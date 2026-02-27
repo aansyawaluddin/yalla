@@ -14,7 +14,6 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // controllers (opsional, untuk mengambil value)
   final TextEditingController firstNameC = TextEditingController();
   final TextEditingController middleNameC = TextEditingController();
   final TextEditingController lastNameC = TextEditingController();
@@ -35,6 +34,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     passwordC.dispose();
     confirmPasswordC.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      dobC.text = "${picked.day}/${picked.month}/${picked.year}";
+    }
   }
 
   @override
@@ -184,12 +196,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(right: 12),
-                            child: CustomTextField(
-                              hint: "Tanggal Lahir",
-                              controller: dobC,
-                              keyboardType: TextInputType.datetime,
-                              borderRadius: const BorderRadius.horizontal(
-                                right: Radius.circular(50),
+                            child: GestureDetector(
+                              onTap: () => _selectDate(context),
+                              child: AbsorbPointer(
+                                child: CustomTextField(
+                                  hint: "Tanggal Lahir",
+                                  controller: dobC,
+                                  borderRadius: const BorderRadius.horizontal(
+                                    right: Radius.circular(50),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
