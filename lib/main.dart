@@ -13,7 +13,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Yalla',
       debugShowCheckedModeBanner: false,
-      home:  SplashScreen(),
+      theme: ThemeData(
+        fontFamily: 'Inter',
+      ),
+      home: SplashScreen(),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:yalla/features/auth/login.dart';
+import 'package:yalla/features/auth/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -144,6 +144,7 @@ class _SplashScreenState extends State<SplashScreen> {
             top: _step == 7 ? 200 : screenHeight,
             left: 0,
             right: 0,
+            height: screenHeight - 200,
             child: LoginScreen(screenHeight: screenHeight),
           ),
         ],
