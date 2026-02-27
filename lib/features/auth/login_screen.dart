@@ -4,6 +4,7 @@ import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/custom_text_field.dart';
 import 'package:yalla/features/auth/register_screen.dart';
+import 'package:yalla/features/user/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final double screenHeight;
@@ -19,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Align(
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Input Password 
+                    // Input Password
                     Row(
                       children: [
                         Expanded(
@@ -250,7 +250,39 @@ class _LoginScreenState extends State<LoginScreen> {
                               boxShadow: AppColors.defaultShadow,
                             ),
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  PageRouteBuilder(
+                                    transitionDuration: const Duration(
+                                      milliseconds: 300,
+                                    ), 
+                                    pageBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                        ) => const HomeScreen(),
+                                    transitionsBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                          child,
+                                        ) {
+                                          final curvedAnimation =
+                                              CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.easeIn,
+                                              );
+                                          return FadeTransition(
+                                            opacity: curvedAnimation,
+                                            child: child,
+                                          );
+                                        },
+                                  ),
+                                );
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
