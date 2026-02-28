@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Align(
         alignment: Alignment.bottomCenter,
         child: Container(
-          height: widget.screenHeight - 200,
+          height: widget.screenHeight - 170,
           clipBehavior: Clip.antiAlias,
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: Stack(
             children: [
-              SingleChildScrollView(
+              Padding(
                 padding: const EdgeInsets.only(top: 41, bottom: 40),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,10 +98,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.12),
-                                    blurRadius: 12,
-                                    spreadRadius: -2,
-                                    offset: Offset(0, 4),
+                                    color: Colors.black.withOpacity(
+                                      0.25,
+                                    ), 
+                                    blurRadius: 4, 
+                                    spreadRadius: 0, 
+                                    offset: const Offset(
+                                      0,
+                                      4,
+                                    ),
                                   ),
                                 ],
                                 gradient: const LinearGradient(
@@ -256,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   PageRouteBuilder(
                                     transitionDuration: const Duration(
                                       milliseconds: 300,
-                                    ), 
+                                    ),
                                     pageBuilder:
                                         (
                                           context,

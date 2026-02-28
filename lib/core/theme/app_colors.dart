@@ -12,7 +12,7 @@ class AppColors {
 
   // Neutrals / Lines
   static const Color line = Color(0xFFDADADA);
-  static const Color textDark = Color(0xFF333333);
+  static const Color textDark = Color(0xFF000000);
   static const Color textGrey = Color(0xFF8E8E8E);
 
   // Gradients

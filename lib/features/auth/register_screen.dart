@@ -56,7 +56,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Align(
         alignment: Alignment.bottomCenter,
         child: Container(
-          height: widget.screenHeight - 200,
+          height: widget.screenHeight - 170,
           clipBehavior: Clip.antiAlias,
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -70,8 +70,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           child: Stack(
             children: [
-              SingleChildScrollView(
-                padding: const EdgeInsets.only(top: 41, bottom: 40),
+              Padding(
+                padding: const EdgeInsets.only(top: 30, bottom: 30),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -80,29 +80,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 10,
-                              ),
-                              side: BorderSide(
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
                                 color: AppColors.secondary,
                                 width: 1.2,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 4,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                            child: Text(
-                              "Masuk",
-                              style: AppTypography.bold14.copyWith(
-                                color: AppColors.secondary,
+                            child: TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                "Masuk",
+                                style: AppTypography.bold14.copyWith(
+                                  color: AppColors.secondary,
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Text(
                             "Sudah punya akun?",
                             style: AppTypography.regular12.copyWith(
@@ -112,7 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 19),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 30),
                       child: Column(
@@ -146,9 +163,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 30),
 
-                    // Baris 1: Nama Awal | Nama Tengah | Nama Akhir
                     Row(
                       children: [
                         Expanded(
@@ -188,9 +204,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 16),
-
-                    // Baris 2: Tanggal Lahir | Negara Asal
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Expanded(
@@ -225,9 +239,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 6),
 
-                    // Baris 3: Email
                     Padding(
                       padding: const EdgeInsets.only(right: 30),
                       child: CustomTextField(
@@ -240,9 +253,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 6),
 
-                    // Baris 4: Kata Sandi | Ulangi Kata Sandi
                     Row(
                       children: [
                         Expanded(
@@ -276,7 +288,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 28),
 
-                    // Tombol Daftar (Biru Gradien, Nempel Kanan)
                     Row(
                       children: [
                         const Expanded(flex: 3, child: SizedBox()),
@@ -285,7 +296,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: Container(
                             height: 54,
                             decoration: BoxDecoration(
-                              gradient: AppColors.buttonGradient,
+                              gradient: const LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [Color(0xFF0099FF), Color(0xFF005C99)],
+                              ),
                               borderRadius: const BorderRadius.horizontal(
                                 left: Radius.circular(50),
                               ),
@@ -307,7 +322,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: const Text(
                                 "Daftar",
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 6,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.5,
                                 ),
@@ -318,18 +333,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 29),
 
-                    // Divider
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 30),
+                      padding: const EdgeInsets.symmetric(horizontal: 0),
                       child: Row(
                         children: [
                           Expanded(
                             child: Divider(color: AppColors.line, thickness: 1),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                             child: Text(
                               "Atau daftar menggunakan",
                               style: AppTypography.regular12.copyWith(
@@ -344,9 +358,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 14),
 
-                    // Tombol Social Media
                     Row(
                       children: [
                         Expanded(

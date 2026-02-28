@@ -141,10 +141,10 @@ class _SplashScreenState extends State<SplashScreen> {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 1000),
             curve: Curves.easeOutQuart,
-            top: _step == 7 ? 200 : screenHeight,
+            top: _step == 7 ? 170 : screenHeight,
             left: 0,
             right: 0,
-            height: screenHeight - 200,
+            height: screenHeight - 170,
             child: LoginScreen(screenHeight: screenHeight),
           ),
         ],
