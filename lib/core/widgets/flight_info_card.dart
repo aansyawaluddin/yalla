@@ -43,11 +43,18 @@ class FlightInfoCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipOval(
-                      child: Image.asset(
-                        'assets/images/logo_flydeal.png',
-                        height: 44,
-                        width: 44,
-                        fit: BoxFit.cover,
+                      child: SizedBox(
+                        height: 50,
+                        width: 50,
+                        child: Transform.scale(
+                          scale:
+                              1.5, 
+                          child: Image.asset(
+                            'assets/images/logo_flydeal.png',
+                            fit: BoxFit
+                                .cover, 
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -173,8 +180,7 @@ class FlightInfoCard extends StatelessWidget {
                     child: IntrinsicWidth(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment
-                            .stretch,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Container(
                             height: 3,

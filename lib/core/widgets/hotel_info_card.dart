@@ -16,7 +16,7 @@ class HotelInfoCard extends StatelessWidget {
           begin: Alignment.bottomLeft,
           end: Alignment.topRight,
           colors: [
-            Color(0xFFD0EAFF),
+            Color(0xFF67B5FE),
             Colors.white,
             Colors.white,
             Color(0xFF67B5FE),
