@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
-import 'package:yalla/core/widgets/custom_text_field.dart';
+import 'package:yalla/core/widgets/inputan/custom_text_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   final double screenHeight;
