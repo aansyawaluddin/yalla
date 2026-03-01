@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:yalla/core/theme/app_colors.dart';
-import 'package:yalla/core/theme/app_typography.dart';
 
 class HotelInfoCard extends StatelessWidget {
   const HotelInfoCard({super.key});
@@ -8,124 +6,137 @@ class HotelInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      width: 320,
+      height: 150,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
         gradient: const LinearGradient(
           begin: Alignment.bottomLeft,
           end: Alignment.topRight,
           colors: [
-            Color(0xFFBCE3FF), // Biru muda sudut kiri bawah
-            Colors.white, // Putih dominan di tengah
+            Color(0xFFD0EAFF),
             Colors.white,
-            Color(0xFFDFF1FF), // Biru pudar sudut kanan atas
+            Colors.white,
+            Color(0xFF67B5FE),
           ],
-          stops: [0.0, 0.2, 0.8, 1.0],
+          stops: [0.0, 0.20, 0.80, 1.0],
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Bagian Foto Hotel (Sisi Kiri)
-          Container(
-            width: 100,
-            height: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              image: const DecorationImage(
-                image: AssetImage('assets/images/hotel.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(width: 12),
-          // Bagian Informasi Teks (Sisi Kanan)
-          Expanded(
-            child: Column(
+        ],
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        "Hotel Borobudur Jakarta",
-                        style: AppTypography.bold14.copyWith(
-                          color: Colors.black,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    // Badge Check-in (Pojok Kanan Atas Teks)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F3F3),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "Check In 12:21:01",
-                        style: AppTypography.regular10.copyWith(
-                          fontSize: 8,
-                          color: AppColors.textGrey,
-                        ),
-                      ),
-                    ),
-                  ],
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.asset(
+                    'assets/images/hotel.png',
+                    width: 100,
+                    height: 75,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                const SizedBox(height: 12),
-                // Baris Tanggal
-                Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today_outlined,
-                      size: 14,
-                      color: AppColors.secondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Okt 12 - 15 Okt",
-                      style: AppTypography.regular10.copyWith(
-                        color: AppColors.textGrey,
+
+                const SizedBox(width: 14),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Hotel\nBorobudur Jakarta",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                          fontSize: 14,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // Baris Detail Tamu & Durasi
-                Row(
-                  children: [
-                    Text(
-                      "3 Malam",
-                      style: AppTypography.regular10.copyWith(
-                        color: AppColors.textGrey,
+
+                      const SizedBox(height: 10),
+
+                      Row(
+                        children: const [
+                          Icon(
+                            Icons.calendar_month,
+                            size: 12,
+                            color: Color(0xFF005C99),
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            "Okt 12 - 15 Okt",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(width: 1, height: 10, color: AppColors.line),
-                    const SizedBox(width: 8),
-                    Text(
-                      "2 Tamu",
-                      style: AppTypography.regular10.copyWith(
-                        color: AppColors.textGrey,
+
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Text(
+                            "3 Malam",
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.black45,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 1,
+                            height: 10,
+                            color: Colors.grey.shade300,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            "2 Tamu",
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.black45,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
+            ),
+          ),
+
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                "Check In 12:21:01",
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black54,
+                ),
+              ),
             ),
           ),
         ],

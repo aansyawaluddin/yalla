@@ -68,103 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
+                // Konten Scroll utama
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SafeArea(
-                      bottom: false,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 20,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const CircleAvatar(
-                                  radius: 24,
-                                  backgroundImage: AssetImage(
-                                    'assets/images/profile.png',
-                                  ),
-                                  backgroundColor: Colors.grey,
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Selamat Datang,",
-                                      style: AppTypography.regular12.copyWith(
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          "Syahdam ",
-                                          style: AppTypography.bold14.copyWith(
-                                            color: AppColors.primary,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        const Text(
-                                          "👋",
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Container(
-                                  width: 55,
-                                  height: 55,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        const Color(0xFF000000),
-                                        const Color(
-                                          0xFF666666,
-                                        ).withOpacity(0.0),
-                                      ],
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.notifications_none,
-                                    color: AppColors.primary,
-                                    size: 24,
-                                  ),
-                                ),
-                                Positioned(
-                                  top: 0,
-                                  right: 0,
-                                  child: Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.lightBlue,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
+                    const SizedBox(height: 100),
                     const SizedBox(height: 120),
 
                     Container(
@@ -280,13 +188,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-
                           _buildStandardInput(
                             Icons.calendar_today_outlined,
                             "Pilih Tanggal",
                           ),
                           const SizedBox(height: 16),
-
                           _buildStandardInput(
                             Icons.person_outline,
                             "Pilih Penumpang",
@@ -334,9 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
 
                     const SizedBox(height: 24),
-
                     const AnimatedSearchBar(),
-
                     const SizedBox(height: 30),
 
                     _buildSectionHeader("Informasi Penting"),
@@ -345,12 +249,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       clipBehavior: Clip.none,
-                      child: const Row(
-                        children: [
-                          FlightInfoCard(),
-                          SizedBox(width: 16),
-                          HotelInfoCard(),
-                        ],
+                      child: IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: const [
+                            FlightInfoCard(),
+                            SizedBox(width: 16),
+                            HotelInfoCard(),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -362,15 +269,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Row(
-                        children: [
-                          const PromoCard(
+                        children: const [
+                          PromoCard(
                             title: "VVIP Umrah Sebulan Penuh",
                             price: "IDR 150 Jt",
                             tag: "Spesial Ramadhan",
                             tagColor: Color(0xFFFFB300),
                             imagePath: 'assets/images/promo_kaabah.png',
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                           PromoCard(
                             title: "Umrah Eksekutif",
                             price: "IDR 50 Jt",
@@ -390,15 +297,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Row(
-                        children: [
-                          const PromoCard(
+                        children: const [
+                          PromoCard(
                             title: "VVIP Umrah Sebulan Penuh",
                             price: "IDR 150 Jt",
                             tag: "Spesial Ramadhan",
                             tagColor: Color(0xFFFFB300),
                             imagePath: 'assets/images/promo_kaabah.png',
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                           PromoCard(
                             title: "Umrah Eksekutif",
                             price: "IDR 50 Jt",
@@ -414,6 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          Positioned(top: 0, left: 0, right: 0, child: _buildFixedHeader()),
         ],
       ),
 
@@ -430,6 +338,100 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildBottomNavItem(3, Icons.receipt_long_outlined, "Pesanan"),
             _buildBottomNavItem(4, Icons.person_outline, "Profil"),
           ],
+        ),
+      ),
+    );
+  }
+  Widget _buildFixedHeader() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 24,
+                    backgroundImage: AssetImage('assets/images/profile.png'),
+                    backgroundColor: Colors.grey,
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Selamat Datang,",
+                        style: AppTypography.regular12.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            "Syahdam ",
+                            style: AppTypography.bold14.copyWith(
+                              color: AppColors.primary,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const Text("👋", style: TextStyle(fontSize: 16)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 55,
+                    height: 55,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color(0xFF000000),
+                          const Color(0xFF666666).withOpacity(0.0),
+                        ],
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_none,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: const BoxDecoration(
+                        color: AppColors.lightBlue,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -322,7 +322,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: const Text(
                                 "Daftar",
                                 style: TextStyle(
-                                  fontSize: 6,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.5,
                                 ),
