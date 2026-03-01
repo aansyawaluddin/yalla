@@ -1,50 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/widgets/inputan/standard_icon_input.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 
-class VisaTab extends StatelessWidget {
+class VisaTab extends StatefulWidget {
   const VisaTab({super.key});
+
+  @override
+  State<VisaTab> createState() => _VisaTabState();
+}
+
+class _VisaTabState extends State<VisaTab> {
+  bool isTop = true;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF00A2FF), width: 1.5),
-          ),
-          child: Row(
-            children: [
-              Image.asset(
-                'assets/icons/location.png',
-                width: 28,
-                height: 28,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.location_on,
-                  color: Colors.redAccent,
-                  size: 28,
-                ),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              isTop = !isTop;
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              border: Border.all(
+                color: isTop ? AppColors.secondary : AppColors.line,
+                width: isTop ? 1.5 : 1,
               ),
-              const SizedBox(width: 12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/icons/location.png',
+                  width: 28,
+                  height: 28,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.location_on,
+                    color: Colors.redAccent,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 12),
 
-              RichText(
-                text: const TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Jeddah',
-                      style: TextStyle(
-                        color: Color(0xFF00A2FF),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                RichText(
+                  text: const TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Jeddah',
+                        style: TextStyle(
+                          color: Color(0xFF00A2FF),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 16),
