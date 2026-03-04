@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
+import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 
 class CalendarBottomSheet extends StatefulWidget {
   const CalendarBottomSheet({super.key});
@@ -109,22 +110,24 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
                         child: Text("Kalender", style: AppTypography.bold18),
                       ),
                     ),
-                    const SizedBox(
-                      width: 48,
-                    ), 
+                    const SizedBox(width: 48),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
 
-             // Area Scroll Kalender
+              // Area Scroll Kalender
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.only(bottom: 100),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: List.generate(5, (index) {
-                      DateTime monthToShow = DateTime(now.year, now.month + index, 1);
+                      DateTime monthToShow = DateTime(
+                        now.year,
+                        now.month + index,
+                        1,
+                      );
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 32),
                         child: _buildMonthCalendar(monthToShow),
@@ -163,27 +166,9 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context, _selectedDate);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.lightBlue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        "Terapkan",
-                        style: AppTypography.bold14.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                  PrimaryGradientButton(
+                    text: "Terapkan",
+                    onPressed: () {},
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -209,7 +194,6 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
 
     int totalDays = DateTime(monthDate.year, monthDate.month + 1, 0).day;
 
-
     int emptyDaysAtStart =
         DateTime(monthDate.year, monthDate.month, 1).weekday - 1;
 
@@ -224,13 +208,11 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
               children: [
                 TextSpan(
                   text: "$monthName ",
-                  style: const TextStyle(
-                    color: AppColors.secondary,
-                  ), 
+                  style: const TextStyle(color: AppColors.secondary),
                 ),
                 TextSpan(
                   text: year,
-                  style: const TextStyle(color: AppColors.textDark), 
+                  style: const TextStyle(color: AppColors.textDark),
                 ),
               ],
             ),
@@ -287,7 +269,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
       currentCells.add(
         GestureDetector(
           onTap: isPastDate
-              ? null 
+              ? null
               : () {
                   setState(() {
                     _selectedDate = cellDate;
@@ -323,10 +305,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
     }
 
     return Table(
-      border: TableBorder.all(
-        color: const Color(0xFFE5E5E5),
-        width: 1.0,
-      ),
+      border: TableBorder.all(color: const Color(0xFFE5E5E5), width: 1.0),
       children: rows,
     );
   }

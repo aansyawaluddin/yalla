@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/animated/animatedSearchBar.dart';
+import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/flight_info_card.dart';
 import 'package:yalla/core/widgets/card/hotel_info_card.dart';
 import 'package:yalla/core/widgets/card/promo_card.dart';
@@ -28,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return 'assets/images/pesawat.png';
       case 2:
-        return 'assets/images/pesawat.png'; 
+        return 'assets/images/pesawat.png';
       default:
         return 'assets/images/pesawat.png';
     }
@@ -249,22 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: const BoxDecoration(color: Color(0xFFD4D4D4)),
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildBottomNavItem(0, Icons.home_filled, "Beranda"),
-            _buildBottomNavItem(1, Icons.favorite_border, "Favorit"),
-            _buildBottomNavItem(2, Icons.flight, "Jelajahi"),
-            _buildBottomNavItem(3, Icons.receipt_long_outlined, "Pesanan"),
-            _buildBottomNavItem(4, Icons.person_outline, "Profil"),
-          ],
-        ),
-      ),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
     );
   }
 
