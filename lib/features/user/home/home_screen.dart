@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/animated/animatedSearchBar.dart';
+
 import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/flight_info_card.dart';
-import 'package:yalla/core/widgets/card/hotel_info_card.dart';
 import 'package:yalla/core/widgets/card/promo_card.dart';
 import 'package:yalla/core/widgets/header/home_header.dart';
-import 'package:yalla/features/user/home/tab/hotel_tab.dart';
-import 'package:yalla/features/user/home/tab/pesawat_tab.dart';
-import 'package:yalla/features/user/home/tab/visa_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,33 +17,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedServiceIndex = 0;
-  int _bottomNavIndex = 0;
-
-  String _getBackgroundImage() {
-    switch (_selectedServiceIndex) {
-      case 0:
-        return 'assets/images/pesawat.png';
-      case 1:
-        return 'assets/images/pesawat.png';
-      case 2:
-        return 'assets/images/pesawat.png';
-      default:
-        return 'assets/images/pesawat.png';
-    }
-  }
-
-  Widget _buildSelectedTabContent() {
-    switch (_selectedServiceIndex) {
-      case 0:
-        return const PesawatTab(key: ValueKey(0));
-      case 1:
-        return const HotelTab(key: ValueKey(1));
-      case 2:
-        return const VisaTab(key: ValueKey(2));
-      default:
-        return const PesawatTab(key: ValueKey(0));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,195 +24,156 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFFF5F6F8),
       body: Stack(
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 40),
-            child: Stack(
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  transitionBuilder:
-                      (Widget child, Animation<double> animation) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                  child: Container(
-                    key: ValueKey<int>(_selectedServiceIndex),
-                    height: MediaQuery.of(context).size.height * 0.45,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF557799),
-                      image: DecorationImage(
-                        image: AssetImage(_getBackgroundImage()),
-                        fit: BoxFit.cover,
-                        alignment: Alignment.topCenter,
-                      ),
-                    ),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.center,
-                          colors: [Color(0xFFF5F6F8), Colors.transparent],
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.55,
+            child: Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/bg_home.png'),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withOpacity(0.5),
+                      const Color(0xFFF5F6F8),
+                    ],
+                    stops: const [0.4, 0.8, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          Positioned.fill(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(bottom: 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 180),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 36,
+                          height: 1.2,
+                          color: Color(0xFF005C99),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 220,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withOpacity(0.8),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 100),
-                    const SizedBox(height: 180),
-
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 24),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: AppColors.defaultShadow,
-                      ),
-                      child: Column(
                         children: [
-                          Row(
-                            children: [
-                              _buildServiceTab(
-                                0,
-                                "Pesawat",
-                                'assets/icons/plane_3d.png',
-                              ),
-                              _buildServiceTab(
-                                1,
-                                "Hotel",
-                                'assets/icons/hotel.png',
-                              ),
-                              _buildServiceTab(
-                                2,
-                                "Visa",
-                                'assets/icons/visa.png',
-                              ),
-                            ],
+                          const TextSpan(
+                            text: "Langkah Mudah\nMenuju ",
+                            style: TextStyle(fontWeight: FontWeight.w300),
                           ),
-                          const SizedBox(height: 24),
-
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 500),
-                            switchInCurve: Curves.easeInOut,
-                            switchOutCurve: Curves.easeInOut,
-                            transitionBuilder:
-                                (Widget child, Animation<double> animation) {
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: child,
-                                  );
-                                },
-                            child: _buildSelectedTabContent(),
+                          TextSpan(
+                            text: "Tanah Suci",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF001F33),
+                            ),
                           ),
                         ],
                       ),
                     ),
+                  ),
 
-                    const SizedBox(height: 24),
-                    const AnimatedSearchBar(),
-                    const SizedBox(height: 30),
+                  const SizedBox(height: 24),
 
-                    // --- Informasi Penting ---
-                    _buildSectionHeader("Informasi Penting"),
-                    const SizedBox(height: 16),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      clipBehavior: Clip.none,
-                      child: IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: const [
-                            FlightInfoCard(),
-                            SizedBox(width: 16),
-                            HotelInfoCard(),
-                          ],
+                  AnimatedSearchBar(
+                    selectedServiceIndex: _selectedServiceIndex,
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  const Align(
+                    alignment: Alignment.center,
+                    child: FlightInfoCard(),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildDot(isActive: true),
+                      _buildDot(isActive: false),
+                      _buildDot(isActive: false),
+                    ],
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildBigServiceTab(
+                          index: 0,
+                          title: "Pesawat",
+                          imagePath:
+                              'assets/icons/planee.png', 
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        _buildBigServiceTab(
+                          index: 1,
+                          title: "Hotel",
+                          imagePath:
+                              'assets/icons/hotel.png', 
+                        ),
+                        const SizedBox(width: 12),
+                        _buildBigServiceTab(
+                          index: 2,
+                          title: "Visa",
+                          imagePath:
+                              'assets/icons/visa.png',
+                        ),
+                      ],
                     ),
+                  ),
 
-                    const SizedBox(height: 36),
+                  const SizedBox(height: 36),
 
-                    // --- Penawaran Khusus ---
-                    _buildSectionHeader("Penawaran Khusus"),
-                    const SizedBox(height: 16),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Row(
-                        children: const [
-                          PromoCard(
-                            title: "VVIP Umrah Sebulan Penuh",
-                            price: "IDR 150 Jt",
-                            tag: "Spesial Ramadhan",
-                            tagColor: Color(0xFFFFB300),
-                            imagePath: 'assets/images/promo_kaabah.png',
-                          ),
-                          SizedBox(width: 16),
-                          PromoCard(
-                            title: "Umrah Eksekutif",
-                            price: "IDR 50 Jt",
-                            tag: "Paket Keluarga",
-                            tagColor: AppColors.lightBlue,
-                            imagePath: 'assets/images/promo_kaabah.png',
-                          ),
-                        ],
-                      ),
+                  _buildSectionHeader("Penawaran Khusus"),
+                  const SizedBox(height: 16),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    clipBehavior: Clip.none,
+                    child: Row(
+                      children: const [
+                        PromoCard(
+                          title: "VVIP Umrah Sebulan Penuh",
+                          price: "IDR 150 Jt",
+                          tag: "Spesial Ramadhan",
+                          tagColor: Color(0xFFFFB300),
+                          imagePath: 'assets/images/promo_kaabah.png',
+                        ),
+                        SizedBox(width: 16),
+                        PromoCard(
+                          title: "Umrah Eksekutif",
+                          price: "IDR 50 Jt",
+                          tag: "Paket Keluarga",
+                          tagColor: AppColors.lightBlue,
+                          imagePath: 'assets/images/promo_kaabah.png',
+                        ),
+                      ],
                     ),
-
-                    const SizedBox(height: 36),
-
-                    // --- Penawaran Terbatas ---
-                    _buildSectionHeader("Penawaran Terbatas"),
-                    const SizedBox(height: 16),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Row(
-                        children: const [
-                          PromoCard(
-                            title: "VVIP Umrah Sebulan Penuh",
-                            price: "IDR 150 Jt",
-                            tag: "Spesial Ramadhan",
-                            tagColor: Color(0xFFFFB300),
-                            imagePath: 'assets/images/promo_kaabah.png',
-                          ),
-                          SizedBox(width: 16),
-                          PromoCard(
-                            title: "Umrah Eksekutif",
-                            price: "IDR 50 Jt",
-                            tag: "Paket Keluarga",
-                            tagColor: AppColors.lightBlue,
-                            imagePath: 'assets/images/promo_kaabah.png',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -251,6 +182,71 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
+    );
+  }
+
+  Widget _buildDot({required bool isActive}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      width: isActive ? 24 : 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFF005C99) : Colors.grey.shade400,
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
+  }
+
+  Widget _buildBigServiceTab({
+    required int index,
+    required String title,
+    required String imagePath, // Diubah dari IconData ke String imagePath
+  }) {
+    bool isActive = _selectedServiceIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedServiceIndex = index;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            // Border untuk isActive sudah dihapus di sini
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Menggunakan Image.asset alih-alih Icon
+              Image.asset(
+                imagePath,
+                width: 32,
+                height: 32,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
+                  color: const Color(0xFF005C99),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -267,69 +263,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             "Lihat Semua",
             style: AppTypography.regular12.copyWith(color: AppColors.lightBlue),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildServiceTab(int index, String title, String imagePath) {
-    bool isActive = _selectedServiceIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedServiceIndex = index),
-        child: Container(
-          padding: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: isActive ? AppColors.secondary : AppColors.line,
-                width: isActive ? 2.5 : 1.0,
-              ),
-            ),
-          ),
-          child: Column(
-            children: [
-              Image.asset(
-                imagePath,
-                width: 40,
-                height: 40,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: isActive
-                    ? AppTypography.bold12.copyWith(color: AppColors.textDark)
-                    : AppTypography.regular12.copyWith(
-                        color: AppColors.textGrey,
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavItem(int index, IconData icon, String label) {
-    bool isActive = _bottomNavIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _bottomNavIndex = index),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isActive ? AppColors.lightBlue : AppColors.primary,
-            size: 28,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: isActive
-                ? AppTypography.bold10.copyWith(color: AppColors.lightBlue)
-                : AppTypography.regular10.copyWith(color: AppColors.primary),
           ),
         ],
       ),

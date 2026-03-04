@@ -2,20 +2,25 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
-import 'package:yalla/features/user/search/search_screen.dart'; 
+import 'package:yalla/features/user/search/search_screen.dart';
 
 class AnimatedSearchBar extends StatefulWidget {
-  const AnimatedSearchBar({super.key});
+  final int selectedServiceIndex;
+
+  const AnimatedSearchBar({super.key, this.selectedServiceIndex = 0});
 
   @override
   State<AnimatedSearchBar> createState() => _AnimatedSearchBarState();
 }
 
 class _AnimatedSearchBarState extends State<AnimatedSearchBar> {
-  final List<String> _searchHints = ["Cari Penerbangan", "Cari Hotel"];
+  final List<String> _searchHints = [
+    "Cari Penerbangan",
+    "Cari Hotel",
+  ];
 
   String _displayedText = "";
-  int _hintIndex = 0;
+  late int _hintIndex;
   int _charIndex = 0;
   bool _isDeleting = false;
   Timer? _timer;
@@ -23,7 +28,21 @@ class _AnimatedSearchBarState extends State<AnimatedSearchBar> {
   @override
   void initState() {
     super.initState();
+    _hintIndex = widget.selectedServiceIndex;
     _startTyping();
+  }
+
+  @override
+  void didUpdateWidget(AnimatedSearchBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedServiceIndex != oldWidget.selectedServiceIndex) {
+      setState(() {
+        _hintIndex = widget.selectedServiceIndex;
+        _charIndex = 0;
+        _displayedText = "";
+        _isDeleting = false;
+      });
+    }
   }
 
   void _startTyping() {
@@ -107,17 +126,31 @@ class _AnimatedSearchBarState extends State<AnimatedSearchBar> {
           child: Material(
             color: Colors.transparent,
             child: Container(
-              height: 48,
+              height: 54,
               decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(50),
-                border: Border.all(color: AppColors.line, width: 1),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Row(
                 children: [
-                  const Icon(Icons.search, color: Colors.black, size: 24),
-                  const SizedBox(width: 12),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 10, right: 5),
+                    child: Icon(
+                      Icons.search,
+                      color: Color(0xFF005C99),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
                   Expanded(
                     child: Text(
                       "$_displayedText|",

@@ -6,23 +6,12 @@ class FlightInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 300,
-      height: 150,
+      width: 320,
+      height: 140,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          begin: Alignment.bottomLeft,
-          end: Alignment.topRight,
-          colors: [
-            Color(0xFF67B5FE),
-            Colors.white,
-            Colors.white,
-            Color(0xFF67B5FE),
-          ],
-          stops: [0.0, 0.20, 0.80, 1.0],
-        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
@@ -38,7 +27,7 @@ class FlightInfoCard extends StatelessWidget {
           Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 12.0),
+                padding: const EdgeInsets.only(top: 2.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -47,12 +36,10 @@ class FlightInfoCard extends StatelessWidget {
                         height: 50,
                         width: 50,
                         child: Transform.scale(
-                          scale:
-                              1.5, 
+                          scale: 1.5,
                           child: Image.asset(
                             'assets/images/logo_flydeal.png',
-                            fit: BoxFit
-                                .cover, 
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
@@ -151,10 +138,13 @@ class FlightInfoCard extends StatelessWidget {
               ),
             ],
           ),
+
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
+            // Tetap gunakan end agar bagian bawah sejajar
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              // --- KIRI: JED ---
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: const [
@@ -163,7 +153,7 @@ class FlightInfoCard extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: Colors.black,
-                      fontSize: 18,
+                      fontSize: 14,
                     ),
                   ),
                   Text(
@@ -173,43 +163,37 @@ class FlightInfoCard extends StatelessWidget {
                 ],
               ),
 
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Center(
-                    child: IntrinsicWidth(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Container(
-                            height: 3,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(2),
-                              gradient: const LinearGradient(
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                                colors: [Color(0xFFCDE8FF), Color(0xFF4DB0FF)],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            "On Time",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF22C55E),
-                              fontSize: 9,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                        ],
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                      width: 37.5,
+                      height: 1.5,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        gradient: const LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [Color(0xFFCDE8FF), Color(0xFF4DB0FF)],
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "On Time",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF22C55E),
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+
 
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -219,7 +203,7 @@ class FlightInfoCard extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: Colors.black,
-                      fontSize: 18,
+                      fontSize: 14,
                     ),
                   ),
                   Text(
