@@ -111,7 +111,9 @@ class _SplashScreenState extends State<SplashScreen> {
                 curve: Curves.easeOutBack,
                 scale: _step == 1
                     ? 0.3
-                    : (_step == 6 ? (finalLogoSize / logoContainerSize) : 1.0),
+                    : (_step >= 6
+                          ? (finalLogoSize / logoContainerSize)
+                          : 1.0), 
                 child: Image.asset(
                   'assets/images/logo.png',
                   fit: BoxFit.contain,
