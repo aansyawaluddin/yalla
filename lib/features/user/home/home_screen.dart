@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/animated/animatedSearchBar.dart';
-
+import 'package:yalla/core/widgets/card/flight_card.dart';
 import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/flight_info_card.dart';
 import 'package:yalla/core/widgets/card/promo_card.dart';
+import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/widgets/header/home_header.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -123,22 +124,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         _buildBigServiceTab(
                           index: 0,
                           title: "Pesawat",
-                          imagePath:
-                              'assets/icons/planee.png', 
+                          imagePath: 'assets/icons/planee.png',
                         ),
                         const SizedBox(width: 12),
                         _buildBigServiceTab(
                           index: 1,
                           title: "Hotel",
-                          imagePath:
-                              'assets/icons/hotel.png', 
+                          imagePath: 'assets/icons/hotel.png',
                         ),
                         const SizedBox(width: 12),
                         _buildBigServiceTab(
                           index: 2,
                           title: "Visa",
-                          imagePath:
-                              'assets/icons/visa.png',
+                          imagePath: 'assets/icons/visa.png',
                         ),
                       ],
                     ),
@@ -146,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 36),
 
-                  _buildSectionHeader("Penawaran Khusus"),
+                  _buildSectionHeader(title: "Penawaran Khusus"),
                   const SizedBox(height: 16),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -159,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           price: "IDR 150 Jt",
                           tag: "Spesial Ramadhan",
                           tagColor: Color(0xFFFFB300),
-                          imagePath: 'assets/images/promo_kaabah.png',
+                          imagePath: 'assets/images/kaabah.jpeg',
                         ),
                         SizedBox(width: 16),
                         PromoCard(
@@ -167,7 +165,66 @@ class _HomeScreenState extends State<HomeScreen> {
                           price: "IDR 50 Jt",
                           tag: "Paket Keluarga",
                           tagColor: AppColors.lightBlue,
-                          imagePath: 'assets/images/promo_kaabah.png',
+                          imagePath: 'assets/images/kaabah.jpeg',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  _buildSectionHeader(
+                    title: "Keberangkatan Terdekat",
+                    subtitle: "Siapkan koper Anda segera",
+                    showAction: false,
+                  ),
+                  const SizedBox(height: 16),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: FlightOptionCard(),
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  _buildSectionHeader(
+                    title: "Travel Populer",
+                    subtitle: "Penyelenggara umroh terpercaya",
+                  ),
+                  const SizedBox(height: 16),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    clipBehavior: Clip.none,
+                    child: Row(
+                      children: const [
+                        TravelCard(
+                          title: "CMA Tour &\nTravel",
+                          rating: 4.9,
+                          reviews: "2.4k",
+                          badgeText: "Terverifikasi",
+                          badgeColor: Color(0xFF0099FF),
+                          badgeIcon: Icons.verified,
+                          imagePath: 'assets/images/kaabah.jpeg',
+                        ),
+                        SizedBox(width: 16),
+                        TravelCard(
+                          title: "Rabbani Tour",
+                          rating: 4.9,
+                          reviews: "2.4k",
+                          badgeText: "Top Rated",
+                          badgeColor: Color(0xFFFF8C00),
+                          badgeIcon: Icons.emoji_events,
+                          imagePath: 'assets/images/kaabah.jpeg',
+                        ),
+                        SizedBox(width: 16),
+                        TravelCard(
+                          title: "Rabbani Tour",
+                          rating: 4.9,
+                          reviews: "2.4k",
+                          badgeText: "Top Rated",
+                          badgeColor: Color(0xFFFF8C00),
+                          badgeIcon: Icons.emoji_events,
+                          imagePath: 'assets/images/kaabah.jpeg',
                         ),
                       ],
                     ),
@@ -250,20 +307,42 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader({
+    required String title,
+    String? subtitle,
+    bool showAction = true,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: AppTypography.bold18.copyWith(color: AppColors.textDark),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppTypography.bold18.copyWith(color: AppColors.textDark),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: AppTypography.regular12.copyWith(
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ],
+            ],
           ),
-          Text(
-            "Lihat Semua",
-            style: AppTypography.regular12.copyWith(color: AppColors.lightBlue),
-          ),
+          if (showAction)
+            Text(
+              "Lihat Semua",
+              style: AppTypography.regular12.copyWith(
+                color: AppColors.lightBlue,
+              ),
+            ),
         ],
       ),
     );
