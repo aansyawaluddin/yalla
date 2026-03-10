@@ -12,13 +12,6 @@ class FlightInfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,15 +48,13 @@ class FlightInfoCard extends StatelessWidget {
                             child: const Text(
                               "Flydeal Air",
                               style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: Colors.black87,
-                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                fontSize: 14,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 7),
 
                           Row(
                             children: const [
@@ -76,7 +67,7 @@ class FlightInfoCard extends StatelessWidget {
                               Text(
                                 "06 Juni 2026",
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 8,
                                   color: Colors.black54,
                                 ),
                               ),
@@ -90,7 +81,7 @@ class FlightInfoCard extends StatelessWidget {
                               Text(
                                 "08 : 30 WITA",
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 8,
                                   color: Colors.black54,
                                 ),
                               ),
@@ -98,11 +89,10 @@ class FlightInfoCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
 
-                          // Tipe Penumpang
                           const Text(
                             "1 Dewasa  •  Ekonomi",
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 8,
                               color: Colors.black45,
                             ),
                             maxLines: 1,
@@ -139,12 +129,12 @@ class FlightInfoCard extends StatelessWidget {
             ],
           ),
 
+          const SizedBox(height: 8),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            // Tetap gunakan end agar bagian bawah sejajar
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // --- KIRI: JED ---
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: const [
@@ -164,7 +154,7 @@ class FlightInfoCard extends StatelessWidget {
               ),
 
               Padding(
-                padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
+                padding: const EdgeInsets.only(bottom: 8, left: 18, right: 18),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -193,7 +183,6 @@ class FlightInfoCard extends StatelessWidget {
                   ],
                 ),
               ),
-
 
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,

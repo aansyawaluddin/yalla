@@ -8,6 +8,8 @@ import 'package:yalla/core/widgets/card/flight_info_card.dart';
 import 'package:yalla/core/widgets/card/promo_card.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/widgets/header/home_header.dart';
+import 'package:yalla/features/user/paket/paket_umrah_screen.dart';
+import 'package:yalla/features/user/travel/travel_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -98,20 +100,71 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 30),
 
-                  const Align(
-                    alignment: Alignment.center,
-                    child: FlightInfoCard(),
-                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            gradient: const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Color(0x00FFFFFF), Color(0xFFF2FAFF)],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFF2FAFF),
+                                spreadRadius: 10,
+                                blurRadius: 20,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: const FlightInfoCard(),
+                        ),
 
-                  const SizedBox(height: 16),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildDot(isActive: true),
-                      _buildDot(isActive: false),
-                      _buildDot(isActive: false),
-                    ],
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(16),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildDot(isActive: true),
+                                  const SizedBox(width: 4),
+                                  _buildDot(isActive: false),
+                                  const SizedBox(width: 4),
+                                  _buildDot(isActive: false),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 32),
@@ -144,7 +197,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 36),
 
-                  _buildSectionHeader(title: "Penawaran Khusus"),
+                  _buildSectionHeader(
+                    title: "Penawaran Khusus",
+                    onActionTap: () {
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 300),
+                          reverseTransitionDuration: const Duration(
+                            milliseconds: 300,
+                          ),
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  const PaketUmrahScreen(),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                var curvedAnimation = CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOut,
+                                );
+                                return FadeTransition(
+                                  opacity: curvedAnimation,
+                                  child: child,
+                                );
+                              },
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 16),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -189,6 +269,31 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildSectionHeader(
                     title: "Travel Populer",
                     subtitle: "Penyelenggara umroh terpercaya",
+                    onActionTap: () {
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 300),
+                          reverseTransitionDuration: const Duration(
+                            milliseconds: 300,
+                          ),
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  const TravelListScreen(),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                var curvedAnimation = CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOut,
+                                );
+                                return FadeTransition(
+                                  opacity: curvedAnimation,
+                                  child: child,
+                                );
+                              },
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   SingleChildScrollView(
@@ -257,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBigServiceTab({
     required int index,
     required String title,
-    required String imagePath, // Diubah dari IconData ke String imagePath
+    required String imagePath,
   }) {
     bool isActive = _selectedServiceIndex == index;
     return Expanded(
@@ -272,7 +377,6 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            // Border untuk isActive sudah dihapus di sini
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -284,7 +388,6 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Menggunakan Image.asset alih-alih Icon
               Image.asset(
                 imagePath,
                 width: 32,
@@ -311,6 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String title,
     String? subtitle,
     bool showAction = true,
+    VoidCallback? onActionTap,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -336,11 +440,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ],
           ),
+
           if (showAction)
-            Text(
-              "Lihat Semua",
-              style: AppTypography.regular12.copyWith(
-                color: AppColors.lightBlue,
+            GestureDetector(
+              onTap: onActionTap,
+              child: Container(
+                color: Colors.transparent,
+                padding: const EdgeInsets.only(left: 8, bottom: 8),
+                child: Text(
+                  "Lihat Semua",
+                  style: AppTypography.regular12.copyWith(
+                    color: AppColors.lightBlue,
+                  ),
+                ),
               ),
             ),
         ],

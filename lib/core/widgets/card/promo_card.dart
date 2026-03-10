@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
+import 'package:yalla/features/user/paket/detail_paket_screen.dart';
 
 class PromoCard extends StatelessWidget {
   final String title;
@@ -20,78 +21,104 @@ class PromoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 260,
-      height: 150,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.grey.shade400,
-        image: DecorationImage(image: AssetImage(imagePath), fit: BoxFit.cover),
-      ),
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.center,
-                colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            transitionDuration: const Duration(
+              milliseconds: 300,
+            ), 
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const DetailPaketScreen(), 
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              var curvedAnimation = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut, 
+              );
+              return FadeTransition(opacity: curvedAnimation, child: child);
+            },
+          ),
+        );
+      },
+      child: Container(
+        width: 260,
+        height: 150,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.grey.shade400,
+          image: DecorationImage(
+            image: AssetImage(imagePath),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.center,
+                  colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: tagColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    tag,
-                    style: AppTypography.bold10.copyWith(
-                      color: AppColors.primary,
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: AppTypography.bold14.copyWith(
-                    color: AppColors.primary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                RichText(
-                  text: TextSpan(
-                    style: AppTypography.regular10.copyWith(
-                      color: AppColors.primary,
+                    decoration: BoxDecoration(
+                      color: tagColor,
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    children: [
-                      const TextSpan(text: "Mulai dari "),
-                      TextSpan(
-                        text: price,
-                        style: AppTypography.bold12.copyWith(
-                          color: Colors.amber.shade400,
-                        ),
+                    child: Text(
+                      tag,
+                      style: AppTypography.bold10.copyWith(
+                        color: AppColors
+                            .primary, 
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    title,
+                    style: AppTypography.bold14.copyWith(
+                      color: AppColors.primary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  RichText(
+                    text: TextSpan(
+                      style: AppTypography.regular10.copyWith(
+                        color: AppColors.primary,
+                      ),
+                      children: [
+                        const TextSpan(text: "Mulai dari "),
+                        TextSpan(
+                          text: price,
+                          style: AppTypography.bold12.copyWith(
+                            color: Colors.amber.shade400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

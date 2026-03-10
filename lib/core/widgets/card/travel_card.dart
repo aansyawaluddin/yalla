@@ -23,8 +23,8 @@ class TravelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 220, 
-      height: 280,
+      width: 150, 
+      height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         image: DecorationImage(image: AssetImage(imagePath), fit: BoxFit.cover),
