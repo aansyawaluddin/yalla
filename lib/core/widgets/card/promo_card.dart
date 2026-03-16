@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
-import 'package:yalla/features/user/paket/detail_paket_screen.dart';
+import 'package:yalla/features/user/home/paket/detail_paket_screen.dart';
 
 class PromoCard extends StatelessWidget {
   final String title;

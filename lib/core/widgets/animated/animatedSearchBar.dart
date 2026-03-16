@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
-import 'package:yalla/features/user/search/search_screen.dart';
+import 'package:yalla/features/user/home/search/search_screen.dart';
 
 class AnimatedSearchBar extends StatefulWidget {
   final int selectedServiceIndex;

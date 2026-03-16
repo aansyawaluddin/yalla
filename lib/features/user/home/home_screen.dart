@@ -8,8 +8,9 @@ import 'package:yalla/core/widgets/card/flight_info_card.dart';
 import 'package:yalla/core/widgets/card/promo_card.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/widgets/header/home_header.dart';
-import 'package:yalla/features/user/paket/paket_umrah_screen.dart';
-import 'package:yalla/features/user/travel/travel_list_screen.dart';
+import 'package:yalla/features/user/home/paket/paket_umrah_screen.dart';
+import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
+import 'package:yalla/features/user/plane/home_plane.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -71,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: RichText(
                       text: TextSpan(
                         style: const TextStyle(
-                          fontSize: 36,
+                          fontSize: 20,
                           height: 1.2,
                           color: Color(0xFF005C99),
                         ),
@@ -195,76 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 36),
-
-                  _buildSectionHeader(
-                    title: "Penawaran Khusus",
-                    onActionTap: () {
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          transitionDuration: const Duration(milliseconds: 300),
-                          reverseTransitionDuration: const Duration(
-                            milliseconds: 300,
-                          ),
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) =>
-                                  const PaketUmrahScreen(),
-                          transitionsBuilder:
-                              (context, animation, secondaryAnimation, child) {
-                                var curvedAnimation = CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOut,
-                                );
-                                return FadeTransition(
-                                  opacity: curvedAnimation,
-                                  child: child,
-                                );
-                              },
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    clipBehavior: Clip.none,
-                    child: Row(
-                      children: const [
-                        PromoCard(
-                          title: "VVIP Umrah Sebulan Penuh",
-                          price: "IDR 150 Jt",
-                          tag: "Spesial Ramadhan",
-                          tagColor: Color(0xFFFFB300),
-                          imagePath: 'assets/images/kaabah.jpeg',
-                        ),
-                        SizedBox(width: 16),
-                        PromoCard(
-                          title: "Umrah Eksekutif",
-                          price: "IDR 50 Jt",
-                          tag: "Paket Keluarga",
-                          tagColor: AppColors.lightBlue,
-                          imagePath: 'assets/images/kaabah.jpeg',
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  _buildSectionHeader(
-                    title: "Keberangkatan Terdekat",
-                    subtitle: "Siapkan koper Anda segera",
-                    showAction: false,
-                  ),
-                  const SizedBox(height: 16),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: FlightOptionCard(),
-                  ),
-
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 20),
 
                   _buildSectionHeader(
                     title: "Travel Populer",
@@ -334,6 +266,75 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 20),
+
+                  _buildSectionHeader(
+                    title: "Keberangkatan Terdekat",
+                    subtitle: "Siapkan koper Anda segera",
+                    showAction: false,
+                  ),
+                  const SizedBox(height: 16),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: FlightOptionCard(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  _buildSectionHeader(
+                    title: "Penawaran Khusus",
+                    onActionTap: () {
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 300),
+                          reverseTransitionDuration: const Duration(
+                            milliseconds: 300,
+                          ),
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  const PaketUmrahScreen(),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                var curvedAnimation = CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOut,
+                                );
+                                return FadeTransition(
+                                  opacity: curvedAnimation,
+                                  child: child,
+                                );
+                              },
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    clipBehavior: Clip.none,
+                    child: Row(
+                      children: const [
+                        PromoCard(
+                          title: "VVIP Umrah Sebulan Penuh",
+                          price: "IDR 150 Jt",
+                          tag: "Spesial Ramadhan",
+                          tagColor: Color(0xFFFFB300),
+                          imagePath: 'assets/images/kaabah.jpeg',
+                        ),
+                        SizedBox(width: 16),
+                        PromoCard(
+                          title: "Umrah Eksekutif",
+                          price: "IDR 50 Jt",
+                          tag: "Paket Keluarga",
+                          tagColor: AppColors.lightBlue,
+                          imagePath: 'assets/images/kaabah.jpeg',
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -371,6 +372,29 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _selectedServiceIndex = index;
           });
+
+          if (index == 0) {
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 300),
+                reverseTransitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const HomePlane(), 
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      var curvedAnimation = CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOut,
+                      );
+                      return FadeTransition(
+                        opacity: curvedAnimation,
+                        child: child,
+                      );
+                    },
+              ),
+            );
+          }
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 24),
@@ -399,6 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title,
                 style: TextStyle(
                   fontSize: 14,
+                  // Menggunakan ketebalan font sesuai status aktif
                   fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
                   color: const Color(0xFF005C99),
                 ),

@@ -39,11 +39,9 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
-    DateTime currentMonth = DateTime(now.year, now.month, 1);
-    DateTime nextMonth = DateTime(now.year, now.month + 1, 1);
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.90,
+      height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -96,7 +94,6 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
 
           Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: Row(
@@ -116,10 +113,9 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Area Scroll Kalender
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 100),
+                  padding: const EdgeInsets.only(bottom: 140),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: List.generate(5, (index) {
@@ -138,38 +134,31 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
               ),
             ],
           ),
-
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: Container(
               padding: const EdgeInsets.only(
-                top: 20,
+                top: 24, 
                 left: 24,
                 right: 24,
                 bottom: 32,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.white,
-                    Colors.white.withOpacity(0.9),
-                    Colors.white.withOpacity(0.0),
-                  ],
-                  stops: const [0.6, 0.8, 1.0],
-                ),
+                color: Colors.white, 
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15), 
+                    blurRadius: 10,
+                    offset: const Offset(0, -4), 
+                  ),
+                ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  PrimaryGradientButton(
-                    text: "Terapkan",
-                    onPressed: () {},
-                  ),
+                  PrimaryGradientButton(text: "Terapkan", onPressed: () {}),
                   const SizedBox(height: 12),
                   Text(
                     _selectedDate != null

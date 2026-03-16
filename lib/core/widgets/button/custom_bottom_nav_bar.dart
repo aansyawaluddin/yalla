@@ -2,33 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/features/user/home/home_screen.dart';
-import 'package:yalla/features/user/order/order_screen.dart';
+import 'package:yalla/features/user/home/order/order_screen.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
 
   const CustomBottomNavBar({super.key, required this.currentIndex});
 
-  // --- LOGIKA NAVIGASI ---
   void _onItemTapped(BuildContext context, int index) {
-    // Jika tap pada tab yang sedang aktif, tidak perlu melakukan apa-apa
     if (index == currentIndex) return;
 
     Widget targetScreen = const HomeScreen();
 
-    // Tentukan halaman tujuan berdasarkan index
     switch (index) {
       case 0:
         targetScreen = const HomeScreen();
         break;
       case 1:
-        // TODO: Ganti dengan halaman Favorit yang sebenarnya jika sudah ada
         targetScreen = const Scaffold(
           body: Center(child: Text("Halaman Favorit")),
         );
         break;
       case 2:
-        // Index 2 untuk Jelajahi (Bisa diarahkan ke FlightListScreen atau halaman Jelajah utama)
         targetScreen = const Scaffold(
           body: Center(child: Text("Halaman Jelajahi")),
         );
@@ -37,7 +32,6 @@ class CustomBottomNavBar extends StatelessWidget {
         targetScreen = const OrderScreen();
         break;
       case 4:
-        // TODO: Ganti dengan halaman Profil yang sebenarnya jika sudah ada
         targetScreen = const Scaffold(
           body: Center(child: Text("Halaman Profil")),
         );
@@ -46,8 +40,6 @@ class CustomBottomNavBar extends StatelessWidget {
         targetScreen = const HomeScreen();
     }
 
-    // Gunakan pushReplacement agar halaman tidak menumpuk di memory
-    // PageRouteBuilder dengan durasi 0 agar transisinya instan (seperti pindah tab)
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
@@ -91,9 +83,9 @@ class CustomBottomNavBar extends StatelessWidget {
     bool isActive = currentIndex == index;
     return GestureDetector(
       onTap: () =>
-          _onItemTapped(context, index), // Panggil logika navigasi di sini
+          _onItemTapped(context, index),
       child: Container(
-        color: Colors.transparent, // Membuat seluruh area kolom bisa di-tap
+        color: Colors.transparent, 
         width: 60,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
