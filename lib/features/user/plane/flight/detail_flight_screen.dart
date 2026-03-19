@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yalla/features/user/plane/flight/detail_passenger_screen.dart';
 
 class DetailFlightScreen extends StatelessWidget {
   const DetailFlightScreen({super.key});
@@ -42,7 +43,7 @@ class DetailFlightScreen extends StatelessWidget {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/images/kaabah.jpeg', fit: BoxFit.cover),
+            child: Image.asset('assets/images/madinah.png', fit: BoxFit.cover),
           ),
 
           Positioned(
@@ -273,7 +274,42 @@ class DetailFlightScreen extends StatelessWidget {
                             Expanded(
                               flex: 4,
                               child: GestureDetector(
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    PageRouteBuilder(
+                                      transitionDuration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      reverseTransitionDuration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      pageBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                          ) => const DetailPassengerScreen(),
+                                      transitionsBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                            child,
+                                          ) {
+                                            var curvedAnimation =
+                                                CurvedAnimation(
+                                                  parent: animation,
+                                                  curve: Curves.easeOut,
+                                                );
+                                            return FadeTransition(
+                                              opacity: curvedAnimation,
+                                              child: child,
+                                            );
+                                          },
+                                    ),
+                                  );
+                                },
                                 child: Container(
                                   color: Colors.white,
                                   child: const Center(
