@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/widgets/button/payment_button.dart';
+import 'package:yalla/core/widgets/modals/payment_method.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   const PaymentMethodScreen({super.key});
@@ -9,8 +10,8 @@ class PaymentMethodScreen extends StatefulWidget {
 }
 
 class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
-  // Variabel state untuk menyimpan skema yang sedang dipilih
   String _selectedScheme = 'Lunas';
+  String? _selectedPaymentMethod;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +20,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // --- HEADER ---
             Container(
               color: Colors.white,
               padding: const EdgeInsets.only(
@@ -61,7 +61,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               ),
             ),
 
-            // --- BODY (SCROLLABLE) ---
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -69,7 +68,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- ORDER SUMMARY CARD ---
                     Container(
                       width: double.infinity,
                       clipBehavior: Clip.hardEdge,
@@ -287,7 +285,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
                     const SizedBox(height: 16),
 
-                    // --- PAYMENT SUMMARY CARD ---
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -385,7 +382,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // --- SCHEME OPTIONS ROW ---
                     Row(
                       children: [
                         Expanded(
@@ -423,7 +419,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // --- ANIMATED EXPAND/COLLAPSE SECTION ---
                     AnimatedSize(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOut,
@@ -438,42 +433,59 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
                     const SizedBox(height: 16),
 
-                    // --- SELECT PAYMENT METHOD BUTTON ---
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 20,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Row(
-                        children: [
-                          Image.asset(
-                            'assets/icons/payment.png',
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.contain,
-                          ),
-                          const SizedBox(width: 16),
-                          const Expanded(
-                            child: Text(
-                              "Metode Pembayaran",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                    GestureDetector(
+                      onTap: () async {
+                        final selectedMethod =
+                            await showModalBottomSheet<String>(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => const PaymentMethod(),
+                            );
+
+                        if (selectedMethod != null) {
+                          setState(() {
+                            _selectedPaymentMethod = selectedMethod;
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            Image.asset(
+                              'assets/icons/payment.png',
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                _selectedPaymentMethod ??
+                                    "Pilih Metode Pembayaran",
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
                               ),
                             ),
-                          ),
-                          const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color: Colors.black87,
-                          ),
-                        ],
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.black87,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -484,7 +496,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         ),
       ),
 
-      // --- BOTTOM NAVIGATION BAR ---
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         decoration: BoxDecoration(

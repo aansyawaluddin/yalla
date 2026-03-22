@@ -7,7 +7,6 @@ import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/flight_info_card.dart';
 import 'package:yalla/core/widgets/card/promo_card.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
-import 'package:yalla/core/widgets/header/home_header.dart';
 import 'package:yalla/features/user/home/paket/paket_umrah_screen.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
 import 'package:yalla/features/user/plane/home_plane.dart';
@@ -25,14 +24,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           Positioned(
-            top: 0,
+            top: -90.0,
             left: 0,
             right: 0,
-            height: MediaQuery.of(context).size.height * 0.55,
+            height: MediaQuery.of(context).size.height * 0.55 + 70,
             child: Container(
               decoration: const BoxDecoration(
                 image: DecorationImage(
@@ -58,26 +57,103 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          Positioned.fill(
+          SafeArea(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.only(bottom: 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 180),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                                image: const DecorationImage(
+                                  image: AssetImage(
+                                    'assets/images/profile.png',
+                                  ),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  "Selamat Datang,",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF005C99),
+                                  ),
+                                ),
+                                Text(
+                                  "Syahdam 👋",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF005C99),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(
+                              Icons.notifications_outlined,
+                              color: Color(0xFF005C99),
+                              size: 18,
+                            ),
+                            onPressed: () {},
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
+                  const SizedBox(height: 24),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
+                      text: const TextSpan(
+                        style: TextStyle(
                           fontSize: 20,
                           height: 1.2,
                           color: Color(0xFF005C99),
                         ),
                         children: [
-                          const TextSpan(
+                          TextSpan(
                             text: "Langkah Mudah\nMenuju ",
                             style: TextStyle(fontWeight: FontWeight.w300),
                           ),
@@ -127,7 +203,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           child: const FlightInfoCard(),
                         ),
-
                         Positioned(
                           bottom: 0,
                           left: 0,
@@ -340,10 +415,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          const Positioned(top: 0, left: 0, right: 0, child: HomeHeader()),
         ],
       ),
-
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
     );
   }
@@ -380,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 transitionDuration: const Duration(milliseconds: 300),
                 reverseTransitionDuration: const Duration(milliseconds: 300),
                 pageBuilder: (context, animation, secondaryAnimation) =>
-                    const HomePlane(), 
+                    const HomePlane(),
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
                       var curvedAnimation = CurvedAnimation(
@@ -423,7 +496,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 title,
                 style: TextStyle(
                   fontSize: 14,
-                  // Menggunakan ketebalan font sesuai status aktif
                   fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
                   color: const Color(0xFF005C99),
                 ),
@@ -465,7 +537,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ],
           ),
-
           if (showAction)
             GestureDetector(
               onTap: onActionTap,

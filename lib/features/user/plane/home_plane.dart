@@ -21,7 +21,7 @@ class _HomePlaneState extends State<HomePlane> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           Positioned(
@@ -285,7 +285,7 @@ class _HomePlaneState extends State<HomePlane> {
                                 ),
                                 pageBuilder:
                                     (context, animation, secondaryAnimation) =>
-                                        const ListFlightScreen(), // Mengarah ke halaman baru
+                                        const ListFlightScreen(), 
                                 transitionsBuilder:
                                     (
                                       context,
