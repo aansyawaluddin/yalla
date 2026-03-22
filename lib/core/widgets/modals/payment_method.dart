@@ -14,11 +14,12 @@ class PaymentMethod extends StatefulWidget {
 
 class _PaymentMethodState extends State<PaymentMethod> {
   String _selectedMethod = '';
+  String _selectedBank = '';
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.50,
+      height: MediaQuery.of(context).size.height * 0.45,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -48,7 +49,6 @@ class _PaymentMethodState extends State<PaymentMethod> {
               ),
             ),
           ),
-
           Positioned(
             bottom: 50,
             left: -50,
@@ -108,18 +108,30 @@ class _PaymentMethodState extends State<PaymentMethod> {
                         title: "Transfer Bank",
                         iconPath: 'assets/icons/card.png',
                         trailingType: TrailingType.chevron,
+                        subOptions: [
+                          {'name': 'Bank BRI', 'icon': 'assets/icons/bri.png'},
+                          {'name': 'Bank BCA', 'icon': 'assets/icons/bca.png'},
+                          {'name': 'Bank BNI', 'icon': 'assets/icons/bni.png'},
+                        ],
                       ),
                       const SizedBox(height: 12),
+
                       _buildPaymentOption(
                         title: "QRIS",
                         iconPath: 'assets/icons/qris.png',
                         trailingType: TrailingType.radio,
                       ),
                       const SizedBox(height: 12),
+
                       _buildPaymentOption(
                         title: "Kartu Kredit/Debit",
                         iconPath: 'assets/icons/card.png',
                         trailingType: TrailingType.chevron,
+                        subOptions: [
+                          {'name': 'Bank BRI', 'icon': 'assets/icons/bri.png'},
+                          {'name': 'Bank BCA', 'icon': 'assets/icons/bca.png'},
+                          {'name': 'Bank BNI', 'icon': 'assets/icons/bni.png'},
+                        ],
                       ),
                     ],
                   ),
@@ -131,7 +143,12 @@ class _PaymentMethodState extends State<PaymentMethod> {
                 child: PrimaryGradientButton(
                   text: "Pilih Metode",
                   onPressed: () {
-                    Navigator.pop(context, _selectedMethod);
+                    String finalSelection =
+                        _selectedMethod == "Transfer Bank" &&
+                            _selectedBank.isNotEmpty
+                        ? _selectedBank
+                        : _selectedMethod;
+                    Navigator.pop(context, finalSelection);
                   },
                 ),
               ),
@@ -146,71 +163,181 @@ class _PaymentMethodState extends State<PaymentMethod> {
     required String title,
     required String iconPath,
     required TrailingType trailingType,
+    List<Map<String, String>>? subOptions,
   }) {
     bool isSelected = _selectedMethod == title;
+    bool isExpanded = isSelected && subOptions != null;
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedMethod = title;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.lightBlue : Colors.grey.shade300,
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          children: [
-            Image.asset(
-              iconPath,
-              width: 32,
-              height: 32,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.account_balance_wallet, color: Colors.grey),
-            ),
-            const SizedBox(width: 16),
-
-            Expanded(
-              child: Text(
-                title,
-                style: AppTypography.regular12.copyWith(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ),
-
-            if (trailingType == TrailingType.chevron)
-              const Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.black54,
-                size: 20,
-              )
-            else
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.lightBlue
-                        : Colors.grey.shade300,
-                    width: isSelected ? 6 : 1.5,
-                  ),
-                ),
-              ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? AppColors.lightBlue : Colors.grey.shade300,
+          width: isSelected ? 1.5 : 1.0,
         ),
       ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedMethod = isExpanded ? '' : title;
+              });
+            },
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              color: Colors.transparent,
+              child: Row(
+                children: [
+                  Image.asset(
+                    iconPath,
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.account_balance_wallet,
+                      color: Colors.grey,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: AppTypography.regular12.copyWith(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+
+                  if (trailingType == TrailingType.chevron)
+                    Icon(
+                      isExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: Colors.black54,
+                      size: 20,
+                    )
+                  else
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.lightBlue
+                              : Colors.grey.shade300,
+                          width: isSelected ? 5 : 1.5,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeOut,
+              child: isExpanded
+                  ? _buildExpandedArea(subOptions)
+                  : const SizedBox.shrink(key: ValueKey('collapsed')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpandedArea(List<Map<String, String>> banks) {
+    return Column(
+      key: const ValueKey('expanded_area'),
+      children: [
+        Container(
+          height: 1,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.35),
+                blurRadius: 1,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        ...banks.map((bank) {
+          bool isBankSelected = _selectedBank == bank['name'];
+          return InkWell(
+            onTap: () {
+              setState(() {
+                _selectedBank = bank['name']!;
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Image.asset(
+                    bank['icon']!,
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.account_balance,
+                      color: Colors.blue,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: Text(
+                      bank['name']!,
+                      style: AppTypography.regular12.copyWith(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+
+                  Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isBankSelected
+                            ? AppColors.lightBlue
+                            : Colors.grey.shade300,
+                        width: isBankSelected ? 5 : 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+
+        const SizedBox(height: 8),
+      ],
     );
   }
 }

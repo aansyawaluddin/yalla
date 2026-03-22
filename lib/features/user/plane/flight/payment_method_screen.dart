@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/widgets/button/payment_button.dart';
 import 'package:yalla/core/widgets/modals/payment_method.dart';
+import 'package:yalla/features/user/plane/flight/payment_screen.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   const PaymentMethodScreen({super.key});
@@ -544,7 +545,35 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             ),
             const SizedBox(height: 16),
 
-            PaymentButton(text: "Bayar Sekarang", onPressed: () {}),
+            PaymentButton(
+              text: "Bayar Sekarang",
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    transitionDuration: const Duration(milliseconds: 800),
+                    reverseTransitionDuration: const Duration(
+                      milliseconds: 800,
+                    ),
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const PaymentScreen(), 
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                          var curvedAnimation = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeInOut,
+                          );
+
+                          return FadeTransition(
+                            opacity: curvedAnimation,
+                            child: child,
+                          );
+                        },
+                  ),
+                );
+                // -------------------------------------------------
+              },
+            ),
           ],
         ),
       ),

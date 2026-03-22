@@ -494,7 +494,7 @@ class DetailPassengerScreen extends StatelessWidget {
     TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
-      height: 60,
+      height: 40,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -509,7 +509,7 @@ class DetailPassengerScreen extends StatelessWidget {
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 25,
+              vertical: 15,
             ),
             border: InputBorder.none,
             label: RichText(
