@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:yalla/features/user/plane/flight/ticket_detail_page.dart';
+import 'package:yalla/features/travel/ticket_detail_travel_page.dart';
 
-class PaymentSuccessScreen extends StatefulWidget {
-  const PaymentSuccessScreen({super.key});
+class PaymentSuccesTravelScreen extends StatefulWidget {
+  const PaymentSuccesTravelScreen({super.key});
 
   @override
-  State<PaymentSuccessScreen> createState() => _PaymentSuccessScreenState();
+  State<PaymentSuccesTravelScreen> createState() =>
+      _PaymentSuccesTravelScreenState();
 }
 
-class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
+class _PaymentSuccesTravelScreenState extends State<PaymentSuccesTravelScreen>
     with TickerProviderStateMixin {
   // Controller utama untuk mengatur fase 1 dan 2 (Pesawat & Background)
   late AnimationController _phaseController;
@@ -182,7 +183,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Background Glow Menggunakan RadialGradient (Soft Blur Effect)
           AnimatedBuilder(
             animation: _bgGlowScale,
             builder: (context, child) {
@@ -322,7 +322,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                 final screenH = MediaQuery.of(context).size.height;
                 return Transform.translate(
                   offset: Offset(0, slide * screenH * 0.6),
-                  child: TicketDetailPage(
+                  child: TicketDetailTravelPage(
                     barcodeOpacity: _barcodeOpacity,
                     barcodeSlide: _barcodeSlide,
                   ),

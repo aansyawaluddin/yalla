@@ -5,17 +5,17 @@ import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/widgets/modals/calendar_bottom_sheet.dart';
 import 'package:yalla/core/widgets/modals/passenger_class_bottom_sheet.dart';
+import 'package:yalla/features/travel/list_flight_travel_screen.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
-import 'package:yalla/features/user/plane/flight/list_flight_screen.dart';
 
-class HomePlane extends StatefulWidget {
-  const HomePlane({super.key});
+class HomePlaneTravelScreen extends StatefulWidget {
+  const HomePlaneTravelScreen({super.key});
 
   @override
-  State<HomePlane> createState() => _HomePlaneState();
+  State<HomePlaneTravelScreen> createState() => _HomePlaneTravelScreenState();
 }
 
-class _HomePlaneState extends State<HomePlane> {
+class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
   bool isOneWay = true;
 
   @override
@@ -285,7 +285,7 @@ class _HomePlaneState extends State<HomePlane> {
                                 ),
                                 pageBuilder:
                                     (context, animation, secondaryAnimation) =>
-                                        const ListFlightScreen(), 
+                                        const ListFlightTravelScreen(),
                                 transitionsBuilder:
                                     (
                                       context,

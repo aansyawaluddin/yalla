@@ -4,6 +4,7 @@ import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/inputan/custom_text_field.dart';
 import 'package:yalla/features/auth/register_screen.dart';
+import 'package:yalla/features/travel/home_plane_travel_screen.dart';
 import 'package:yalla/features/user/home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,6 +18,73 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  final List<Map<String, String>> _dummyAccounts = [
+    {'email': 'user@gmail.com', 'password': '123', 'role': 'user'},
+    {'email': 'travel@gmail.com', 'password': '123', 'role': 'travel'},
+  ];
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _handleLogin() {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email dan Password tidak boleh kosong!')),
+      );
+      return;
+    }
+
+    var matchedAccount = _dummyAccounts
+        .where(
+          (account) =>
+              account['email'] == email && account['password'] == password,
+        )
+        .toList();
+
+    if (matchedAccount.isNotEmpty) {
+      String role = matchedAccount.first['role']!;
+      Widget targetScreen;
+
+      if (role == 'travel') {
+        targetScreen = const HomePlaneTravelScreen();
+      } else {
+        targetScreen = const HomeScreen();
+      }
+
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final curvedAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeIn,
+            );
+            return FadeTransition(opacity: curvedAnimation, child: child);
+          },
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email atau Password salah!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,15 +166,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(
-                                      0.25,
-                                    ), 
-                                    blurRadius: 4, 
-                                    spreadRadius: 0, 
-                                    offset: const Offset(
-                                      0,
-                                      4,
-                                    ),
+                                    color: Colors.black.withOpacity(0.25),
+                                    blurRadius: 4,
+                                    spreadRadius: 0,
+                                    offset: const Offset(0, 4),
                                   ),
                                 ],
                                 gradient: const LinearGradient(
@@ -184,9 +247,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 40),
 
                     // Input Email
-                    const Padding(
-                      padding: EdgeInsets.only(right: 30),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 30),
                       child: CustomTextField(
+                        controller: _emailController,
                         icon: Icons.alternate_email,
                         hint: "Masukkan Email Anda",
                       ),
@@ -199,6 +263,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Expanded(
                           child: CustomTextField(
+                            controller: _passwordController,
                             icon: Icons.key_outlined,
                             hint: "Masukkan kata sandi Anda",
                             isPassword: true,
@@ -218,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.25),
                                 blurRadius: 4,
-                                offset: Offset(0, 4),
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
@@ -228,8 +293,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             icon: Icon(
                               _obscurePassword
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                               color: AppColors.secondary,
                               size: 22,
                             ),
@@ -255,39 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               boxShadow: AppColors.defaultShadow,
                             ),
                             child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  PageRouteBuilder(
-                                    transitionDuration: const Duration(
-                                      milliseconds: 300,
-                                    ),
-                                    pageBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                        ) => const HomeScreen(),
-                                    transitionsBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                          child,
-                                        ) {
-                                          final curvedAnimation =
-                                              CurvedAnimation(
-                                                parent: animation,
-                                                curve: Curves.easeIn,
-                                              );
-                                          return FadeTransition(
-                                            opacity: curvedAnimation,
-                                            child: child,
-                                          );
-                                        },
-                                  ),
-                                );
-                              },
+                              onPressed: _handleLogin,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
@@ -324,7 +357,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.08),
                                   blurRadius: 10,
-                                  offset: Offset(0, 4),
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
@@ -393,7 +426,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.08),
                                   blurRadius: 10,
-                                  offset: Offset(0, 4),
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
@@ -443,7 +476,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.08),
                                   blurRadius: 10,
-                                  offset: Offset(0, 4),
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
@@ -483,7 +516,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 24),
                   ],
                 ),

@@ -9,7 +9,7 @@ import 'package:yalla/core/widgets/card/promo_card.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/features/user/home/paket/paket_umrah_screen.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
-import 'package:yalla/features/user/plane/home_plane.dart';
+import 'package:yalla/features/user/plane/home_plane_user_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -414,7 +414,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-
         ],
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
@@ -453,7 +452,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 transitionDuration: const Duration(milliseconds: 300),
                 reverseTransitionDuration: const Duration(milliseconds: 300),
                 pageBuilder: (context, animation, secondaryAnimation) =>
-                    const HomePlane(),
+                    const HomePlaneUserScreen(),
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
                       var curvedAnimation = CurvedAnimation(
