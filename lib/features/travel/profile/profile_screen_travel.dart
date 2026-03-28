@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/widgets/button/travel_custom_bottom_nav_bar.dart';
-import 'package:yalla/core/widgets/card/profile_card.dart';
+import 'package:yalla/core/widgets/card/profile_card_travel.dart';
 import 'package:yalla/features/travel/profile/help_center_screen_travel.dart';
 import 'package:yalla/features/travel/profile/my_umrah_package_screen.dart';
 import 'package:yalla/features/travel/profile/payment_method_screen_travel.dart';
@@ -69,7 +69,7 @@ class ProfileScreenTravel extends StatelessWidget {
 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: ProfileCard(),
+                  child: ProfileCardTravel(),
                 ),
 
                 const SizedBox(height: 32),

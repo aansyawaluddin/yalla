@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:yalla/core/widgets/card/profile_card.dart';
+import 'package:yalla/core/widgets/card/profile_card_travel.dart';
 
 class HelpCenterScreenTravel extends StatelessWidget {
   const HelpCenterScreenTravel({super.key});
@@ -48,7 +48,7 @@ class HelpCenterScreenTravel extends StatelessWidget {
           children: [
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.0),
-              child: ProfileCard(),
+              child: ProfileCardTravel(),
             ),
 
             const SizedBox(height: 32),

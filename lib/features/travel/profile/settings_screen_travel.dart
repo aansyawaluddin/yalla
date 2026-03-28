@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:yalla/core/widgets/card/profile_card.dart';
+import 'package:yalla/core/widgets/card/profile_card_travel.dart';
 
 class SettingsScreenTravel extends StatefulWidget {
   const SettingsScreenTravel({super.key});
@@ -53,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreenTravel> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const ProfileCard(),
+            const ProfileCardTravel(),
 
             const SizedBox(height: 32),
 
