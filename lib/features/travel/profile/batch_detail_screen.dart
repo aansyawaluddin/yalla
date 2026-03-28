@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yalla/features/travel/profile/jamaah_detail_screen.dart';
 
 class BatchDetailScreen extends StatelessWidget {
   final String batchName;
