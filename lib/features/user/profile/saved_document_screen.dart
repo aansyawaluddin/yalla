@@ -18,7 +18,10 @@ class SavedDocumentScreen extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 24.0, top: 8, bottom: 8),
           child: Container(
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
+              color: Colors.white,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.grey.shade300),
             ),
@@ -193,7 +196,7 @@ class SavedDocumentScreen extends StatelessWidget {
             text: title,
             style: const TextStyle(
               fontSize: 12,
-              color: Colors.black54, 
+              color: Colors.black54,
               fontWeight: FontWeight.w500,
             ),
             children: const [
@@ -304,7 +307,7 @@ class DashedRectPainter extends CustomPainter {
         );
         distance += gap * 2;
       }
-      distance = 0.0; 
+      distance = 0.0;
     }
 
     canvas.drawPath(dashedPath, paint);

@@ -98,7 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.share_outlined,
               title: "Akun yang terhubung",
               trailing: Image.asset(
-                'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png',
+                'assets/icons/google.png',
                 width: 20,
                 height: 20,
               ),

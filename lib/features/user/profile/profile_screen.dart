@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/profile_card.dart';
+import 'package:yalla/features/user/profile/help_center_screen.dart';
+import 'package:yalla/features/user/profile/payment_method_screen.dart';
 import 'package:yalla/features/user/profile/saved_document_screen.dart';
 import 'package:yalla/features/user/profile/settings_screen.dart';
 
@@ -97,7 +99,9 @@ class ProfileScreen extends StatelessWidget {
                           iconColor: const Color(0xFF10B981),
                           iconBgColor: const Color(0xFFD1FAE5),
                           title: "Metode Pembayaran",
-                          onTap: () {},
+                          onTap: () {
+                            _navigateTo(context, const PaymentMethodScreen());
+                          },
                         ),
                         const Divider(
                           height: 1,
@@ -136,7 +140,9 @@ class ProfileScreen extends StatelessWidget {
                           iconColor: const Color(0xFF6B7280),
                           iconBgColor: const Color(0xFFF3F4F6),
                           title: "Pusat Bantuan",
-                          onTap: () {},
+                          onTap: () {
+                            _navigateTo(context, const HelpCenterScreen());
+                          },
                         ),
                         const Divider(
                           height: 1,
