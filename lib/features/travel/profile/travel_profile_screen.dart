@@ -173,6 +173,7 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
                   if (_selectedTabIndex == 0) _buildTentangTab(),
                   if (_selectedTabIndex == 1) _buildPaketTab(),
                   if (_selectedTabIndex == 2) _buildGaleriTab(),
+                  if (_selectedTabIndex == 3) _buildUlasanTab(),
 
                   const SizedBox(height: 40),
                 ],
@@ -598,8 +599,7 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
           const SizedBox(height: 12),
 
           GestureDetector(
-            onTap: () {
-            },
+            onTap: () {},
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -650,15 +650,217 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
     double? width,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(
-        16,
-      ), 
+      borderRadius: BorderRadius.circular(16),
       child: Image.asset(
         imagePath,
         height: height,
         width: width,
         fit: BoxFit.cover,
       ),
+    );
+  }
+
+  Widget _buildUlasanTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Column(
+                children: [
+                  const Text(
+                    "4.9",
+                    style: TextStyle(
+                      fontSize: 56,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      height: 1.0,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: List.generate(
+                      5,
+                      (index) => const Icon(
+                        Icons.star,
+                        color: Color(0xFFFFB800),
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "2.4k Ulasan",
+                    style: TextStyle(fontSize: 12, color: Colors.black87),
+                  ),
+                ],
+              ),
+
+              const SizedBox(width: 24),
+
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildRatingBar(5, 0.90, "90%"),
+                    _buildRatingBar(4, 0.35, "35%"),
+                    _buildRatingBar(3, 0.29, "29%"),
+                    _buildRatingBar(2, 0.21, "21%"),
+                    _buildRatingBar(1, 0.08, "8%"),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 40),
+
+          _buildReviewItem(
+            name: "Zain Al Husein",
+            timeAndPackage: "2 Minggu Lalu - Ramadhan Special Umrah",
+            rating: 5,
+            reviewText:
+                "Pelayanan dari travel ini sangat memuaskan. Timnya responsif dan membantu selama proses pendaftaran hingga keberangkatan. Fasilitas hotel dan penerbangan juga sesuai dengan yang dijanjikan.",
+            avatarPath: 'assets/images/profile.png',
+          ),
+
+          _buildReviewItem(
+            name: "Zain Al Husein",
+            timeAndPackage: "2 Minggu Lalu - Ramadhan Special Umrah",
+            rating: 5,
+            reviewText:
+                "Pelayanan dari travel ini sangat memuaskan. Timnya responsif dan membantu selama proses pendaftaran hingga keberangkatan. Fasilitas hotel dan penerbangan juga sesuai dengan yang dijanjikan.",
+            avatarPath: 'assets/images/profile.png',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRatingBar(int star, double value, String percentage) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          const Icon(Icons.star, color: Color(0xFFFFB800), size: 10),
+          const SizedBox(width: 4),
+          Text(
+            star.toString(),
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: LinearProgressIndicator(
+              value: value,
+              backgroundColor: const Color(0xFFE5F0FF),
+              color: const Color(0xFF005C99),
+              minHeight: 4,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 28,
+            child: Text(
+              percentage,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewItem({
+    required String name,
+    required String timeAndPackage,
+    required int rating,
+    required String reviewText,
+    required String avatarPath,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            // Foto Profil Reviewer
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                  image: AssetImage(avatarPath),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    timeAndPackage,
+                    style: const TextStyle(fontSize: 10, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: List.generate(
+                      5,
+                      (index) => Icon(
+                        index < rating ? Icons.star : Icons.star_border,
+                        color: const Color(0xFFFFB800),
+                        size: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Teks Ulasan dengan tanda kutip
+        Text(
+          "\"$reviewText\"",
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.black54,
+            height: 1.5,
+          ),
+          textAlign: TextAlign.justify,
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 }
