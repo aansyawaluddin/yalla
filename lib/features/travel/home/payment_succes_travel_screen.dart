@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:yalla/features/travel/ticket_detail_travel_page.dart';
+import 'package:yalla/features/travel/home/ticket_detail_travel_page.dart';
 
 class PaymentSuccesTravelScreen extends StatefulWidget {
   const PaymentSuccesTravelScreen({super.key});

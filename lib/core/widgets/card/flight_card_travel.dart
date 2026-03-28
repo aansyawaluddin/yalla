@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:yalla/features/travel/detail_flight_travel_screen.dart';
+import 'package:yalla/features/travel/home/detail_flight_travel_screen.dart';
 
 class FlightOptionCardTravel extends StatelessWidget {
   final bool isHighlighted;

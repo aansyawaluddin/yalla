@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
+import 'package:yalla/core/widgets/button/travel_custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/widgets/modals/calendar_bottom_sheet.dart';
 import 'package:yalla/core/widgets/modals/passenger_class_bottom_sheet.dart';
-import 'package:yalla/features/travel/list_flight_travel_screen.dart';
+import 'package:yalla/features/travel/home/list_flight_travel_screen.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
 
 class HomePlaneTravelScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      extendBody: true,
       body: Stack(
         children: [
           Positioned(
@@ -55,9 +57,10 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
           ),
 
           SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 40),
+              padding: const EdgeInsets.only(bottom: 100),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -112,27 +115,31 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                           ],
                         ),
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 55,
+                          height: 55,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: const Color(0xFF0099FF),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
+                                color: Colors.black.withOpacity(
+                                  0.15,
+                                ), // Efek drop shadow
+                                blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
                           child: IconButton(
+                            padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                             icon: const Icon(
-                              Icons.arrow_back,
-                              color: Color(0xFF005C99),
-                              size: 18,
+                              Icons.notifications_none_outlined, 
+                              color: Colors.white,
+                              size: 20,
                             ),
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () {
+                            },
                           ),
                         ),
                       ],
@@ -386,6 +393,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const TravelCustomBottomNavBar(currentIndex: 0),
     );
   }
 

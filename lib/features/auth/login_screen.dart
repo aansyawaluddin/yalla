@@ -4,7 +4,7 @@ import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/inputan/custom_text_field.dart';
 import 'package:yalla/features/auth/register_screen.dart';
-import 'package:yalla/features/travel/home_plane_travel_screen.dart';
+import 'package:yalla/features/travel/home/home_plane_travel_screen.dart';
 import 'package:yalla/features/user/home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {

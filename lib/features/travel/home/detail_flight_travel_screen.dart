@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:yalla/features/travel/detail_passenger_travel_screen.dart';
+import 'package:yalla/features/travel/home/detail_passenger_travel_screen.dart';
 
 class DetailFlightTravelScreen extends StatelessWidget {
   const DetailFlightTravelScreen({super.key});

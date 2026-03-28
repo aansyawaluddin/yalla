@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/widgets/button/payment_button.dart';
 import 'package:yalla/core/widgets/modals/payment_method.dart';
-import 'package:yalla/features/travel/payment_travel_screen.dart';
+import 'package:yalla/features/travel/home/payment_travel_screen.dart';
 
 class PaymentMethodTravelScreen extends StatefulWidget {
   const PaymentMethodTravelScreen({super.key});

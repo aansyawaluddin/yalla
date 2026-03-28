@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
-import 'package:yalla/features/travel/payment_method_travel_screen.dart';
+import 'package:yalla/features/travel/home/payment_method_travel_screen.dart';
 
 class DetailPassengerTravelScreen extends StatelessWidget {
   const DetailPassengerTravelScreen({super.key});

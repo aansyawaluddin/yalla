@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      extendBody: true,
       body: Stack(
         children: [
           Positioned(
@@ -58,9 +59,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 40),
+              padding: const EdgeInsets.only(bottom: 100),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

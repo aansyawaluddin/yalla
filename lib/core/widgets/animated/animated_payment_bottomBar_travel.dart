@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
-import 'package:yalla/features/travel/payment_succes_travel_screen.dart';
+import 'package:yalla/features/travel/home/payment_succes_travel_screen.dart';
 
 class AnimatedPaymentBottombarTravel extends StatefulWidget {
   const AnimatedPaymentBottombarTravel({super.key});
