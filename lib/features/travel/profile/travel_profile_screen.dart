@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class TravelProfileScreen extends StatefulWidget {
@@ -171,6 +172,7 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
 
                   if (_selectedTabIndex == 0) _buildTentangTab(),
                   if (_selectedTabIndex == 1) _buildPaketTab(),
+                  if (_selectedTabIndex == 2) _buildGaleriTab(),
 
                   const SizedBox(height: 40),
                 ],
@@ -558,6 +560,104 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGaleriTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Column(
+        children: [
+          _buildGalleryImage(
+            'assets/images/kaabah.jpeg',
+            height: 140,
+            width: double.infinity,
+          ),
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildGalleryImage(
+                  'assets/images/kaabah.jpeg',
+                  height: 120,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildGalleryImage(
+                  'assets/images/kaabah.jpeg',
+                  height: 120,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          GestureDetector(
+            onTap: () {
+            },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildGalleryImage(
+                  'assets/images/kaabah.jpeg',
+                  height: 140,
+                  width: double.infinity,
+                ),
+
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    height: 140,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3), // Lapisan gelap
+                    ),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 4.0,
+                        sigmaY: 4.0,
+                      ), // Efek blur
+                      child: Container(color: Colors.transparent),
+                    ),
+                  ),
+                ),
+
+                // Teks Angka
+                const Text(
+                  "+24",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGalleryImage(
+    String imagePath, {
+    required double height,
+    double? width,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(
+        16,
+      ), 
+      child: Image.asset(
+        imagePath,
+        height: height,
+        width: width,
+        fit: BoxFit.cover,
       ),
     );
   }
