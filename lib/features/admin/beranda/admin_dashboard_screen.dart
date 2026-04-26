@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/widgets/button/admin_custom_bottom_nav_bar.dart';
+import 'package:yalla/features/auth/providers/auth_provider.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -11,7 +12,19 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().fetchUserProfile();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final displayFirstName = authProvider.firstName.isNotEmpty
+        ? authProvider.firstName
+        : "Memuat...";
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: Stack(
@@ -43,7 +56,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     top: 0.0,
                     bottom: 40.0,
                   ),
-                  child: _buildHeader(firstName: "Syahdam"),
+                  child: _buildHeader(firstName: displayFirstName),
                 ),
 
                 // Area Konten yang Bisa Di-scroll
@@ -140,7 +153,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
-       bottomNavigationBar: const CustomAdminBottomNavBar(currentIndex: 0),
+      bottomNavigationBar: const CustomAdminBottomNavBar(currentIndex: 0),
     );
   }
 

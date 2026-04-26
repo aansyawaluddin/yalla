@@ -3,6 +3,7 @@ import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/features/admin/beranda/admin_dashboard_screen.dart';
 import 'package:yalla/features/admin/plane/admin_flight_scree.dart';
+import 'package:yalla/features/admin/profile/admin_profile_screen.dart';
 
 class CustomAdminBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -28,8 +29,8 @@ class CustomAdminBottomNavBar extends StatelessWidget {
       // case 3:
       //   targetScreen = const AdminVisaScreen();
       //   break;
-      // case 4:
-      //   targetScreen = const AdminProfileScreen();
+      case 4:
+        targetScreen = const AdminProfileScreen();
         break;
       default:
         targetScreen = const AdminDashboardScreen();

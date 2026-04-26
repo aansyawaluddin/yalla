@@ -25,6 +25,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
       backgroundColor: const Color(0xFFF8F9FA),
       body: Stack(
         children: [
+          // Background Header (Biru gradasi/gambar di atas)
           Positioned(
             top: 0,
             left: 0,
@@ -44,79 +45,74 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
           SafeArea(
             child: Column(
               children: [
+                // 1. Header Profil (Tetap/Fixed)
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 20.0,
+                  padding: const EdgeInsets.only(
+                    left: 24.0,
+                    right: 24.0,
+                    top: 0.0,
+                    bottom: 20.0, // Dikurangi sedikit agar lebih padat
                   ),
                   child: _buildHeader(firstName: "Syahdam"),
                 ),
 
+                // Area Konten Bawah (Latar Putih/Abu terang)
                 Expanded(
                   child: Container(
+                    width: double.infinity,
                     decoration: const BoxDecoration(
                       color: Color(0xFFF8F9FA),
                       borderRadius: BorderRadius.vertical(
                         top: Radius.circular(24),
                       ),
                     ),
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 24),
 
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0,
+                        // 2. Search Bar (Tetap/Fixed)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: _buildSearchBar(),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // 3. Filter Chips (Tetap/Fixed)
+                        _buildFilterList(),
+
+                        const SizedBox(height: 24),
+
+                        // 4. Area Daftar Penerbangan (Bisa di-scroll)
+                        Expanded(
+                          child: ListView.separated(
+                            padding: const EdgeInsets.only(
+                              left: 24.0,
+                              right: 24.0,
+                              bottom: 32.0, // Spacing bawah extra
                             ),
-                            child: _buildSearchBar(),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          _buildFilterList(),
-
-                          const SizedBox(height: 24),
-
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0,
-                            ),
-                            child: Column(
-                              children: [
-                                _buildFlightCard(
-                                  id: "DL-2482",
-                                  status: "Tepat Waktu",
-                                  originCode: "UPG",
-                                  originName: "Makassar",
-                                  destCode: "JED",
-                                  destName: "Jeddah",
-                                  depTime: "08:30 AM",
-                                  arrTime: "09:45 PM",
-                                  airlineLogoPath:
-                                      'assets/images/flyadeal_logo.png',
-                                ),
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: 2, // Ganti dengan panjang data Anda
+                            separatorBuilder: (context, index) =>
                                 const SizedBox(height: 16),
-                                _buildFlightCard(
-                                  id: "DL-2482",
-                                  status: "Tepat Waktu",
-                                  originCode: "UPG",
-                                  originName: "Makassar",
-                                  destCode: "JED",
-                                  destName: "Jeddah",
-                                  depTime: "08:30 AM",
-                                  arrTime: "09:45 PM",
-                                  airlineLogoPath:
-                                      'assets/images/flyadeal_logo.png',
-                                ),
-                                const SizedBox(height: 32),
-                              ],
-                            ),
+                            itemBuilder: (context, index) {
+                              return _buildFlightCard(
+                                id: "DL-2482",
+                                status: "Tepat Waktu",
+                                originCode: "UPG",
+                                originName: "Makassar",
+                                destCode: "JED",
+                                destName: "Jeddah",
+                                depTime: "08:30 AM",
+                                arrTime: "09:45 PM",
+                                airlineLogoPath:
+                                    'assets/images/logo_flydeal.png',
+                              );
+                            },
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -129,6 +125,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     );
   }
 
+  // --- Header ---
   Widget _buildHeader({required String firstName}) {
     return Row(
       children: [
@@ -195,7 +192,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
             children: [
               const Icon(
                 Icons.notifications_none,
-                color: Color(0xFF004CB9), // Biru gelap
+                color: Color(0xFF004CB9),
                 size: 24,
               ),
               Positioned(
@@ -217,6 +214,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     );
   }
 
+  // --- Search Bar ---
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
@@ -243,6 +241,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     );
   }
 
+  // --- Filter List ---
   Widget _buildFilterList() {
     return SizedBox(
       height: 35,
@@ -314,6 +313,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     return Colors.transparent;
   }
 
+  // --- Flight Card ---
   Widget _buildFlightCard({
     required String id,
     required String status,
@@ -338,7 +338,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
 
     return GestureDetector(
       onTap: () {
-        // Navigasi ke halaman detail
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -370,15 +369,13 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                   height: 45,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/logo_flydeal.png'),
+                    image: DecorationImage(
+                      image: AssetImage(airlineLogoPath),
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-
-                // ID Penerbangan
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,7 +399,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                     ],
                   ),
                 ),
-
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -436,17 +432,14 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                 ),
               ],
             ),
-
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16.0),
               child: Divider(color: Color(0xFFF0F0F0), height: 1),
             ),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Asal (Origin)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -467,7 +460,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                     ),
                   ],
                 ),
-
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -507,7 +499,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                             },
                           ),
                         ),
-                        // Ikon Pesawat (Tengah)
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 4.0),
                           child: Icon(
@@ -539,7 +530,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                             },
                           ),
                         ),
-                        // Lingkaran penuh (tujuan)
                         Container(
                           width: 8,
                           height: 8,
@@ -552,7 +542,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                     ),
                   ),
                 ),
-
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -575,9 +564,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 20),
-
             Row(
               children: [
                 Expanded(
@@ -611,7 +598,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Kotak Waktu Kedatangan
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),

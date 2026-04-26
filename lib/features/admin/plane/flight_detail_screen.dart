@@ -15,6 +15,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
   @override
   void initState() {
     super.initState();
+    // TabController untuk 2 tab (Manifest & Log)
     _tabController = TabController(length: 2, vsync: this);
   }
 
@@ -58,34 +59,53 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 20.0,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24.0, 20.0, 24.0, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFlightInfo(),
+                  const SizedBox(height: 24),
+                  _buildInfoGrid(),
+                  const SizedBox(height: 24),
+                  _buildTabBar(),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildFlightInfo(),
 
-                const SizedBox(height: 24),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        _buildManifestContent(),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
 
-                _buildInfoGrid(),
-
-                const SizedBox(height: 24),
-
-                _buildTabBar(),
-
-                const SizedBox(height: 24),
-
-                _buildManifestContent(),
-
-                const SizedBox(height: 40),
-              ],
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        _buildLogContent(),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -97,9 +117,9 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
         Container(
           width: 70,
           height: 70,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            image: const DecorationImage(
+            image: DecorationImage(
               image: AssetImage('assets/images/logo_flydeal.png'),
               fit: BoxFit.cover,
             ),
@@ -294,9 +314,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
         ),
 
         const SizedBox(height: 24),
-
         _buildBoardingProgress(),
-
         const SizedBox(height: 24),
 
         Row(
@@ -398,9 +416,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
           Stack(
             children: [
               Container(
@@ -425,9 +441,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -540,6 +554,188 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildLogContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header Log
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Riwayat Aktivitas",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F8FF),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                "Live Update",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF004CB9),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 32),
+
+        // Timeline Items
+        _buildTimelineItem(
+          isFirst: true,
+          isLast: false,
+          icon: Icons.check,
+          iconColor: Colors.white,
+          circleColor: const Color(0xFF22C55E), 
+          title: "Boarding Started",
+          titleColor: const Color(0xFF22C55E),
+          description:
+              "Panggilan pertama untuk business class dan priority. Tim mengonfirmasi bahwa cabin telah diperiksan dan aman.",
+          timeInfo: "10:45 AM - Gate B12",
+        ),
+
+        _buildTimelineItem(
+          isFirst: false,
+          isLast: false,
+          icon: Icons
+              .local_gas_station_outlined, 
+          iconColor: Colors.white,
+          circleColor: const Color(0xFF0267C1),
+          title: "Refueling Complete",
+          titleColor: const Color(0xFF0267C1),
+          description:
+              "Total 42.000L. Telah di verifikasi oleh departemen mesin.",
+          timeInfo: "11:15 AM - Station 4",
+        ),
+
+        _buildTimelineItem(
+          isFirst: false,
+          isLast: true,
+          icon: Icons.person_outline,
+          iconColor: Colors.grey.shade600,
+          circleColor: Colors.grey.shade300,
+          title: "Pre-Flight Check",
+          titleColor: Colors.grey.shade600,
+          description: "Menunggu jadwal notifikasi wawancara",
+          timeInfo: "", 
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimelineItem({
+    required bool isFirst,
+    required bool isLast,
+    required IconData icon,
+    required Color iconColor,
+    required Color circleColor,
+    required String title,
+    required Color titleColor,
+    required String description,
+    required String timeInfo,
+  }) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 45,
+            child: Column(
+              children: [
+                // Ikon Lingkaran
+                Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: circleColor,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: circleColor.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: iconColor, size: 24),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 1, 
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                bottom: 32.0,
+              ), 
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Judul dan Waktu
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: titleColor,
+                          ),
+                        ),
+                      ),
+                      if (timeInfo.isNotEmpty)
+                        Text(
+                          timeInfo,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Deskripsi
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: titleColor.withOpacity(
+                        0.9,
+                      ), 
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

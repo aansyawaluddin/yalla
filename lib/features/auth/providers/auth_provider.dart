@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yalla/core/services/auth_service.dart';
+import 'package:yalla/core/models/user_model.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -11,8 +12,11 @@ class AuthProvider extends ChangeNotifier {
   String _errorMessage = '';
   String get errorMessage => _errorMessage;
 
-  Map<String, dynamic>? _userProfile;
-  Map<String, dynamic>? get userProfile => _userProfile;
+  UserModel? _userData;
+  UserModel? get userData => _userData;
+
+  String _firstName = '';
+  String get firstName => _firstName;
 
   Future<bool> register(Map<String, dynamic> payload) async {
     _isLoading = true;
@@ -39,16 +43,25 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final data = await _authService.login(email, password);
+
       final token = data['userToken'];
       final role = data['role'] ?? 'jamaah';
+      final userId = data['userID'];
 
       if (token != null && token.toString().isNotEmpty) {
         final prefs = await SharedPreferences.getInstance();
-        
+
         await prefs.setString('auth_token', token);
         await prefs.setString('user_role', role);
+        if (userId != null) {
+          await prefs.setString('user_id', userId);
+        }
 
-        _userProfile = data['profile'];
+        _userData = UserModel.fromJson(data);
+
+        if (_userData?.profile?.firstName != null) {
+          _firstName = _userData!.profile!.firstName!;
+        }
 
         _isLoading = false;
         notifyListeners();
@@ -67,6 +80,28 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> fetchUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    final userId = prefs.getString('user_id');
+
+    if (token == null || userId == null) return;
+    if (_firstName.isNotEmpty) return;
+
+    try {
+      final fetchedUser = await _authService.getUserProfile(userId, token);
+
+      _userData = fetchedUser;
+
+      if (_userData?.profile?.firstName != null) {
+        _firstName = _userData!.profile!.firstName!;
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+    }
+  }
+
   Future<String?> checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
@@ -80,9 +115,14 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
+
     await prefs.remove('auth_token');
     await prefs.remove('user_role');
-    _userProfile = null;
+    await prefs.remove('user_id');
+
+    _userData = null;
+    _firstName = '';
+
     notifyListeners();
   }
 }

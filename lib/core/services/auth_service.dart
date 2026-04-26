@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:yalla/core/models/user_model.dart';
 
 class AuthService {
   final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
@@ -49,6 +50,21 @@ class AuthService {
     } else {
       final errorData = jsonDecode(response.body);
       throw Exception(errorData['message'] ?? 'Gagal melakukan pendaftaran.');
+    }
+  }
+
+  Future<UserModel> getUserProfile(String userId, String token) async {
+    final url = Uri.parse('$_baseUrl/users/$userId');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return UserModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal mengambil data profil');
     }
   }
 }
