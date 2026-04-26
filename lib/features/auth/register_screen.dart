@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/inputan/custom_text_field.dart';
+import 'package:yalla/features/auth/providers/auth_provider.dart';
 
 enum RegistrationType { none, jamaah, travel }
 
@@ -60,146 +61,255 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (picked != null) {
-      dobC.text = "${picked.day}/${picked.month}/${picked.year}";
+      String day = picked.day.toString().padLeft(2, '0');
+      String month = picked.month.toString().padLeft(2, '0');
+      dobC.text = "$day/$month/${picked.year}";
+    }
+  }
+
+  String _formatDateForApi(String date) {
+    if (date.isEmpty) return "";
+    try {
+      final parts = date.split('/');
+      if (parts.length == 3) {
+        return "${parts[2]}-${parts[1]}-${parts[0]}";
+      }
+    } catch (e) {
+      return date;
+    }
+    return date;
+  }
+
+  Future<void> _handleRegister() async {
+    if (emailC.text.isEmpty || passwordC.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email dan kata sandi tidak boleh kosong!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (passwordC.text != confirmPasswordC.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Kata sandi dan Masukkan Ulang Kata Sandi tidak cocok!',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    Map<String, dynamic> payload = {};
+
+    if (_selectedRegType == RegistrationType.jamaah) {
+      payload = {
+        "firstName": firstNameC.text.trim(),
+        "middleName": middleNameC.text.trim(),
+        "lastName": lastNameC.text.trim(),
+        "birth": _formatDateForApi(dobC.text),
+        "nationality": countryC.text.trim(),
+        "email": emailC.text.trim(),
+        "password": passwordC.text,
+        "role": "jamaah", 
+        "passportNumber": "",
+        "passportIssueDate": "2026-01-01",
+        "passportExpiryDate": "2026-01-01",
+        "passportIssueCountry": "",
+        "gender": "male",
+      };
+    } else {
+      payload = {
+        "firstName": companyNameC.text.trim(),
+        "email": emailC.text.trim(),
+        "password": passwordC.text,
+        "role": "travel", // Ini sudah benar sesuai enum swagger
+        "npwp": npwpC.text.trim(),
+        "travelLicense": travelLicenseC.text.trim(),
+      };
+    }
+
+    FocusScope.of(context).unfocus();
+
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.register(payload);
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pendaftaran Berhasil! Silakan Masuk.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Pantau status loading dari provider
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          height: widget.screenHeight - 170,
-          clipBehavior: Clip.antiAlias,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 10,
-                offset: Offset(0, -5),
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 30, bottom: 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: AppColors.secondary,
-                              width: 1.2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.25),
-                                blurRadius: 4,
-                                spreadRadius: 0,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: TextButton(
-                            onPressed: () {
-                              if (_selectedRegType != RegistrationType.none) {
-                                setState(() {
-                                  _selectedRegType = RegistrationType.none;
-                                });
-                              } else {
-                                Navigator.pop(context);
-                              }
-                            },
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 10,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(
-                              _selectedRegType == RegistrationType.none
-                                  ? "Masuk"
-                                  : "Kembali",
-                              style: AppTypography.bold14.copyWith(
-                                color: AppColors.secondary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        if (_selectedRegType == RegistrationType.none)
-                          Text(
-                            "Sudah punya akun?",
-                            style: AppTypography.regular12.copyWith(
-                              color: AppColors.secondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 19),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Selamat Datang",
-                          style: AppTypography.bold18.copyWith(
-                            color: AppColors.secondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Siap Untuk Memulai\nPerjalanan Anda?",
-                          style: AppTypography.bold26.copyWith(
-                            color: AppColors.textDark,
-                            height: 1.25,
-                          ),
-                          textAlign: TextAlign.right,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Daftar dengan email dan buat kata sandi\nuntuk melanjutkan",
-                          style: AppTypography.regular12.copyWith(
-                            color: AppColors.textGrey,
-                            height: 1.4,
-                          ),
-                          textAlign: TextAlign.right,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: _buildDynamicForm(),
+      body: Stack(
+        children: [
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              height: widget.screenHeight - 170,
+              clipBehavior: Clip.antiAlias,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, -5),
                   ),
                 ],
               ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 30, bottom: 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: AppColors.secondary,
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.25),
+                                    blurRadius: 4,
+                                    spreadRadius: 0,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: TextButton(
+                                onPressed: () {
+                                  if (_selectedRegType !=
+                                      RegistrationType.none) {
+                                    setState(() {
+                                      _selectedRegType = RegistrationType.none;
+                                    });
+                                  } else {
+                                    Navigator.pop(context);
+                                  }
+                                },
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  _selectedRegType == RegistrationType.none
+                                      ? "Masuk"
+                                      : "Kembali",
+                                  style: AppTypography.bold14.copyWith(
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            if (_selectedRegType == RegistrationType.none)
+                              Text(
+                                "Sudah punya akun?",
+                                style: AppTypography.regular12.copyWith(
+                                  color: AppColors.secondary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 19),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              "Selamat Datang",
+                              style: AppTypography.bold18.copyWith(
+                                color: AppColors.secondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Siap Untuk Memulai\nPerjalanan Anda?",
+                              style: AppTypography.bold26.copyWith(
+                                color: AppColors.textDark,
+                                height: 1.25,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              "Daftar dengan email dan buat kata sandi\nuntuk melanjutkan",
+                              style: AppTypography.regular12.copyWith(
+                                color: AppColors.textGrey,
+                                height: 1.4,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: _buildDynamicForm(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+
+          if (isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3), // Latar belakang redup
+              child: const Center(
+                child: CircularProgressIndicator(color: Color(0xFF0084FF)),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -277,7 +387,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // FORM JAMAAH
+  Widget _buildSubmitButton() {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
+    return ElevatedButton(
+      onPressed: isLoading ? null : _handleRegister,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.horizontal(left: Radius.circular(50)),
+        ),
+      ),
+      child: const Text(
+        "Daftar",
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  // --- FORM JAMAAH ---
   Widget _buildJamaahForm() {
     return Column(
       key: const ValueKey("JamaahForm"),
@@ -386,7 +521,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(left: 12),
                 child: CustomTextField(
-                  hint: "Masukkan Ulang Kata Sandi",
+                  hint: "Masukkan Ulang",
                   isPassword: true,
                   controller: confirmPasswordC,
                   borderRadius: const BorderRadius.horizontal(
@@ -416,150 +551,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   boxShadow: AppColors.defaultShadow,
                 ),
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.horizontal(
-                        left: Radius.circular(50),
-                      ),
-                    ),
-                  ),
-                  child: const Text(
-                    "Daftar",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
+                child: _buildSubmitButton(),
               ),
             ),
           ],
         ),
         const SizedBox(height: 29),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 0),
-          child: Row(
-            children: [
-              Expanded(child: Divider(color: AppColors.line, thickness: 1)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Text(
-                  "Atau daftar menggunakan",
-                  style: AppTypography.regular12.copyWith(
-                    color: AppColors.textGrey,
-                  ),
-                ),
-              ),
-              Expanded(child: Divider(color: AppColors.line, thickness: 1)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: const BorderRadius.horizontal(
-                    right: Radius.circular(50),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const FaIcon(
-                    FontAwesomeIcons.google,
-                    color: Color(0xFFEA4335),
-                    size: 20,
-                  ),
-                  label: const Text(
-                    "Google",
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: AppColors.line, width: 1.0),
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.horizontal(
-                        right: Radius.circular(50),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: const BorderRadius.horizontal(
-                    left: Radius.circular(50),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const FaIcon(
-                    FontAwesomeIcons.facebook,
-                    color: Color(0xFF1877F2),
-                    size: 20,
-                  ),
-                  label: const Text(
-                    "Facebook",
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: AppColors.line, width: 1.0),
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.horizontal(
-                        left: Radius.circular(50),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }
 
-  // FORM TRAVEL
+  // --- FORM TRAVEL ---
   Widget _buildTravelForm() {
     return Column(
       key: const ValueKey("TravelForm"),
@@ -569,6 +571,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: CustomTextField(
             hint: "Nama Perusahaan",
             controller: companyNameC,
+            borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(50),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        Padding(
+          padding: const EdgeInsets.only(right: 30),
+          child: CustomTextField(
+            hint: "Email Perusahaan",
+            controller: emailC,
+            keyboardType: TextInputType.emailAddress,
             borderRadius: const BorderRadius.horizontal(
               right: Radius.circular(50),
             ),
@@ -623,7 +638,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
             ),
-            // Masukkan Ulang: Nempel Kanan, Melengkung Kiri
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(left: 12),
@@ -659,28 +673,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   boxShadow: AppColors.defaultShadow,
                 ),
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.horizontal(
-                        left: Radius.circular(50),
-                      ),
-                    ),
-                  ),
-                  child: const Text(
-                    "Daftar",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
+                child: _buildSubmitButton(),
               ),
             ),
           ],
