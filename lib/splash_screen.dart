@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+import 'package:yalla/features/admin/beranda/admin_dashboard_screen.dart';
 
 import 'package:yalla/features/auth/login_screen.dart';
+import 'package:yalla/features/auth/providers/auth_provider.dart';
+import 'package:yalla/features/travel/home/home_plane_travel_screen.dart';
+import 'package:yalla/features/user/home/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
@@ -18,30 +25,59 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _jalankanAnimasi() async {
-    // Tahan logo dalam posisi kecil selama 1 detik
+    // Step 1: Delay awal
     await Future.delayed(const Duration(seconds: 1));
 
     // Step 2: Logo membesar
     if (mounted) setState(() => _step = 2);
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // Step 3: Dua cahaya muncul di pojok
+    // Step 3: Cahaya muncul
     if (mounted) setState(() => _step = 3);
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // Step 4: Cahaya bergerak ke tengah dan menyatu
+    // Step 4: Cahaya menyatu ke tengah
     if (mounted) setState(() => _step = 4);
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // Step 5: Cahaya hilang (fade out)
+    // Step 5: Cahaya memudar (Fade out)
     if (mounted) setState(() => _step = 5);
     await Future.delayed(const Duration(milliseconds: 600));
 
-    // Step 6: Logo dan pesawat bergerak ke posisi akhir
+    // Step 6: Logo & Pesawat bergerak ke posisi akhir
     if (mounted) setState(() => _step = 6);
     await Future.delayed(const Duration(seconds: 2));
 
-    if (mounted) setState(() => _step = 7);
+    if (!mounted) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final role = await authProvider.checkLoginStatus();
+
+    if (!mounted) return;
+
+    if (role != null) {
+      Widget targetScreen;
+      if (role == 'admin') {
+        targetScreen =
+            const AdminDashboardScreen(); 
+      } else if (role == 'travel') {
+        targetScreen = const HomePlaneTravelScreen(); 
+      } else {
+        targetScreen = const HomeScreen(); 
+      }
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 600),
+          pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      );
+    } else {
+      if (mounted) setState(() => _step = 7);
+    }
   }
 
   @override
@@ -59,9 +95,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final double alignCenterY = 120.0;
     final double planeTop = alignCenterY - (planeSize / 2);
     final double targetTop = alignCenterY - (logoContainerSize / 2);
-    final double targetRightMargin = 0.0;
-    final double targetLeftForRightPos =
-        screenWidth - logoContainerSize - targetRightMargin;
+    final double targetLeftForRightPos = screenWidth - logoContainerSize;
 
     const double lightSize = 300.0;
     final centerLightTop = screenHeight / 2 - (lightSize / 2);
@@ -71,6 +105,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: const Color(0xFF004CB9),
       body: Stack(
         children: [
+          // Efek Cahaya Glow 1
           AnimatedPositioned(
             duration: const Duration(milliseconds: 800),
             curve: Curves.easeInOut,
@@ -85,6 +120,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
+          // Efek Cahaya Glow 2
           AnimatedPositioned(
             duration: const Duration(milliseconds: 800),
             curve: Curves.easeInOut,
@@ -97,6 +133,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
+          // Animasi Logo
           AnimatedPositioned(
             duration: const Duration(milliseconds: 1000),
             curve: Curves.easeOutCubic,
@@ -111,9 +148,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 curve: Curves.easeOutBack,
                 scale: _step == 1
                     ? 0.3
-                    : (_step >= 6
-                          ? (finalLogoSize / logoContainerSize)
-                          : 1.0), 
+                    : (_step >= 6 ? (finalLogoSize / logoContainerSize) : 1.0),
                 child: Image.asset(
                   'assets/images/logo.png',
                   fit: BoxFit.contain,
@@ -122,6 +157,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
+          // Animasi Pesawat
           AnimatedPositioned(
             duration: const Duration(milliseconds: 1200),
             curve: Curves.easeOutCubic,
@@ -140,6 +176,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
+          // Layer Login Screen (Muncul jika belum login)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 1000),
             curve: Curves.easeOutQuart,

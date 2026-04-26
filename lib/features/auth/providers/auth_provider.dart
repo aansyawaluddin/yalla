@@ -39,12 +39,14 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final data = await _authService.login(email, password);
-
       final token = data['userToken'];
+      final role = data['role'] ?? 'jamaah';
 
       if (token != null && token.toString().isNotEmpty) {
         final prefs = await SharedPreferences.getInstance();
+        
         await prefs.setString('auth_token', token);
+        await prefs.setString('user_role', role);
 
         _userProfile = data['profile'];
 
@@ -52,7 +54,7 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = 'Token tidak dikembalikan oleh server.';
+        _errorMessage = 'Token tidak ditemukan dalam respons server.';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -65,9 +67,21 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<String?> checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    final role = prefs.getString('user_role');
+
+    if (token != null && token.isNotEmpty) {
+      return role ?? 'jamaah';
+    }
+    return null;
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    await prefs.remove('user_role');
     _userProfile = null;
     notifyListeners();
   }

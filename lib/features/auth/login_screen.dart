@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/inputan/custom_text_field.dart';
+import 'package:yalla/features/admin/beranda/admin_dashboard_screen.dart';
 import 'package:yalla/features/auth/providers/auth_provider.dart';
 import 'package:yalla/features/auth/register_screen.dart';
 import 'package:yalla/features/travel/home/home_plane_travel_screen.dart';
@@ -49,12 +50,13 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      final userProfile = authProvider.userProfile;
-      final role = userProfile?['role'] ?? 'user';
+      final role = await authProvider.checkLoginStatus();
 
       Widget targetScreen;
 
-      if (role == 'admin' || role == 'travel') {
+      if (role == 'admin') {
+        targetScreen = const AdminDashboardScreen();
+      } else if (role == 'travel') {
         targetScreen = const HomePlaneTravelScreen();
       } else {
         targetScreen = const HomeScreen();

@@ -1,40 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
-import 'package:yalla/features/user/explore/jelajah_screen.dart';
-import 'package:yalla/features/user/favorite/favorite_screen.dart';
-import 'package:yalla/features/user/home/home_screen.dart';
-import 'package:yalla/features/user/order/order_screen.dart';
-import 'package:yalla/features/user/profile/profile_screen.dart';
+import 'package:yalla/features/admin/beranda/admin_dashboard_screen.dart';
+import 'package:yalla/features/admin/plane/admin_flight_scree.dart';
 
-class CustomBottomNavBar extends StatelessWidget {
+class CustomAdminBottomNavBar extends StatelessWidget {
   final int currentIndex;
 
-  const CustomBottomNavBar({super.key, required this.currentIndex});
+  const CustomAdminBottomNavBar({super.key, required this.currentIndex});
 
   void _onItemTapped(BuildContext context, int index) {
     if (index == currentIndex) return;
 
-    Widget targetScreen = const HomeScreen();
+
+    Widget targetScreen = const AdminDashboardScreen();
 
     switch (index) {
       case 0:
-        targetScreen = const HomeScreen();
+        targetScreen = const AdminDashboardScreen();
         break;
       case 1:
-        targetScreen = const FavoriteScreen();
+        targetScreen = const AdminFlightScreen();
         break;
-      case 2:
-        targetScreen = const JelajahScreen();
-        break;
-      case 3:
-        targetScreen = const OrderScreen();
-        break;
-      case 4:
-        targetScreen = const ProfileScreen();
+      // case 2:
+      //   targetScreen = const AdminHotelScreen();
+      //   break;
+      // case 3:
+      //   targetScreen = const AdminVisaScreen();
+      //   break;
+      // case 4:
+      //   targetScreen = const AdminProfileScreen();
         break;
       default:
-        targetScreen = const HomeScreen();
+        targetScreen = const AdminDashboardScreen();
     }
 
     Navigator.pushReplacement(
@@ -50,7 +48,7 @@ class CustomBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 95,
+      height: 95, // Tinggi sama dengan nav user
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -78,19 +76,9 @@ class CustomBottomNavBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 _buildBottomNavItem(context, 0, Icons.home_outlined, "Beranda"),
-                _buildBottomNavItem(
-                  context,
-                  1,
-                  Icons.favorite_border,
-                  "Favorite",
-                ),
-                _buildCenterItem(context, 2),
-                _buildBottomNavItem(
-                  context,
-                  3,
-                  Icons.local_activity_outlined,
-                  "Pesanan",
-                ), // Ikon tiket
+                _buildBottomNavItem(context, 1, Icons.flight, "Pesawat"),
+                _buildBottomNavItem(context, 2, Icons.domain, "Hotel"),
+                _buildBottomNavItem(context, 3, Icons.credit_card, "Visa"),
                 _buildBottomNavItem(context, 4, Icons.person_outline, "Profil"),
               ],
             ),
@@ -127,28 +115,6 @@ class CustomBottomNavBar extends StatelessWidget {
                   : AppTypography.regular10.copyWith(color: itemColor),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCenterItem(BuildContext context, int index) {
-    return GestureDetector(
-      onTap: () => _onItemTapped(context, index),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        height: 60,
-        width: 60,
-        decoration: BoxDecoration(
-          color: const Color(0xFF004CBF),
-          shape: BoxShape.circle,
-        ),
-        child: const Center(
-          child: Icon(
-            Icons.change_circle_outlined,
-            color: Colors.white,
-            size: 32,
-          ),
         ),
       ),
     );

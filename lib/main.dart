@@ -7,7 +7,6 @@ import 'package:yalla/features/auth/providers/auth_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Memuat file .env
   await dotenv.load(fileName: ".env");
 
   runApp(

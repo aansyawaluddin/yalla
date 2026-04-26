@@ -4,7 +4,6 @@ import 'package:yalla/core/widgets/card/order/order_flight_card.dart';
 import 'package:yalla/core/widgets/card/order/order_hotel_card.dart';
 import 'package:yalla/core/widgets/card/order/order_visa_card.dart';
 
-// 1. Ubah menjadi StatefulWidget agar bisa interaktif
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
 
@@ -13,7 +12,6 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen> {
-  // Variable untuk menyimpan status tab yang aktif (0 = Aktif, 1 = Riwayat)
   int _selectedTabIndex = 0;
 
   @override
