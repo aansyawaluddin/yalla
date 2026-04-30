@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/widgets/button/admin_custom_bottom_nav_bar.dart';
+import 'package:yalla/features/admin/plane/admin_flight_form_screen.dart';
 import 'package:yalla/features/admin/plane/flight_detail_screen.dart';
 
 class AdminFlightScreen extends StatefulWidget {
@@ -45,18 +46,16 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
           SafeArea(
             child: Column(
               children: [
-                // 1. Header Profil (Tetap/Fixed)
                 Padding(
                   padding: const EdgeInsets.only(
                     left: 24.0,
                     right: 24.0,
                     top: 0.0,
-                    bottom: 20.0, // Dikurangi sedikit agar lebih padat
+                    bottom: 20.0,
                   ),
                   child: _buildHeader(firstName: "Syahdam"),
                 ),
 
-                // Area Konten Bawah (Latar Putih/Abu terang)
                 Expanded(
                   child: Container(
                     width: double.infinity,
@@ -79,21 +78,19 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
 
                         const SizedBox(height: 20),
 
-                        // 3. Filter Chips (Tetap/Fixed)
                         _buildFilterList(),
 
                         const SizedBox(height: 24),
 
-                        // 4. Area Daftar Penerbangan (Bisa di-scroll)
                         Expanded(
                           child: ListView.separated(
                             padding: const EdgeInsets.only(
                               left: 24.0,
                               right: 24.0,
-                              bottom: 32.0, // Spacing bawah extra
+                              bottom: 32.0,
                             ),
                             physics: const BouncingScrollPhysics(),
-                            itemCount: 2, // Ganti dengan panjang data Anda
+                            itemCount: 5,
                             separatorBuilder: (context, index) =>
                                 const SizedBox(height: 16),
                             itemBuilder: (context, index) {
@@ -121,11 +118,25 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
           ),
         ],
       ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AdminFlightFormScreen(),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFF004CB9),
+        shape: const CircleBorder(),
+        elevation: 6,
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
+      ),
       bottomNavigationBar: const CustomAdminBottomNavBar(currentIndex: 1),
     );
   }
 
-  // --- Header ---
   Widget _buildHeader({required String firstName}) {
     return Row(
       children: [
@@ -214,7 +225,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     );
   }
 
-  // --- Search Bar ---
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
@@ -241,7 +251,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     );
   }
 
-  // --- Filter List ---
   Widget _buildFilterList() {
     return SizedBox(
       height: 35,
@@ -313,7 +322,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     return Colors.transparent;
   }
 
-  // --- Flight Card ---
   Widget _buildFlightCard({
     required String id,
     required String status,
