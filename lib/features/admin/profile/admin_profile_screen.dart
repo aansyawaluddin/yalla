@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/widgets/button/admin_custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/profile_card.dart';
-import 'package:yalla/features/auth/providers/auth_provider.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/features/admin/profile/admin_order_management_screen.dart';
 import 'package:yalla/features/admin/profile/admin_user_managemet_screen.dart';
 import 'package:yalla/features/admin/profile/admin_visa_config_screen.dart';

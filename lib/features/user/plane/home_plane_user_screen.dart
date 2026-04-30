@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; 
+import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
@@ -19,7 +21,20 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
   bool isOneWay = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().fetchUserProfile();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final displayFirstName = authProvider.firstName.isNotEmpty
+        ? authProvider.firstName
+        : "Memuat...";
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -91,8 +106,8 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                             const SizedBox(width: 12),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
+                              children: [
+                                const Text(
                                   "Selamat Datang,",
                                   style: TextStyle(
                                     fontSize: 14,
@@ -100,8 +115,8 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                                   ),
                                 ),
                                 Text(
-                                  "Syahdam 👋",
-                                  style: TextStyle(
+                                  "$displayFirstName 👋",
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF005C99),

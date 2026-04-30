@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/splash_screen.dart';
-import 'package:yalla/features/auth/providers/auth_provider.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => FlightProvider()),
       ],
       child: const MyApp(),
     ),
@@ -28,8 +30,7 @@ class MyApp extends StatelessWidget {
       title: 'Yalla',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Inter'),
-      home:
-          SplashScreen(), 
+      home: SplashScreen(),
     );
   }
 }

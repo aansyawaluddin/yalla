@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/widgets/button/admin_custom_bottom_nav_bar.dart';
-import 'package:yalla/features/auth/providers/auth_provider.dart';
+import 'package:yalla/features/admin/plane/admin_flight_scree.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -117,17 +118,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               child: _buildFeatureButton(
                                 Icons.flight,
                                 "Pesawat",
+                                () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AdminFlightScreen(),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: _buildFeatureButton(Icons.domain, "Hotel"),
+                              child: _buildFeatureButton(
+                                Icons.domain,
+                                "Hotel",
+                                () {},
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildFeatureButton(
                                 Icons.credit_card,
                                 "Visa",
+                                () {},
                               ),
                             ),
                           ],
@@ -403,34 +418,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildFeatureButton(IconData icon, String title) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: const Color(0xFF004CB9), size: 32),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF004CB9),
+  Widget _buildFeatureButton(IconData icon, String title, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: const Color(0xFF004CB9), size: 32),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF004CB9),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

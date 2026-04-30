@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
+import 'package:yalla/core/providers/flight_provider.dart';
+import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/core/widgets/button/admin_custom_bottom_nav_bar.dart';
 import 'package:yalla/features/admin/plane/admin_flight_form_screen.dart';
 import 'package:yalla/features/admin/plane/flight_detail_screen.dart';
@@ -21,12 +25,27 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().fetchUserProfile();
+      context.read<FlightProvider>().fetchFlights();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final displayFirstName = authProvider.firstName.isNotEmpty
+        ? authProvider.firstName
+        : "Memuat...";
+    final flightProvider = context.watch<FlightProvider>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: Stack(
         children: [
-          // Background Header (Biru gradasi/gambar di atas)
+          // Background Header
           Positioned(
             top: 0,
             left: 0,
@@ -53,7 +72,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                     top: 0.0,
                     bottom: 20.0,
                   ),
-                  child: _buildHeader(firstName: "Syahdam"),
+                  child: _buildHeader(firstName: displayFirstName),
                 ),
 
                 Expanded(
@@ -70,7 +89,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                       children: [
                         const SizedBox(height: 24),
 
-                        // 2. Search Bar (Tetap/Fixed)
+                        // Search Bar
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24.0),
                           child: _buildSearchBar(),
@@ -78,37 +97,13 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
 
                         const SizedBox(height: 20),
 
+                        // Filter Horizontal
                         _buildFilterList(),
 
                         const SizedBox(height: 24),
 
-                        Expanded(
-                          child: ListView.separated(
-                            padding: const EdgeInsets.only(
-                              left: 24.0,
-                              right: 24.0,
-                              bottom: 32.0,
-                            ),
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: 5,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 16),
-                            itemBuilder: (context, index) {
-                              return _buildFlightCard(
-                                id: "DL-2482",
-                                status: "Tepat Waktu",
-                                originCode: "UPG",
-                                originName: "Makassar",
-                                destCode: "JED",
-                                destName: "Jeddah",
-                                depTime: "08:30 AM",
-                                arrTime: "09:45 PM",
-                                airlineLogoPath:
-                                    'assets/images/logo_flydeal.png',
-                              );
-                            },
-                          ),
-                        ),
+                        // List View Dinamis
+                        Expanded(child: _buildFlightContent(flightProvider)),
                       ],
                     ),
                   ),
@@ -126,7 +121,9 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
             MaterialPageRoute(
               builder: (context) => const AdminFlightFormScreen(),
             ),
-          );
+          ).then((_) {
+            context.read<FlightProvider>().fetchFlights();
+          });
         },
         backgroundColor: const Color(0xFF004CB9),
         shape: const CircleBorder(),
@@ -134,6 +131,72 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
         child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
       bottomNavigationBar: const CustomAdminBottomNavBar(currentIndex: 1),
+    );
+  }
+
+  Widget _buildFlightContent(FlightProvider provider) {
+    if (provider.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF004CB9)),
+      );
+    }
+
+    if (provider.errorMessage.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              provider.errorMessage,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () => context.read<FlightProvider>().fetchFlights(),
+              child: const Text("Coba Lagi"),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (provider.flights.isEmpty) {
+      return const Center(
+        child: Text(
+          "Tidak ada jadwal penerbangan saat ini.",
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 32.0),
+      physics: const BouncingScrollPhysics(),
+      itemCount: provider.flights.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 16),
+      itemBuilder: (context, index) {
+        final flight = provider.flights[index];
+        final bool isOutbound = flight.isOutbound ?? true;
+
+        final String originCode = isOutbound ? "UPG" : "JED";
+        final String originName = isOutbound ? "Makassar" : "Jeddah";
+        final String destCode = isOutbound ? "JED" : "UPG";
+        final String destName = isOutbound ? "Jeddah" : "Makassar";
+
+        return _buildFlightCard(
+          flightId: flight.id ?? "", 
+          flightNo: flight.flightNo ?? "Unknown",
+          status: "Tepat Waktu",
+          originCode: originCode,
+          originName: originName,
+          destCode: destCode,
+          destName: destName,
+          depTime: DateFormatter.formatTime(flight.departureTime),
+          arrTime: DateFormatter.formatTime(flight.arrivalTime),
+          airlineLogoPath: 'assets/images/logo_flydeal.png',
+        );
+      },
     );
   }
 
@@ -323,7 +386,8 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
   }
 
   Widget _buildFlightCard({
-    required String id,
+    required String flightId,
+    required String flightNo,
     required String status,
     required String originCode,
     required String originName,
@@ -349,7 +413,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const AdminFlightDetailScreen(),
+            builder: (context) => AdminFlightDetailScreen(flightId: flightId),
           ),
         );
       },
@@ -397,7 +461,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        id,
+                        flightNo,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,

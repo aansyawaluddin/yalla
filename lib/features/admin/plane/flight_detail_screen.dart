@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/providers/flight_provider.dart';
+import 'package:yalla/core/utils/date_formatter.dart';
 
 class AdminFlightDetailScreen extends StatefulWidget {
-  const AdminFlightDetailScreen({super.key});
+  final String flightId; 
+
+  const AdminFlightDetailScreen({super.key, required this.flightId});
 
   @override
   State<AdminFlightDetailScreen> createState() =>
@@ -15,8 +21,10 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
   @override
   void initState() {
     super.initState();
-    // TabController untuk 2 tab (Manifest & Log)
     _tabController = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<FlightProvider>().fetchFlightDetail(widget.flightId);
+    });
   }
 
   @override
@@ -27,6 +35,9 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<FlightProvider>();
+    final flight = provider.selectedFlight;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -49,7 +60,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
           IconButton(
             icon: const Icon(Icons.edit_outlined, color: Color(0xFF004CB9)),
             onPressed: () {
-              // Aksi Edit
+              // TODO: Aksi Edit
             },
           ),
         ],
@@ -58,60 +69,102 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
           child: Container(color: const Color(0xFFF0F0F0), height: 1.0),
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24.0, 20.0, 24.0, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFlightInfo(),
-                  const SizedBox(height: 24),
-                  _buildInfoGrid(),
-                  const SizedBox(height: 24),
-                  _buildTabBar(),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      children: [
-                        _buildManifestContent(),
-                        const SizedBox(height: 40),
-                      ],
-                    ),
-                  ),
-
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      children: [
-                        _buildLogContent(),
-                        const SizedBox(height: 40),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: SafeArea(child: _buildBody(provider, flight)),
     );
   }
 
-  Widget _buildFlightInfo() {
+  Widget _buildBody(FlightProvider provider, FlightModel? flight) {
+    if (provider.isDetailLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF004CB9)),
+      );
+    }
+
+    if (provider.detailErrorMessage.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              provider.detailErrorMessage,
+              style: const TextStyle(color: Colors.red),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => provider.fetchFlightDetail(widget.flightId),
+              child: const Text("Coba Lagi"),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (flight == null) {
+      return const Center(child: Text("Data penerbangan tidak ditemukan"));
+    }
+    final bool isOutbound = flight.isOutbound ?? true;
+    final String rute = isOutbound
+        ? "Makassar (UPG) → Jeddah (JED)"
+        : "Jeddah (JED) → Makassar (UPG)";
+    final int ecoClass = flight.economyClass ?? 0;
+    final int busClass = flight.businessClass ?? 0;
+    final int totalSeats = ecoClass + busClass;
+    final String formattedDepTime = DateFormatter.formatTime(
+      flight.departureTime,
+    );
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24.0, 20.0, 24.0, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildFlightInfo(flight.flightNo ?? "Unknown"),
+              const SizedBox(height: 24),
+              _buildInfoGrid(formattedDepTime, totalSeats.toString()),
+              const SizedBox(height: 24),
+              _buildTabBar(),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            physics: const BouncingScrollPhysics(),
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    _buildManifestContent(
+                      flight.flightNo ?? "Unknown",
+                      rute,
+                      totalSeats,
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+
+              SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [_buildLogContent(), const SizedBox(height: 40)],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFlightInfo(String flightNo) {
     return Row(
       children: [
         Container(
@@ -132,9 +185,9 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
             children: [
               Row(
                 children: [
-                  const Text(
-                    "DL-2482",
-                    style: TextStyle(
+                  Text(
+                    flightNo,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
@@ -177,7 +230,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
     );
   }
 
-  Widget _buildInfoGrid() {
+  Widget _buildInfoGrid(String depTime, String totalSeats) {
     return GridView.count(
       crossAxisCount: 2,
       crossAxisSpacing: 16,
@@ -187,9 +240,9 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
       physics: const NeverScrollableScrollPhysics(),
       children: [
         _buildInfoCard("Gate", "B12", null),
-        _buildInfoCard("Boarding", "162/180", null),
+        _buildInfoCard("Kapasitas", totalSeats, null),
         _buildInfoCard("Fuel", "85%", Icons.local_gas_station),
-        _buildInfoCard("Departure", "14:30", null),
+        _buildInfoCard("Departure", depTime, null),
       ],
     );
   }
@@ -256,7 +309,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
     );
   }
 
-  Widget _buildManifestContent() {
+  Widget _buildManifestContent(String flightNo, String rute, int totalSeats) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -264,23 +317,25 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "PENERBANGAN DL-2482",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "PENERBANGAN $flightNo",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Makassar (UPG) → Jeddah (JED)",
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    rute,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -314,7 +369,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
         ),
 
         const SizedBox(height: 24),
-        _buildBoardingProgress(),
+        _buildBoardingProgress(totalSeats),
         const SizedBox(height: 24),
 
         Row(
@@ -349,8 +404,8 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
         ),
         const SizedBox(height: 16),
         _buildPassengerItem(
-          name: "Muhammad Rafli Dahlan",
-          seat: "Seat 12 - Ekonomi",
+          name: "Syahdam Dahlan",
+          seat: "Seat 13 - Ekonomi",
           status: "Boarded",
           time: "10:14 AM",
         ),
@@ -358,10 +413,10 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
     );
   }
 
-  Widget _buildBoardingProgress() {
-    int boarded = 162;
-    int total = 180;
-    int checkedIn = 174;
+  Widget _buildBoardingProgress(int totalSeats) {
+    int total = totalSeats > 0 ? totalSeats : 180;
+    int boarded = (total * 0.9).toInt(); 
+    int checkedIn = (total * 0.96).toInt();
     int remaining = total - boarded;
     double progress = boarded / total;
 
@@ -561,7 +616,6 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header Log
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -593,25 +647,23 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
 
         const SizedBox(height: 32),
 
-        // Timeline Items
         _buildTimelineItem(
           isFirst: true,
           isLast: false,
           icon: Icons.check,
           iconColor: Colors.white,
-          circleColor: const Color(0xFF22C55E), 
+          circleColor: const Color(0xFF22C55E),
           title: "Boarding Started",
           titleColor: const Color(0xFF22C55E),
           description:
-              "Panggilan pertama untuk business class dan priority. Tim mengonfirmasi bahwa cabin telah diperiksan dan aman.",
+              "Panggilan pertama untuk business class dan priority. Tim mengonfirmasi bahwa cabin telah diperiksa dan aman.",
           timeInfo: "10:45 AM - Gate B12",
         ),
 
         _buildTimelineItem(
           isFirst: false,
           isLast: false,
-          icon: Icons
-              .local_gas_station_outlined, 
+          icon: Icons.local_gas_station_outlined,
           iconColor: Colors.white,
           circleColor: const Color(0xFF0267C1),
           title: "Refueling Complete",
@@ -630,7 +682,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
           title: "Pre-Flight Check",
           titleColor: Colors.grey.shade600,
           description: "Menunggu jadwal notifikasi wawancara",
-          timeInfo: "", 
+          timeInfo: "",
         ),
       ],
     );
@@ -655,7 +707,6 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
             width: 45,
             child: Column(
               children: [
-                // Ikon Lingkaran
                 Container(
                   width: 45,
                   height: 45,
@@ -674,26 +725,18 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
                 ),
                 if (!isLast)
                   Expanded(
-                    child: Container(
-                      width: 1, 
-                      color: Colors.grey.shade300,
-                    ),
+                    child: Container(width: 1, color: Colors.grey.shade300),
                   ),
               ],
             ),
           ),
-
           const SizedBox(width: 16),
-
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(
-                bottom: 32.0,
-              ), 
+              padding: const EdgeInsets.only(bottom: 32.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Judul dan Waktu
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,14 +762,11 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
                     ],
                   ),
                   const SizedBox(height: 8),
-                  // Deskripsi
                   Text(
                     description,
                     style: TextStyle(
                       fontSize: 13,
-                      color: titleColor.withOpacity(
-                        0.9,
-                      ), 
+                      color: titleColor.withOpacity(0.9),
                       height: 1.4,
                     ),
                   ),

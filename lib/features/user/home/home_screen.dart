@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/animated/animatedSearchBar.dart';
@@ -7,6 +8,7 @@ import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/flight_info_card.dart';
 import 'package:yalla/core/widgets/card/promo_card.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/features/user/home/paket/paket_umrah_screen.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
 import 'package:yalla/features/user/plane/home_plane_user_screen.dart';
@@ -22,7 +24,20 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedServiceIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().fetchUserProfile();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final displayFirstName = authProvider.firstName.isNotEmpty
+        ? authProvider.firstName
+        : "Memuat...";
+        
     return Scaffold(
       backgroundColor: Colors.white,
       extendBody: true,
@@ -96,8 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 12),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
+                              children: [
+                                const Text(
                                   "Selamat Datang,",
                                   style: TextStyle(
                                     fontSize: 14,
@@ -105,8 +120,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 Text(
-                                  "Syahdam 👋",
-                                  style: TextStyle(
+                                  "$displayFirstName 👋",
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF005C99),

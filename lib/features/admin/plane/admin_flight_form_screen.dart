@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart' as fp;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yalla/core/services/flight_service.dart';
 
 class AdminFlightFormScreen extends StatefulWidget {
   const AdminFlightFormScreen({super.key});
@@ -9,6 +12,75 @@ class AdminFlightFormScreen extends StatefulWidget {
 
 class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
   bool isManual = true;
+  bool isLoading = false;
+  String? _selectedFileName;
+  String? _selectedFilePath;
+  Future<void> _pickFile() async {
+    try {
+      fp.FilePickerResult? result = await fp.FilePicker.platform.pickFiles(
+        type: fp.FileType.custom,
+        allowedExtensions: ['xlsx'],
+      );
+
+      if (result != null) {
+        setState(() {
+          _selectedFileName = result.files.single.name;
+          _selectedFilePath = result.files.single.path;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking file: $e");
+    }
+  }
+
+  Future<void> _simpanData() async {
+    if (!isManual) {
+      if (_selectedFilePath == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Silakan pilih file Excel terlebih dahulu!"),
+          ),
+        );
+        return;
+      }
+      setState(() => isLoading = true);
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('auth_token');
+
+        if (token == null || token.isEmpty) {
+          throw Exception("Sesi telah habis. Silakan login kembali.");
+        }
+        FlightService flightService = FlightService();
+        bool isSuccess = await flightService.uploadFlightExcel(
+          _selectedFilePath!,
+          token,
+        );
+
+        if (isSuccess) {
+          _showSuccessPopup();
+          setState(() {
+            _selectedFileName = null;
+            _selectedFilePath = null;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Gagal mengunggah jadwal penerbangan."),
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll("Exception: ", ""))),
+        );
+      } finally {
+        setState(() => isLoading = false);
+      }
+    } else {
+      print("Proses form manual");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,14 +223,20 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        _showSuccessPopup();
-                        // Tambahkan aksi simpan di sini
-                      },
-                      icon: const Icon(Icons.save, color: Colors.white),
-                      label: const Text(
-                        "Simpan",
-                        style: TextStyle(
+                      onPressed: isLoading ? null : _simpanData,
+                      icon: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.save, color: Colors.white),
+                      label: Text(
+                        isLoading ? "Menyimpan..." : "Simpan",
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -166,6 +244,7 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0091FF),
+                        disabledBackgroundColor: Colors.grey.shade400,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -318,13 +397,14 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
     );
   }
 
-  // Widget untuk halaman upload dokumen
   Widget _buildDocumentUpload() {
+    bool hasFile = _selectedFileName != null;
+
     return GestureDetector(
-      onTap: () {},
+      onTap: _pickFile,
       child: CustomPaint(
         painter: DashedRectPainter(
-          color: Colors.grey.shade400,
+          color: hasFile ? const Color(0xFF0091FF) : Colors.grey.shade400,
           strokeWidth: 1.5,
           dashWidth: 6.0,
           dashSpace: 4.0,
@@ -332,30 +412,47 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 80.0),
+          color: hasFile
+              ? const Color(0xFF0091FF).withOpacity(0.05)
+              : Colors.transparent,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.upload_outlined, size: 32, color: Colors.black),
+              Icon(
+                hasFile ? Icons.insert_drive_file : Icons.upload_outlined,
+                size: 32,
+                color: hasFile ? const Color(0xFF0091FF) : Colors.black,
+              ),
               const SizedBox(height: 16),
-              const Text(
-                "Upload File Jadwal Penerbangan (.xlsx)",
+              Text(
+                hasFile
+                    ? _selectedFileName!
+                    : "Upload File Jadwal Penerbangan (.xlsx)",
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: hasFile ? const Color(0xFF004CB9) : Colors.black,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
-              const Text(
-                "Maksimal ukuran file (5MB)",
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+              if (!hasFile) ...[
+                const Text(
+                  "Maksimal ukuran file (5MB)",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
+              ] else ...[
+                const Text(
+                  "Ketuk untuk mengganti file",
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ],
           ),
         ),
@@ -407,8 +504,7 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize:
-                      MainAxisSize.min, 
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
                       "Jadwal Penerbangan Berhasil Ditambahkan",
