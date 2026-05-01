@@ -58,6 +58,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
       initialDate: DateTime(2000),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dialogBackgroundColor: Colors.white,
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF004CB9),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF004CB9),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (picked != null) {
@@ -114,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         "nationality": countryC.text.trim(),
         "email": emailC.text.trim(),
         "password": passwordC.text,
-        "role": "jamaah", 
+        "role": "jamaah",
         "passportNumber": "",
         "passportIssueDate": "2026-01-01",
         "passportExpiryDate": "2026-01-01",
@@ -126,7 +145,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         "firstName": companyNameC.text.trim(),
         "email": emailC.text.trim(),
         "password": passwordC.text,
-        "role": "travel", // Ini sudah benar sesuai enum swagger
+        "role": "travel",
         "npwp": npwpC.text.trim(),
         "travelLicense": travelLicenseC.text.trim(),
       };
@@ -159,7 +178,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Pantau status loading dari provider
     final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(

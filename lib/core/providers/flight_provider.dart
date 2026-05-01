@@ -74,4 +74,32 @@ class FlightProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> updateFlightData(String id, Map<String, dynamic> payload) async {
+    _isDetailLoading = true;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception("Sesi habis, silakan login ulang.");
+      }
+
+      final isSuccess = await _flightService.updateFlight(id, payload, token);
+
+      if (isSuccess) {
+        await fetchFlightDetail(id);
+        await fetchFlights();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _detailErrorMessage = e.toString().replaceAll("Exception: ", "");
+      _isDetailLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }

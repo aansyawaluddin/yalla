@@ -4,6 +4,7 @@ import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/core/widgets/button/admin_custom_bottom_nav_bar.dart';
+import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/features/admin/plane/admin_flight_form_screen.dart';
 import 'package:yalla/features/admin/plane/flight_detail_screen.dart';
 
@@ -19,6 +20,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
 
   final List<String> _filters = [
     "Semua Penerbangan",
+    "Dijadwalkan",
     "Tepat Waktu",
     "Terlambat",
     "Dibatalkan",
@@ -31,6 +33,23 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
       context.read<AuthProvider>().fetchUserProfile();
       context.read<FlightProvider>().fetchFlights();
     });
+  }
+
+  String _determineFlightStatus(String? departureTimeIso) {
+    if (departureTimeIso == null) return "Dijadwalkan";
+
+    try {
+      final now = DateTime.now();
+      final departureDate = DateTime.parse(departureTimeIso).toLocal();
+
+      if (now.isBefore(departureDate)) {
+        return "Dijadwalkan";
+      } else {
+        return "Tepat Waktu";
+      }
+    } catch (e) {
+      return "Dijadwalkan";
+    }
   }
 
   @override
@@ -89,7 +108,6 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                       children: [
                         const SizedBox(height: 24),
 
-                        // Search Bar
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24.0),
                           child: _buildSearchBar(),
@@ -97,12 +115,10 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
 
                         const SizedBox(height: 20),
 
-                        // Filter Horizontal
                         _buildFilterList(),
 
                         const SizedBox(height: 24),
 
-                        // List View Dinamis
                         Expanded(child: _buildFlightContent(flightProvider)),
                       ],
                     ),
@@ -142,22 +158,11 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     }
 
     if (provider.errorMessage.isNotEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              provider.errorMessage,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: () => context.read<FlightProvider>().fetchFlights(),
-              child: const Text("Coba Lagi"),
-            ),
-          ],
-        ),
+      return ErrorStateWidget(
+        errorMessage: provider.errorMessage,
+        onRetry: () {
+          context.read<FlightProvider>().fetchFlights();
+        },
       );
     }
 
@@ -184,16 +189,22 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
         final String destCode = isOutbound ? "JED" : "UPG";
         final String destName = isOutbound ? "Jeddah" : "Makassar";
 
+        final String calculatedStatus = _determineFlightStatus(
+          flight.departureTime,
+        );
+
         return _buildFlightCard(
-          flightId: flight.id ?? "", 
+          flightId: flight.id ?? "",
           flightNo: flight.flightNo ?? "Unknown",
-          status: "Tepat Waktu",
+          status: calculatedStatus,
           originCode: originCode,
           originName: originName,
           destCode: destCode,
           destName: destName,
           depTime: DateFormatter.formatTime(flight.departureTime),
           arrTime: DateFormatter.formatTime(flight.arrivalTime),
+          depDate: DateFormatter.formatDate(flight.departureTime),
+          arrDate: DateFormatter.formatDate(flight.arrivalTime),
           airlineLogoPath: 'assets/images/logo_flydeal.png',
         );
       },
@@ -379,9 +390,10 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
   }
 
   Color _getFilterDotColor(int index) {
-    if (index == 1) return const Color(0xFF4CAF50);
-    if (index == 2) return Colors.orange;
-    if (index == 3) return Colors.red;
+    if (index == 1) return const Color(0xFF004CB9);
+    if (index == 2) return const Color(0xFF4CAF50);
+    if (index == 3) return Colors.orange;
+    if (index == 4) return Colors.red;
     return Colors.transparent;
   }
 
@@ -394,7 +406,9 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     required String destCode,
     required String destName,
     required String depTime,
+    required String depDate, // <--- Tambahan parameter baru
     required String arrTime,
+    required String arrDate, // <--- Tambahan parameter baru
     required String airlineLogoPath,
   }) {
     Color statusBgColor = const Color(0xFFE8F5E9);
@@ -406,6 +420,9 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
     } else if (status == "Dibatalkan") {
       statusBgColor = Colors.red.shade50;
       statusTextColor = Colors.red;
+    } else if (status == "Dijadwalkan") {
+      statusBgColor = const Color(0xFFF0F8FF);
+      statusTextColor = const Color(0xFF004CB9);
     }
 
     return GestureDetector(
@@ -433,6 +450,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
         ),
         child: Column(
           children: [
+            // ... (Bagian Header Maskapai dan Status Tetap Sama) ...
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -508,6 +526,7 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
               padding: EdgeInsets.symmetric(vertical: 16.0),
               child: Divider(color: Color(0xFFF0F0F0), height: 1),
             ),
+            // ... (Bagian Rute UPG -> JED Tetap Sama) ...
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -637,6 +656,8 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
               ],
             ),
             const SizedBox(height: 20),
+
+            // --- BAGIAN WAKTU DAN TANGGAL YANG DIPERBARUI ---
             Row(
               children: [
                 Expanded(
@@ -663,6 +684,16 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        // Menampilkan Tanggal Keberangkatan
+                        Text(
+                          depDate,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF004CB9),
                           ),
                         ),
                       ],
@@ -694,6 +725,16 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        // Menampilkan Tanggal Kedatangan
+                        Text(
+                          arrDate,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF004CB9),
                           ),
                         ),
                       ],

@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
+import 'package:yalla/features/admin/plane/admin_edit_flight_screen.dart';
 
 class AdminFlightDetailScreen extends StatefulWidget {
-  final String flightId; 
+  final String flightId;
 
   const AdminFlightDetailScreen({super.key, required this.flightId});
 
@@ -60,7 +61,14 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
           IconButton(
             icon: const Icon(Icons.edit_outlined, color: Color(0xFF004CB9)),
             onPressed: () {
-              // TODO: Aksi Edit
+              if (flight != null && flight.id != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AdminEditFlightScreen(flight: flight),
+                  ),
+                );
+              }
             },
           ),
         ],
@@ -415,7 +423,7 @@ class _AdminFlightDetailScreenState extends State<AdminFlightDetailScreen>
 
   Widget _buildBoardingProgress(int totalSeats) {
     int total = totalSeats > 0 ? totalSeats : 180;
-    int boarded = (total * 0.9).toInt(); 
+    int boarded = (total * 0.9).toInt();
     int checkedIn = (total * 0.96).toInt();
     int remaining = total - boarded;
     double progress = boarded / total;

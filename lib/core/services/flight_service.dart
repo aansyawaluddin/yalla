@@ -85,4 +85,46 @@ class FlightService {
       throw Exception('Terjadi kesalahan jaringan: $e');
     }
   }
+
+Future<bool> updateFlight(String id, Map<String, dynamic> payload, String token) async {
+    final url = Uri.parse('$_baseUrl/flights/$id');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(payload),
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } 
+      else {
+        String errorMessage = 'Gagal memperbarui penerbangan (Error ${response.statusCode})';
+
+        try {
+          final errorData = jsonDecode(response.body);
+          if (errorData is Map && errorData.containsKey('message')) {
+            errorMessage = errorData['message'];
+          } else if (errorData is Map && errorData.containsKey('error')) {
+            errorMessage = errorData['error'];
+          }
+        } catch (formatException) {
+          String rawResponse = response.body;
+          if (rawResponse.length > 100) {
+            rawResponse = "${rawResponse.substring(0, 100)}...";
+          }
+          errorMessage = 'Error ${response.statusCode}: $rawResponse';
+        }
+
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      print("Error koneksi saat update flight: $e");
+      throw Exception('Terjadi kesalahan: ${e.toString().replaceAll("Exception: ", "")}');
+    }
+  }
 }
