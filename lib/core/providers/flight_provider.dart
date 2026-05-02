@@ -102,4 +102,31 @@ class FlightProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  FlightModel? get nearestFlight {
+    if (_flights.isEmpty) return null;
+
+    final now = DateTime.now();
+
+    final upcomingFlights = _flights.where((flight) {
+      if (flight.departureTime == null) return false;
+      try {
+        final depDate = DateTime.parse(flight.departureTime!);
+        return depDate.isAfter(now);
+      } catch (e) {
+        return false;
+      }
+    }).toList();
+
+    if (upcomingFlights.isEmpty) return null;
+
+    upcomingFlights.sort((a, b) {
+      final dateA = DateTime.parse(a.departureTime!);
+      final dateB = DateTime.parse(b.departureTime!);
+      return dateA.compareTo(dateB);
+    });
+
+    // 4. Ambil indeks pertama (yang paling dekat)
+    return upcomingFlights.first;
+  }
 }

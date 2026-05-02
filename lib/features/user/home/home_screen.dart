@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/animated/animatedSearchBar.dart';
 import 'package:yalla/core/widgets/card/flight_card.dart';
 import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
-import 'package:yalla/core/widgets/card/flight_info_card.dart';
+// import 'package:yalla/core/widgets/card/flight_info_card.dart';
 import 'package:yalla/core/widgets/card/promo_card.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
@@ -28,16 +29,19 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().fetchUserProfile();
+      context.read<FlightProvider>().fetchFlights();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final flightProvider = context.watch<FlightProvider>();
     final displayFirstName = authProvider.firstName.isNotEmpty
         ? authProvider.firstName
         : "Memuat...";
-        
+    final nearestFlight = flightProvider.nearestFlight;
+
     return Scaffold(
       backgroundColor: Colors.white,
       extendBody: true,
@@ -194,72 +198,71 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 30),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            gradient: const LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Color(0x00FFFFFF), Color(0xFFF2FAFF)],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFF2FAFF),
-                                spreadRadius: 10,
-                                blurRadius: 20,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: const FlightInfoCard(),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(16),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _buildDot(isActive: true),
-                                  const SizedBox(width: 4),
-                                  _buildDot(isActive: false),
-                                  const SizedBox(width: 4),
-                                  _buildDot(isActive: false),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(horizontal: 16),
+                  //   child: Stack(
+                  //     alignment: Alignment.bottomCenter,
+                  //     children: [
+                  //       Container(
+                  //         padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                  //         decoration: BoxDecoration(
+                  //           color: Colors.white,
+                  //           borderRadius: BorderRadius.circular(24),
+                  //           gradient: const LinearGradient(
+                  //             begin: Alignment.topCenter,
+                  //             end: Alignment.bottomCenter,
+                  //             colors: [Color(0x00FFFFFF), Color(0xFFF2FAFF)],
+                  //           ),
+                  //           boxShadow: [
+                  //             BoxShadow(
+                  //               color: const Color(0xFFF2FAFF),
+                  //               spreadRadius: 10,
+                  //               blurRadius: 20,
+                  //               offset: const Offset(0, 5),
+                  //             ),
+                  //           ],
+                  //         ),
+                  //         child: const FlightInfoCard(),
+                  //       ),
+                  //       Positioned(
+                  //         bottom: 0,
+                  //         left: 0,
+                  //         right: 0,
+                  //         child: Center(
+                  //           child: Container(
+                  //             padding: const EdgeInsets.symmetric(
+                  //               horizontal: 14,
+                  //               vertical: 4,
+                  //             ),
+                  //             decoration: BoxDecoration(
+                  //               color: Colors.white,
+                  //               borderRadius: const BorderRadius.vertical(
+                  //                 top: Radius.circular(16),
+                  //               ),
+                  //               boxShadow: [
+                  //                 BoxShadow(
+                  //                   color: Colors.black.withOpacity(0.08),
+                  //                   blurRadius: 8,
+                  //                   offset: const Offset(0, 4),
+                  //                 ),
+                  //               ],
+                  //             ),
+                  //             child: Row(
+                  //               mainAxisSize: MainAxisSize.min,
+                  //               children: [
+                  //                 _buildDot(isActive: true),
+                  //                 const SizedBox(width: 4),
+                  //                 _buildDot(isActive: false),
+                  //                 const SizedBox(width: 4),
+                  //                 _buildDot(isActive: false),
+                  //               ],
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                   const SizedBox(height: 32),
 
                   Padding(
@@ -367,9 +370,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     showAction: false,
                   ),
                   const SizedBox(height: 16),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: FlightOptionCard(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: FlightOptionCard(
+                      flight: nearestFlight,
+                      isLoading: flightProvider.isLoading,
+                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -437,17 +443,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDot({required bool isActive}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: isActive ? 24 : 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF005C99) : Colors.grey.shade400,
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
+  // Widget _buildDot({required bool isActive}) {
+  //   return Container(
+  //     margin: const EdgeInsets.symmetric(horizontal: 4),
+  //     width: isActive ? 24 : 8,
+  //     height: 8,
+  //     decoration: BoxDecoration(
+  //       color: isActive ? const Color(0xFF005C99) : Colors.grey.shade400,
+  //       borderRadius: BorderRadius.circular(4),
+  //     ),
+  //   );
+  // }
 
   Widget _buildBigServiceTab({
     required int index,
