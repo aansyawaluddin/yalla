@@ -1,11 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/features/user/plane/flight/detail_passenger_screen.dart';
 
 class DetailFlightScreen extends StatelessWidget {
-  const DetailFlightScreen({super.key});
+  final FlightModel flight;
+
+  const DetailFlightScreen({super.key, required this.flight});
+
+  String _formatPrice(num? price) {
+    if (price == null || price == 0) return "IDR -";
+    String s = price.toInt().toString();
+    String res = "";
+    for (int i = 0; i < s.length; i++) {
+      res += s[i];
+      if ((s.length - 1 - i) % 3 == 0 && i != s.length - 1) res += ".";
+    }
+    return "IDR $res";
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool isOutbound = flight.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String destCode = isOutbound ? "JED" : "UPG";
+    final String destName = isOutbound ? "Jeddah" : "Makassar";
+
+    final String depTime = DateFormatter.formatTime(flight.departureTime);
+    final String arrTime = DateFormatter.formatTime(flight.arrivalTime);
+    final String priceText = _formatPrice(flight.price);
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -30,22 +54,20 @@ class DetailFlightScreen extends StatelessWidget {
             ),
           ),
         ),
-        title: const Text(
-          "Jeddah",
-          style: TextStyle(
+        title: Text(
+          destName, 
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
         ),
       ),
-
       body: Stack(
         children: [
           Positioned.fill(
             child: Image.asset('assets/images/madinah.png', fit: BoxFit.cover),
           ),
-
           Positioned(
             bottom: 0,
             left: 0,
@@ -62,7 +84,6 @@ class DetailFlightScreen extends StatelessWidget {
               ),
             ),
           ),
-
           Positioned(
             bottom: 0,
             left: 0,
@@ -82,9 +103,9 @@ class DetailFlightScreen extends StatelessWidget {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                const Text(
-                                  "UPG",
-                                  style: TextStyle(
+                                Text(
+                                  originCode, 
+                                  style: const TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
@@ -105,9 +126,9 @@ class DetailFlightScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              "02:00 AM",
-                              style: TextStyle(
+                            Text(
+                              depTime,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -115,7 +136,6 @@ class DetailFlightScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-
                         Expanded(
                           child: SizedBox(
                             height: 36,
@@ -142,7 +162,6 @@ class DetailFlightScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -158,9 +177,9 @@ class DetailFlightScreen extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Text(
-                                  "JED",
-                                  style: TextStyle(
+                                Text(
+                                  destCode, 
+                                  style: const TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
@@ -169,9 +188,9 @@ class DetailFlightScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              "12:15 PM",
-                              style: TextStyle(
+                            Text(
+                              arrTime,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -181,9 +200,7 @@ class DetailFlightScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 24),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -229,17 +246,13 @@ class DetailFlightScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 16),
-
                     const Divider(
                       color: Colors.white24,
                       thickness: 1,
                       height: 1,
                     ),
-
                     const SizedBox(height: 24),
-
                     Align(
                       alignment: Alignment.centerRight,
                       child: Container(
@@ -259,10 +272,10 @@ class DetailFlightScreen extends StatelessWidget {
                               flex: 5,
                               child: Container(
                                 color: Colors.white.withOpacity(0.2),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
-                                    "IDR 11.000.000",
-                                    style: TextStyle(
+                                    priceText, 
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,

@@ -6,24 +6,24 @@ import 'package:yalla/features/user/plane/flight/detail_flight_screen.dart';
 class OrderFlightCard extends StatelessWidget {
   const OrderFlightCard({super.key});
 
-  void _navigateToDetail(BuildContext context) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 300),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const DetailFlightScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          var curvedAnimation = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOut,
-          );
-          return FadeTransition(opacity: curvedAnimation, child: child);
-        },
-      ),
-    );
-  }
+  // void _navigateToDetail(BuildContext context) {
+  //   Navigator.push(
+  //     context,
+  //     PageRouteBuilder(
+  //       transitionDuration: const Duration(milliseconds: 300),
+  //       reverseTransitionDuration: const Duration(milliseconds: 300),
+  //       pageBuilder: (context, animation, secondaryAnimation) =>
+  //           const DetailFlightScreen(),
+  //       transitionsBuilder: (context, animation, secondaryAnimation, child) {
+  //         var curvedAnimation = CurvedAnimation(
+  //           parent: animation,
+  //           curve: Curves.easeOut,
+  //         );
+  //         return FadeTransition(opacity: curvedAnimation, child: child);
+  //       },
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class OrderFlightCard extends StatelessWidget {
     const Color textGrey = Color(0xFF6B7280);
 
     return GestureDetector(
-      onTap: () => _navigateToDetail(context),
+      // onTap: () => _navigateToDetail(context),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         clipBehavior: Clip.antiAlias,

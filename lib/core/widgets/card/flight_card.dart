@@ -17,7 +17,7 @@ class FlightOptionCard extends StatelessWidget {
   });
 
   void _navigateToDetail(BuildContext context) {
-    if (flight == null) return;
+    if (flight == null) return; // Pastikan data tidak kosong
 
     Navigator.push(
       context,
@@ -25,7 +25,7 @@ class FlightOptionCard extends StatelessWidget {
         transitionDuration: const Duration(milliseconds: 300),
         reverseTransitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (context, animation, secondaryAnimation) =>
-            const DetailFlightScreen(),
+            DetailFlightScreen(flight: flight!),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           var curvedAnimation = CurvedAnimation(
             parent: animation,
@@ -186,7 +186,7 @@ class FlightOptionCard extends StatelessWidget {
                             ),
                             child: ClipOval(
                               child: Image.asset(
-                                'assets/images/logo_flydeal.png', 
+                                'assets/images/logo_flydeal.png',
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -255,7 +255,7 @@ class FlightOptionCard extends StatelessWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  depTime, 
+                                  depTime,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
@@ -279,7 +279,7 @@ class FlightOptionCard extends StatelessWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  duration, 
+                                  duration,
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: subTextColor,
@@ -335,7 +335,7 @@ class FlightOptionCard extends StatelessWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  arrTime, 
+                                  arrTime,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
@@ -386,7 +386,7 @@ class FlightOptionCard extends StatelessWidget {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: priceText, 
+                              text: priceText,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
