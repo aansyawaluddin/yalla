@@ -17,7 +17,7 @@ class FlightOptionCard extends StatelessWidget {
   });
 
   void _navigateToDetail(BuildContext context) {
-    if (flight == null) return; // Pastikan data tidak kosong
+    if (flight == null) return;
 
     Navigator.push(
       context,
@@ -197,7 +197,7 @@ class FlightOptionCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  flightNo, // Menggunakan Flight No dinamis
+                                  "Flydeal Air $flightNo",
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
@@ -264,7 +264,7 @@ class FlightOptionCard extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  originCode, // Rute dinamis
+                                  originCode, 
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,

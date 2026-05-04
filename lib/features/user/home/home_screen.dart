@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
+import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/animated/animatedSearchBar.dart';
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().fetchUserProfile();
       context.read<FlightProvider>().fetchFlights();
+      context.read<TravelProvider>().fetchTravels();
     });
   }
 
@@ -37,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final flightProvider = context.watch<FlightProvider>();
+    final travelProvider = context.watch<TravelProvider>();
     final displayFirstName = authProvider.firstName.isNotEmpty
         ? authProvider.firstName
         : "Memuat...";
@@ -323,43 +326,70 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    clipBehavior: Clip.none,
-                    child: Row(
-                      children: const [
-                        TravelCard(
-                          title: "CMA Tour &\nTravel",
-                          rating: 4.9,
-                          reviews: "2.4k",
-                          badgeText: "Terverifikasi",
-                          badgeColor: Color(0xFF0099FF),
-                          badgeIcon: Icons.verified,
-                          imagePath: 'assets/images/kaabah.jpeg',
+                  Consumer<TravelProvider>(
+                    builder: (context, travelProvider, child) {
+                      if (travelProvider.isLoading) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF005C99),
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (travelProvider.errorMessage.isNotEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            travelProvider.errorMessage,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        );
+                      }
+
+                      if (travelProvider.travels.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            "Belum ada mitra travel tersedia.",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        );
+                      }
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        clipBehavior: Clip.none,
+                        child: Row(
+                          children: travelProvider.travels.map((travel) {
+                            final isTopRated =
+                                travel.averageScore >= 4.5 &&
+                                travel.totalRatings > 0;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: TravelCard(
+                                title: travel.fullName,
+                                rating: travel.averageScore, // Rating dari API
+                                reviews: "${travel.totalRatings}",
+                                badgeText: isTopRated
+                                    ? "Top Rated"
+                                    : "Terverifikasi",
+                                badgeColor: isTopRated
+                                    ? const Color(0xFFFF8C00)
+                                    : const Color(0xFF0099FF),
+                                badgeIcon: isTopRated
+                                    ? Icons.emoji_events
+                                    : Icons.verified,
+                                imagePath: 'assets/images/kaabah.jpeg',
+                              ),
+                            );
+                          }).toList(),
                         ),
-                        SizedBox(width: 16),
-                        TravelCard(
-                          title: "Rabbani Tour",
-                          rating: 4.9,
-                          reviews: "2.4k",
-                          badgeText: "Top Rated",
-                          badgeColor: Color(0xFFFF8C00),
-                          badgeIcon: Icons.emoji_events,
-                          imagePath: 'assets/images/kaabah.jpeg',
-                        ),
-                        SizedBox(width: 16),
-                        TravelCard(
-                          title: "Rabbani Tour",
-                          rating: 4.9,
-                          reviews: "2.4k",
-                          badgeText: "Top Rated",
-                          badgeColor: Color(0xFFFF8C00),
-                          badgeIcon: Icons.emoji_events,
-                          imagePath: 'assets/images/kaabah.jpeg',
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 20),
