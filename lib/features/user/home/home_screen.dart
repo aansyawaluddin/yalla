@@ -11,6 +11,7 @@ import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/promo_card.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
+import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/features/user/home/paket/paket_umrah_screen.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
 import 'package:yalla/features/user/plane/home_plane_user_screen.dart';
@@ -38,12 +39,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final flightProvider = context.watch<FlightProvider>();
-    final travelProvider = context.watch<TravelProvider>();
     final displayFirstName = authProvider.firstName.isNotEmpty
         ? authProvider.firstName
         : "Memuat...";
-    final nearestFlight = flightProvider.nearestFlight;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -341,10 +339,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       if (travelProvider.errorMessage.isNotEmpty) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Text(
-                            travelProvider.errorMessage,
-                            style: const TextStyle(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: ErrorStateWidget(
+                            errorMessage: travelProvider.errorMessage,
+                            onRetry: () =>
+                                context.read<TravelProvider>().fetchTravels(),
                           ),
                         );
                       }
@@ -372,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.only(right: 16),
                               child: TravelCard(
                                 title: travel.fullName,
-                                rating: travel.averageScore, // Rating dari API
+                                rating: travel.averageScore,
                                 reviews: "${travel.totalRatings}",
                                 badgeText: isTopRated
                                     ? "Top Rated"
@@ -391,6 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     },
                   ),
+                  const SizedBox(height: 20),
 
                   const SizedBox(height: 20),
 
@@ -400,14 +400,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     showAction: false,
                   ),
                   const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: FlightOptionCard(
-                      flight: nearestFlight,
-                      isLoading: flightProvider.isLoading,
-                    ),
-                  ),
 
+                  Consumer<FlightProvider>(
+                    builder: (context, flightProvider, child) {
+                      if (flightProvider.errorMessage.isNotEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: ErrorStateWidget(
+                            errorMessage: flightProvider.errorMessage,
+                            onRetry: () =>
+                                context.read<FlightProvider>().fetchFlights(),
+                          ),
+                        );
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: FlightOptionCard(
+                          flight: flightProvider.nearestFlight,
+                          isLoading: flightProvider.isLoading,
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 20),
 
                   _buildSectionHeader(
