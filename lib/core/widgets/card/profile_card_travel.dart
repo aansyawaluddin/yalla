@@ -106,7 +106,7 @@ class ProfileCardTravel extends StatelessWidget {
                             ),
                             pageBuilder:
                                 (context, animation, secondaryAnimation) =>
-                                    const TravelProfileScreen(), // Halaman Tujuan
+                                    const TravelProfileScreen(), 
                             transitionsBuilder:
                                 (
                                   context,
@@ -114,13 +114,11 @@ class ProfileCardTravel extends StatelessWidget {
                                   secondaryAnimation,
                                   child,
                                 ) {
-                                  // Menggunakan curve Ease Out
                                   var curvedAnimation = CurvedAnimation(
                                     parent: animation,
                                     curve: Curves.easeOut,
                                   );
 
-                                  // Efek fade transition untuk menyerupai Smart Animate
                                   return FadeTransition(
                                     opacity: curvedAnimation,
                                     child: child,

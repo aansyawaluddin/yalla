@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yalla/core/services/flight_service.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 
 class AdminFlightFormScreen extends StatefulWidget {
   const AdminFlightFormScreen({super.key});
@@ -36,14 +37,17 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
   Future<void> _simpanData() async {
     if (!isManual) {
       if (_selectedFilePath == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Silakan pilih file Excel terlebih dahulu!"),
-          ),
+        CustomSnackBar.showError(
+          context,
+          title: "File Belum Dipilih",
+          message:
+              "Silakan pilih dokumen Excel jadwal penerbangan terlebih dahulu!",
         );
         return;
       }
+
       setState(() => isLoading = true);
+
       try {
         final prefs = await SharedPreferences.getInstance();
         final token = prefs.getString('auth_token');
@@ -51,6 +55,7 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
         if (token == null || token.isEmpty) {
           throw Exception("Sesi telah habis. Silakan login kembali.");
         }
+
         FlightService flightService = FlightService();
         bool isSuccess = await flightService.uploadFlightExcel(
           _selectedFilePath!,
@@ -58,24 +63,36 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
         );
 
         if (isSuccess) {
-          _showSuccessPopup();
+          if (!mounted) return;
+          CustomSnackBar.showSuccess(
+            context,
+            title: "Jadwal Penerbangan Berhasil Ditambahkan",
+            message:
+                "Jadwal penerbangan telah berhasil disimpan dan kini tersedia dalam daftar.",
+          );
+
           setState(() {
             _selectedFileName = null;
             _selectedFilePath = null;
           });
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Gagal mengunggah jadwal penerbangan."),
-            ),
+          if (!mounted) return;
+          CustomSnackBar.showError(
+            context,
+            title: "Gagal Mengunggah",
+            message:
+                "Terjadi kesalahan saat memproses file Excel. Silakan coba lagi.",
           );
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll("Exception: ", ""))),
+        if (!mounted) return;
+        CustomSnackBar.showError(
+          context,
+          title: "Terjadi Kesalahan",
+          message: e.toString().replaceAll("Exception: ", ""),
         );
       } finally {
-        setState(() => isLoading = false);
+        if (mounted) setState(() => isLoading = false);
       }
     } else {
       print("Proses form manual");
@@ -453,79 +470,6 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
                   textAlign: TextAlign.center,
                 ),
               ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showSuccessPopup() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        padding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
-        duration: const Duration(seconds: 3),
-        content: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(50), // Bentuk oval/kapsul
-            border: Border.all(color: Colors.grey.shade200, width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Ikon Centang Hijau
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF009000),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 24,
-                  weight: 700,
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Teks (Judul & Subjudul)
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Jadwal Penerbangan Berhasil Ditambahkan",
-                      style: TextStyle(
-                        color: Color(0xFF009000),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "Jadwal penerbangan telah berhasil disimpan dan kini tersedia dalam daftar penerbangan.",
-                      style: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 10,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),

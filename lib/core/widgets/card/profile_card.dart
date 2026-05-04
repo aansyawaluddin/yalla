@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/auth_provider.dart'; // Sesuaikan path jika berbeda
 
 class ProfileCard extends StatelessWidget {
   const ProfileCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final userData = authProvider.userData;
+    final profile = userData?.profile;
+
+    final String firstName = profile?.firstName ?? 'Memuat...';
+    final String lastName = profile?.lastName ?? '';
+    final String email = userData?.email ?? 'Memuat email...';
+
+    final String fullName = lastName.isNotEmpty
+        ? "$firstName $lastName"
+        : firstName;
+
     return Container(
       height: 110,
       decoration: BoxDecoration(
@@ -49,20 +63,24 @@ class ProfileCard extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          "Muhammad Syahdam\nPatriotik",
-                          style: TextStyle(
+                          fullName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             height: 1.2,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          "syahdam@gmail.com",
-                          style: TextStyle(
+                          email,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
