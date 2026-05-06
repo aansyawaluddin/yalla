@@ -615,6 +615,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: AppTypography.regular12.copyWith(
                     color: AppColors.lightBlue,
                   ),
+                  
                 ),
               ),
             ),

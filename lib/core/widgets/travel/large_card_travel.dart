@@ -30,17 +30,17 @@ class LargeTravelCard extends StatelessWidget {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0A4D3C), // Warna hijau gelap CMA
+                  color: const Color(0xFF0A4D3C), 
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Center(
                   child: Text(
                     "C",
                     style: TextStyle(
-                      color: Color(0xFFD4AF37), // Warna emas
+                      color: Color(0xFFD4AF37), 
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Serif', // Gunakan font serif jika ada
+                      fontFamily: 'Serif',
                     ),
                   ),
                 ),
@@ -75,7 +75,6 @@ class LargeTravelCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Rating & Ulasan
           Row(
             children: const [
               Icon(Icons.star, color: Color(0xFFFFC107), size: 16),
