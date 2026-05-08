@@ -65,23 +65,11 @@ class MyUmrahPackageScreen extends StatelessWidget {
         separatorBuilder: (context, index) => const SizedBox(height: 24),
         itemBuilder: (context, index) {
           final data = packages[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BatchDetailScreen(
-                    batchName:
-                        data['batch'], // Mengirim nama batch ke halaman detail
-                  ),
-                ),
-              );
-            },
-            child: _buildPackageCard(
-              batch: data['batch'],
-              date: data['date'],
-              jamaahCount: data['jamaah'],
-            ),
+          return _buildPackageCard(
+            context: context, 
+            batch: data['batch'],
+            date: data['date'],
+            jamaahCount: data['jamaah'],
           );
         },
       ),
@@ -89,6 +77,7 @@ class MyUmrahPackageScreen extends StatelessWidget {
   }
 
   Widget _buildPackageCard({
+    required BuildContext context, // Tambahkan context di parameter
     required String batch,
     required String date,
     required int jamaahCount,
@@ -114,7 +103,6 @@ class MyUmrahPackageScreen extends StatelessWidget {
               height: 120,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  // Sesuaikan dengan asset gambar Ka'bah Anda
                   image: AssetImage('assets/images/kaabah.jpeg'),
                   fit: BoxFit.cover,
                 ),
@@ -210,7 +198,14 @@ class MyUmrahPackageScreen extends StatelessWidget {
                   height: 36,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Aksi lihat detail jamaah
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BatchDetailScreen(
+                            batchName: batch,
+                          ),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0099FF),

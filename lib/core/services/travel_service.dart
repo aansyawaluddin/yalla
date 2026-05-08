@@ -48,4 +48,29 @@ class TravelService {
       throw Exception('Gagal memuat detail travel (${response.statusCode}).');
     }
   }
+
+  Future<bool> updateTravelDetail({
+    required String userId,
+    required String token,
+    required Map<String, dynamic> body,
+  }) async {
+    final url = Uri.parse('$_baseUrl/travel/$userId/details');
+
+    final response = await http.patch(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      final errorData = jsonDecode(response.body);
+      throw Exception(errorData['message'] ?? 'Gagal memperbarui profil.');
+    }
+  }
 }

@@ -56,4 +56,35 @@ class TravelProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> updateTravelDetail(
+    String userId,
+    Map<String, dynamic> body,
+  ) async {
+    _isDetailLoading = true;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      final success = await _travelService.updateTravelDetail(
+        userId: userId,
+        token: token,
+        body: body,
+      );
+
+      if (success) {
+        await getTravelDetail(userId);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll("Exception: ", "");
+      return false;
+    } finally {
+      _isDetailLoading = false;
+      notifyListeners();
+    }
+  }
 }

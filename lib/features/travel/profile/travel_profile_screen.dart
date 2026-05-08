@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/widgets/eror/error_state_widget.dart';
+import 'package:yalla/features/travel/profile/edit_travel_profile_screen.dart';
 
 class TravelProfileScreen extends StatefulWidget {
   final String travelId;
@@ -79,7 +80,28 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
             padding: const EdgeInsets.only(right: 24.0),
             child: GestureDetector(
               onTap: () {
-                // TODO: Aksi Edit Profil
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    transitionDuration: const Duration(milliseconds: 300),
+                    reverseTransitionDuration: const Duration(
+                      milliseconds: 300,
+                    ),
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const EditTravelProfileScreen(),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                          var curvedAnimation = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOut,
+                          );
+                          return FadeTransition(
+                            opacity: curvedAnimation,
+                            child: child,
+                          );
+                        },
+                  ),
+                );
               },
               child: Container(
                 width: 32,
