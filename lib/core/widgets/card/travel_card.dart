@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yalla/features/user/home/travel/travel_profile_screen.dart';
 
 class TravelCard extends StatelessWidget {
+  final String travelId;
   final String title;
   final double rating;
   final String reviews;
@@ -12,6 +13,7 @@ class TravelCard extends StatelessWidget {
 
   const TravelCard({
     super.key,
+    required this.travelId,
     required this.title,
     required this.rating,
     required this.reviews,
@@ -31,7 +33,7 @@ class TravelCard extends StatelessWidget {
             transitionDuration: const Duration(milliseconds: 300),
             reverseTransitionDuration: const Duration(milliseconds: 300),
             pageBuilder: (context, animation, secondaryAnimation) =>
-                const TravelProfileScreen(),
+                UserTravelProfileScreen(travelId: travelId),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
                   var curvedAnimation = CurvedAnimation(

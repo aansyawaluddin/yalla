@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:yalla/core/models/travel_detail_model.dart';
 import 'package:yalla/core/models/travel_model.dart';
+import 'package:yalla/core/models/travel_profile_model.dart'; 
 
 class TravelService {
   final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
@@ -26,6 +27,26 @@ class TravelService {
       throw Exception(
         'Gagal memuat daftar travel. Status: ${response.statusCode}',
       );
+    }
+  }
+
+  Future<TravelProfileModel> fetchTravelProfileById(
+    String id,
+    String token,
+  ) async {
+    final url = Uri.parse('$_baseUrl/travels/$id');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return TravelProfileModel.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 401) {
+      throw Exception('Sesi login telah habis. Silakan login ulang.');
+    } else {
+      throw Exception('Gagal memuat profil travel (${response.statusCode}).');
     }
   }
 

@@ -1,18 +1,42 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/travel_provider.dart';
+import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 
-class TravelProfileScreen extends StatefulWidget {
-  const TravelProfileScreen({super.key});
+class UserTravelProfileScreen extends StatefulWidget {
+  final String travelId;
+
+  const UserTravelProfileScreen({super.key, required this.travelId});
 
   @override
-  State<TravelProfileScreen> createState() => _TravelProfileScreenState();
+  State<UserTravelProfileScreen> createState() =>
+      _UserTravelProfileScreenState();
 }
 
-class _TravelProfileScreenState extends State<TravelProfileScreen> {
+class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
   int _selectedTabIndex = 0;
   final List<String> _tabs = ["Tentang", "Paket", "Galeri", "Ulasan"];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.travelId.isNotEmpty) {
+        context.read<TravelProvider>().getTravelProfileById(widget.travelId);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final travelProvider = context.watch<TravelProvider>();
+
+    final profileData = travelProvider.selectedTravelProfile;
+    final bool isLoading = travelProvider.isProfileLoading;
+
+    final String companyName = profileData?.companyName ?? "Memuat...";
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -20,21 +44,25 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
         surfaceTintColor: Colors.white,
         scrolledUnderElevation: 0,
         elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(4),
+        centerTitle: true,
+        leadingWidth: 62,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 24.0, top: 8, bottom: 8),
+          child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: const Icon(
-              Icons.arrow_back,
-              color: Color(0xFF005C99),
-              size: 20,
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Color(0xFF0084FF),
+                size: 18,
+              ),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
-          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Profil Travel",
@@ -45,119 +73,138 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
           ),
         ),
       ),
-
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            height: 180,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/kaabah.jpeg'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.white],
-                  stops: [0.6, 1.0],
-                ),
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0084FF)),
+            )
+          : travelProvider.errorMessage.isNotEmpty && profileData == null
+          ? ErrorStateWidget(
+              errorMessage: travelProvider.errorMessage,
+              onRetry: () => context
+                  .read<TravelProvider>()
+                  .getTravelProfileById(widget.travelId),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 70,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/logo_flydeal.png'),
+                  width: double.infinity,
+                  height: 180,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/kaabah.jpeg'),
                       fit: BoxFit.cover,
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: const [
-                          Text(
-                            "CMA Tour & Travel",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          SizedBox(width: 6),
-                          Icon(
-                            Icons.verified,
-                            color: Color(0xFF0084FF),
-                            size: 18,
-                          ),
-                        ],
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.white],
+                        stops: [0.6, 1.0],
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        "Official Umrah provider",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 70,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                          image: const DecorationImage(
+                            image: AssetImage('assets/images/logo_flydeal.png'),
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        "Beroperasi sejak 2019",
-                        style: TextStyle(fontSize: 11, color: Colors.black54),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    companyName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.verified,
+                                  color: Color(0xFF0084FF),
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Izin: ${profileData?.licenseNumber ?? '-'}",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Beroperasi sejak ${profileData?.operatingYear ?? '-'}",
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 24),
+                        _buildCustomTabBar(),
+
+                        if (_selectedTabIndex == 0)
+                          _buildTentangTab(profileData?.aboutText, companyName),
+
+                        if (_selectedTabIndex == 1) _buildPaketTab(),
+                        if (_selectedTabIndex == 2) _buildGaleriTab(),
+                        if (_selectedTabIndex == 3) _buildUlasanTab(),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 24),
-
-                  _buildCustomTabBar(),
-
-                  // 4. Konten Tab
-                  if (_selectedTabIndex == 0) _buildTentangTab(),
-
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -216,29 +263,31 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
     );
   }
 
-  Widget _buildTentangTab() {
+  Widget _buildTentangTab(String? aboutText, String companyName) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Tentang CMA Tour & Travel",
-            style: TextStyle(
+          Text(
+            "Tentang $companyName",
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Kami adalah penyelenggara perjalanan ibadah umrah yang berkomitmen memberikan pelayanan terbaik dengan prinsip amanah, profesional, dan transparan. Didukung oleh tim berpengalaman serta mitra resmi di Arab Saudi, kami memastikan setiap proses perjalanan — mulai dari pendaftaran, pengurusan dokumen, hingga kepulangan — berjalan lancar dan nyaman.\n\nKepercayaan jamaah adalah prioritas utama kami, sehingga kami terus menjaga kualitas layanan dan pendampingan ibadah agar setiap perjalanan menjadi pengalaman spiritual yang berkesan.",
+          Text(
+            aboutText ?? "Belum ada deskripsi profil untuk travel ini.",
             textAlign: TextAlign.justify,
-            style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.5),
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+              height: 1.5,
+            ),
           ),
-
           const SizedBox(height: 32),
-
           _buildInfoCard(
             icon: Icons.security_outlined,
             title: "Penyedia Terpercaya",
@@ -313,6 +362,530 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPaketTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Column(
+        children: [
+          _buildPaketCard(
+            imageUrl: 'assets/images/kaabah.jpeg',
+            title: "Umrah Premium Gold",
+            subtitle: "9 Hari - Hotel bintang-5 di Mekkah - Sarapan",
+            isBestSeller: true,
+            features: ["Penerbangan Langsung", "Air Zamzam", "Gratis Visa"],
+            originalPrice: "IDR 11.200.000",
+            discountPrice: "IDR 8.599.000",
+          ),
+          const SizedBox(height: 24),
+          _buildPaketCard(
+            imageUrl: 'assets/images/kaabah.jpeg',
+            title: "Umrah Reguler",
+            subtitle: "12 Hari - Hotel bintang-4 - Full Board",
+            isBestSeller: false,
+            features: ["Penerbangan Transit", "Air Zamzam"],
+            originalPrice: "IDR 25.000.000",
+            discountPrice: "IDR 22.500.000",
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaketCard({
+    required String imageUrl,
+    required String title,
+    required String subtitle,
+    required bool isBestSeller,
+    required List<String> features,
+    required String originalPrice,
+    required String discountPrice,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Image.asset(
+              imageUrl,
+              height: 160,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    if (isBestSeller)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0099FF),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.verified, color: Colors.white, size: 10),
+                            SizedBox(width: 4),
+                            Text(
+                              "Best Seller",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                ),
+
+                const SizedBox(height: 12),
+
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: features.map((feature) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F8FF),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        feature,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0099FF),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 20),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Harga Coret
+                        Text(
+                          originalPrice,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.red.shade400,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        // Harga Diskon + /pax
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              discountPrice,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const Text(
+                              "/pax",
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(
+                      height: 36,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Aksi lihat tawaran
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(
+                            0xFF0099FF,
+                          ), // Biru tombol
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        child: const Text(
+                          "Lihat Tawaran",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGaleriTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Column(
+        children: [
+          _buildGalleryImage(
+            'assets/images/kaabah.jpeg',
+            height: 140,
+            width: double.infinity,
+          ),
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildGalleryImage(
+                  'assets/images/kaabah.jpeg',
+                  height: 120,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildGalleryImage(
+                  'assets/images/kaabah.jpeg',
+                  height: 120,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          GestureDetector(
+            onTap: () {},
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildGalleryImage(
+                  'assets/images/kaabah.jpeg',
+                  height: 140,
+                  width: double.infinity,
+                ),
+
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    height: 140,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3), // Lapisan gelap
+                    ),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 4.0,
+                        sigmaY: 4.0,
+                      ), // Efek blur
+                      child: Container(color: Colors.transparent),
+                    ),
+                  ),
+                ),
+
+                // Teks Angka
+                const Text(
+                  "+24",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGalleryImage(
+    String imagePath, {
+    required double height,
+    double? width,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.asset(
+        imagePath,
+        height: height,
+        width: width,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  Widget _buildUlasanTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Column(
+                children: [
+                  const Text(
+                    "4.9",
+                    style: TextStyle(
+                      fontSize: 56,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      height: 1.0,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: List.generate(
+                      5,
+                      (index) => const Icon(
+                        Icons.star,
+                        color: Color(0xFFFFB800),
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "2.4k Ulasan",
+                    style: TextStyle(fontSize: 12, color: Colors.black87),
+                  ),
+                ],
+              ),
+
+              const SizedBox(width: 24),
+
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildRatingBar(5, 0.90, "90%"),
+                    _buildRatingBar(4, 0.35, "35%"),
+                    _buildRatingBar(3, 0.29, "29%"),
+                    _buildRatingBar(2, 0.21, "21%"),
+                    _buildRatingBar(1, 0.08, "8%"),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 40),
+
+          _buildReviewItem(
+            name: "Zain Al Husein",
+            timeAndPackage: "2 Minggu Lalu - Ramadhan Special Umrah",
+            rating: 5,
+            reviewText:
+                "Pelayanan dari travel ini sangat memuaskan. Timnya responsif dan membantu selama proses pendaftaran hingga keberangkatan. Fasilitas hotel dan penerbangan juga sesuai dengan yang dijanjikan.",
+            avatarPath: 'assets/images/profile.png',
+          ),
+
+          _buildReviewItem(
+            name: "Zain Al Husein",
+            timeAndPackage: "2 Minggu Lalu - Ramadhan Special Umrah",
+            rating: 5,
+            reviewText:
+                "Pelayanan dari travel ini sangat memuaskan. Timnya responsif dan membantu selama proses pendaftaran hingga keberangkatan. Fasilitas hotel dan penerbangan juga sesuai dengan yang dijanjikan.",
+            avatarPath: 'assets/images/profile.png',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRatingBar(int star, double value, String percentage) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          const Icon(Icons.star, color: Color(0xFFFFB800), size: 10),
+          const SizedBox(width: 4),
+          Text(
+            star.toString(),
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: LinearProgressIndicator(
+              value: value,
+              backgroundColor: const Color(0xFFE5F0FF),
+              color: const Color(0xFF005C99),
+              minHeight: 4,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 28,
+            child: Text(
+              percentage,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewItem({
+    required String name,
+    required String timeAndPackage,
+    required int rating,
+    required String reviewText,
+    required String avatarPath,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            // Foto Profil Reviewer
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                  image: AssetImage(avatarPath),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    timeAndPackage,
+                    style: const TextStyle(fontSize: 10, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: List.generate(
+                      5,
+                      (index) => Icon(
+                        index < rating ? Icons.star : Icons.star_border,
+                        color: const Color(0xFFFFB800),
+                        size: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Teks Ulasan dengan tanda kutip
+        Text(
+          "\"$reviewText\"",
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.black54,
+            height: 1.5,
+          ),
+          textAlign: TextAlign.justify,
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 }

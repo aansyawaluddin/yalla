@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; 
+import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
+import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
+import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/core/widgets/modals/calendar_bottom_sheet.dart';
 import 'package:yalla/core/widgets/modals/passenger_class_bottom_sheet.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
@@ -357,43 +359,72 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    clipBehavior: Clip.none,
-                    child: Row(
-                      children: const [
-                        TravelCard(
-                          title: "CMA Tour &\nTravel",
-                          rating: 4.9,
-                          reviews: "2.4k",
-                          badgeText: "Terverifikasi",
-                          badgeColor: Color(0xFF0099FF),
-                          badgeIcon: Icons.verified,
-                          imagePath: 'assets/images/kaabah.jpeg',
+                  Consumer<TravelProvider>(
+                    builder: (context, travelProvider, child) {
+                      if (travelProvider.isLoading) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF005C99),
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (travelProvider.errorMessage.isNotEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: ErrorStateWidget(
+                            errorMessage: travelProvider.errorMessage,
+                            onRetry: () =>
+                                context.read<TravelProvider>().fetchTravels(),
+                          ),
+                        );
+                      }
+
+                      if (travelProvider.travels.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            "Belum ada mitra travel tersedia.",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        );
+                      }
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        clipBehavior: Clip.none,
+                        child: Row(
+                          children: travelProvider.travels.map((travel) {
+                            final isTopRated =
+                                travel.averageScore >= 4.5 &&
+                                travel.totalRatings > 0;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: TravelCard(
+                                travelId: travel.userID,
+                                title: travel.fullName,
+                                rating: travel.averageScore,
+                                reviews: "${travel.totalRatings}",
+                                badgeText: isTopRated
+                                    ? "Top Rated"
+                                    : "Terverifikasi",
+                                badgeColor: isTopRated
+                                    ? const Color(0xFFFF8C00)
+                                    : const Color(0xFF0099FF),
+                                badgeIcon: isTopRated
+                                    ? Icons.emoji_events
+                                    : Icons.verified,
+                                imagePath: 'assets/images/kaabah.jpeg',
+                              ),
+                            );
+                          }).toList(),
                         ),
-                        SizedBox(width: 16),
-                        TravelCard(
-                          title: "Rabbani Tour",
-                          rating: 4.9,
-                          reviews: "2.4k",
-                          badgeText: "Top Rated",
-                          badgeColor: Color(0xFFFF8C00),
-                          badgeIcon: Icons.emoji_events,
-                          imagePath: 'assets/images/kaabah.jpeg',
-                        ),
-                        SizedBox(width: 16),
-                        TravelCard(
-                          title: "Rabbani Tour",
-                          rating: 4.9,
-                          reviews: "2.4k",
-                          badgeText: "Top Rated",
-                          badgeColor: Color(0xFFFF8C00),
-                          badgeIcon: Icons.emoji_events,
-                          imagePath: 'assets/images/kaabah.jpeg',
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -409,9 +440,7 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(
-          24,
-        ), // Luar sedikit lebih besar agar proporsional
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
@@ -422,31 +451,23 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  // 1. Efek Gradien Menyudut (Linear) sesuai Figma
                   gradient: isOneWay
                       ? const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFD4EEFF), // 0%
-                            Colors.white, // 100% FFFFFF
-                          ],
+                          colors: [Color(0xFFD4EEFF), Colors.white],
                         )
-                      : null, // Jika tidak aktif, tidak ada background
-                  // 2. Corner Radius 20 sesuai Figma
+                      : null,
                   borderRadius: BorderRadius.circular(20),
-                  // 3. Drop Shadow sesuai Figma
                   boxShadow: isOneWay
                       ? [
                           BoxShadow(
-                            color: Colors.black.withOpacity(
-                              0.08,
-                            ), // Efek Drop Shadow halus
+                            color: Colors.black.withOpacity(0.08),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                         ]
-                      : [], // Jika tidak aktif, tidak ada bayangan
+                      : [],
                 ),
                 child: Center(
                   child: Text(

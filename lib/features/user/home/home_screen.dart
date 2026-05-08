@@ -372,6 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(right: 16),
                               child: TravelCard(
+                                travelId: travel.userID,
                                 title: travel.fullName,
                                 rating: travel.averageScore,
                                 reviews: "${travel.totalRatings}",
@@ -500,11 +501,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: PromoCard(
                                 title: paket.packageName,
                                 price: formattedPrice,
-                                tag: paket
-                                    .batchName, 
-                                tagColor: const Color(
-                                  0xFFFFB300,
-                                ),
+                                tag: paket.batchName,
+                                tagColor: const Color(0xFFFFB300),
                                 imagePath: 'assets/images/kaabah.jpeg',
                               ),
                             );
