@@ -62,6 +62,30 @@ class FlightOptionCard extends StatelessWidget {
     return "IDR $res";
   }
 
+  String _formatShortDate(String? isoDate) {
+    if (isoDate == null) return "-";
+    try {
+      final date = DateTime.parse(isoDate);
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+      return "${date.day} ${months[date.month - 1]}";
+    } catch (e) {
+      return "-";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final Color textColor = isHighlighted
@@ -112,6 +136,10 @@ class FlightOptionCard extends StatelessWidget {
     final String destCode = isOutbound ? "JED" : "UPG";
     final String depTime = DateFormatter.formatTime(flight!.departureTime);
     final String arrTime = DateFormatter.formatTime(flight!.arrivalTime);
+
+    final String depDate = _formatShortDate(flight!.departureTime);
+    final String arrDate = _formatShortDate(flight!.arrivalTime);
+
     final String flightNo = flight!.flightNo ?? "Unknown";
     final String duration = _calculateDuration(
       flight!.departureTime,
@@ -262,9 +290,18 @@ class FlightOptionCard extends StatelessWidget {
                                     color: textColor,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Text(
-                                  originCode, 
+                                  depDate,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: subTextColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  originCode,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
@@ -342,9 +379,18 @@ class FlightOptionCard extends StatelessWidget {
                                     color: textColor,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Text(
-                                  destCode, // Rute dinamis
+                                  arrDate,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: subTextColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  destCode,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
