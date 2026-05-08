@@ -1,8 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/package_provider.dart'; 
 import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/widgets/eror/error_state_widget.dart';
+import 'package:yalla/features/user/home/paket/detail_paket_screen.dart'; 
 
 class UserTravelProfileScreen extends StatefulWidget {
   final String travelId;
@@ -24,17 +26,30 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.travelId.isNotEmpty) {
         context.read<TravelProvider>().getTravelProfileById(widget.travelId);
+        context.read<PackageProvider>().getPackages(widget.travelId);
       }
     });
+  }
+
+  String _formatPrice(int price) {
+    String priceStr = price.toString();
+    String result = '';
+    int count = 0;
+    for (int i = priceStr.length - 1; i >= 0; i--) {
+      result = priceStr[i] + result;
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        result = '.$result';
+      }
+    }
+    return result;
   }
 
   @override
   Widget build(BuildContext context) {
     final travelProvider = context.watch<TravelProvider>();
-
     final profileData = travelProvider.selectedTravelProfile;
     final bool isLoading = travelProvider.isProfileLoading;
-
     final String companyName = profileData?.companyName ?? "Memuat...";
 
     return Scaffold(
@@ -195,9 +210,10 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                         if (_selectedTabIndex == 0)
                           _buildTentangTab(profileData?.aboutText, companyName),
 
-                        if (_selectedTabIndex == 1) _buildPaketTab(),
+                        if (_selectedTabIndex == 1) _buildPaketTab(), 
                         if (_selectedTabIndex == 2) _buildGaleriTab(),
                         if (_selectedTabIndex == 3) _buildUlasanTab(),
+                        
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -366,35 +382,67 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
   }
 
   Widget _buildPaketTab() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      child: Column(
-        children: [
-          _buildPaketCard(
-            imageUrl: 'assets/images/kaabah.jpeg',
-            title: "Umrah Premium Gold",
-            subtitle: "9 Hari - Hotel bintang-5 di Mekkah - Sarapan",
-            isBestSeller: true,
-            features: ["Penerbangan Langsung", "Air Zamzam", "Gratis Visa"],
-            originalPrice: "IDR 11.200.000",
-            discountPrice: "IDR 8.599.000",
+    return Consumer<PackageProvider>(
+      builder: (context, packageProvider, child) {
+        if (packageProvider.isFetching) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(
+              child: CircularProgressIndicator(color: Color(0xFF0084FF)),
+            ),
+          );
+        }
+
+        if (packageProvider.errorMessage.isNotEmpty && packageProvider.packages.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: ErrorStateWidget(
+              errorMessage: packageProvider.errorMessage,
+              onRetry: () => packageProvider.getPackages(widget.travelId),
+            ),
+          );
+        }
+
+        if (packageProvider.packages.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(40.0),
+            child: Center(
+              child: Text(
+                "Travel ini belum memiliki penawaran paket.",
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Column(
+            children: packageProvider.packages.map((paket) {
+              final originalPrice = (paket.price * 1.1).toInt(); //
+              
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: _buildPaketCard(
+                  packageId: paket.id ?? '', 
+                  imageUrl: 'assets/images/kaabah.jpeg',
+                  title: paket.packageName,
+                  subtitle: "${paket.durationDays} Hari - Keberangkatan: ${paket.batchDate}",
+                  isBestSeller: true,
+                  features: ["Penerbangan Langsung", "Air Zamzam", "Gratis Visa"],
+                  originalPrice: "IDR ${_formatPrice(originalPrice)}",
+                  discountPrice: "IDR ${_formatPrice(paket.price)}",
+                ),
+              );
+            }).toList(),
           ),
-          const SizedBox(height: 24),
-          _buildPaketCard(
-            imageUrl: 'assets/images/kaabah.jpeg',
-            title: "Umrah Reguler",
-            subtitle: "12 Hari - Hotel bintang-4 - Full Board",
-            isBestSeller: false,
-            features: ["Penerbangan Transit", "Air Zamzam"],
-            originalPrice: "IDR 25.000.000",
-            discountPrice: "IDR 22.500.000",
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildPaketCard({
+    required String packageId,
     required String imageUrl,
     required String title,
     required String subtitle,
@@ -428,7 +476,6 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
               fit: BoxFit.cover,
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -476,16 +523,12 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                       ),
                   ],
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   subtitle,
                   style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
                 ),
-
                 const SizedBox(height: 12),
-
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -510,9 +553,7 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                     );
                   }).toList(),
                 ),
-
                 const SizedBox(height: 20),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -520,7 +561,6 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Harga Coret
                         Text(
                           originalPrice,
                           style: TextStyle(
@@ -529,7 +569,6 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                             decoration: TextDecoration.lineThrough,
                           ),
                         ),
-                        // Harga Diskon + /pax
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -553,17 +592,19 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                         ),
                       ],
                     ),
-
                     SizedBox(
                       height: 36,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Aksi lihat tawaran
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DetailPaketScreen(packageId: packageId),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(
-                            0xFF0099FF,
-                          ), // Biru tombol
+                          backgroundColor: const Color(0xFF0099FF),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
