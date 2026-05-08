@@ -11,6 +11,7 @@ class ProfileCardTravel extends StatelessWidget {
     final authProvider = context.watch<AuthProvider>();
     final userData = authProvider.userData;
     final profile = userData?.profile;
+    final String currentTravelId = userData?.userID ?? '';
     final String firstName = profile?.firstName ?? 'Memuat...';
     final String lastName = profile?.lastName ?? '';
     final String email = userData?.email ?? 'Memuat email...';
@@ -123,7 +124,9 @@ class ProfileCardTravel extends StatelessWidget {
                             ),
                             pageBuilder:
                                 (context, animation, secondaryAnimation) =>
-                                    const TravelProfileScreen(),
+                                    TravelProfileScreen(
+                                      travelId: currentTravelId,
+                                    ),
                             transitionsBuilder:
                                 (
                                   context,

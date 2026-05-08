@@ -27,6 +27,5 @@ class TravelModel {
     );
   }
 
-  // Helper untuk mendapatkan nama lengkap
   String get fullName => "$firstName $lastName".trim();
 }

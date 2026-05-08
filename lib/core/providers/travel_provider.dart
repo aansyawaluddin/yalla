@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'package:yalla/core/models/travel_detail_model.dart';
 import 'package:yalla/core/models/travel_model.dart';
 import 'package:yalla/core/services/travel_service.dart';
 
@@ -28,6 +29,30 @@ class TravelProvider extends ChangeNotifier {
       _errorMessage = e.toString().replaceAll("Exception: ", "");
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  TravelDetailModel? _travelDetail;
+  TravelDetailModel? get travelDetail => _travelDetail;
+
+  bool _isDetailLoading = false;
+  bool get isDetailLoading => _isDetailLoading;
+
+  Future<void> getTravelDetail(String userId) async {
+    _isDetailLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      _travelDetail = await _travelService.fetchTravelDetail(userId, token);
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll("Exception: ", "");
+    } finally {
+      _isDetailLoading = false;
       notifyListeners();
     }
   }

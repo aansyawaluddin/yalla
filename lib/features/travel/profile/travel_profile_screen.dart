@@ -1,8 +1,14 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
+import 'package:yalla/core/providers/travel_provider.dart';
+import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 
 class TravelProfileScreen extends StatefulWidget {
-  const TravelProfileScreen({super.key});
+  final String travelId;
+
+  const TravelProfileScreen({super.key, required this.travelId});
 
   @override
   State<TravelProfileScreen> createState() => _TravelProfileScreenState();
@@ -13,7 +19,26 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
   final List<String> _tabs = ["Tentang", "Paket", "Galeri", "Ulasan"];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.travelId.isNotEmpty) {
+        context.read<TravelProvider>().getTravelDetail(widget.travelId);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final travelProvider = context.watch<TravelProvider>();
+
+    final String companyName =
+        authProvider.userData?.profile?.firstName ?? "Memuat...";
+
+    final detail = travelProvider.travelDetail;
+    final bool isLoading = travelProvider.isDetailLoading;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -53,7 +78,9 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 24.0),
             child: GestureDetector(
-              onTap: () {},
+              onTap: () {
+                // TODO: Aksi Edit Profil
+              },
               child: Container(
                 width: 32,
                 height: 32,
@@ -68,123 +95,143 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
         ],
       ),
 
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            height: 180,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/kaabah.jpeg'),
-                fit: BoxFit.cover,
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0084FF)),
+            )
+          : travelProvider.errorMessage.isNotEmpty && detail == null
+          ? ErrorStateWidget(
+              errorMessage: travelProvider.errorMessage,
+              onRetry: () => context.read<TravelProvider>().getTravelDetail(
+                authProvider.userData!.userID!,
               ),
-            ),
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.white],
-                  stops: [0.6, 1.0],
-                ),
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 70,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/logo_flydeal.png'),
+                  width: double.infinity,
+                  height: 180,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/kaabah.jpeg'),
                       fit: BoxFit.cover,
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: const [
-                          Text(
-                            "CMA Tour & Travel",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          SizedBox(width: 6),
-                          Icon(
-                            Icons.verified,
-                            color: Color(0xFF0084FF),
-                            size: 18,
-                          ),
-                        ],
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.white],
+                        stops: [0.6, 1.0],
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        "Official Umrah provider",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 70,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                          image: const DecorationImage(
+                            image: AssetImage('assets/images/logo_flydeal.png'),
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        "Beroperasi sejak 2019",
-                        style: TextStyle(fontSize: 11, color: Colors.black54),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    companyName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.verified,
+                                  color: Color(0xFF0084FF),
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Izin: ${detail?.licenseNumber ?? '-'}", // 👇 IZIN DINAMIS 👇
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Beroperasi sejak ${detail?.operatingYear ?? '-'}", // 👇 TAHUN BEROPERASI DINAMIS 👇
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 24),
+                        _buildCustomTabBar(),
+
+                        // Menampilkan Tab berdasarkan pilihan
+                        if (_selectedTabIndex == 0)
+                          _buildTentangTab(detail?.aboutText, companyName),
+                        if (_selectedTabIndex == 1) _buildPaketTab(),
+                        if (_selectedTabIndex == 2) _buildGaleriTab(),
+                        if (_selectedTabIndex == 3) _buildUlasanTab(),
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 24),
-
-                  _buildCustomTabBar(),
-
-                  if (_selectedTabIndex == 0) _buildTentangTab(),
-                  if (_selectedTabIndex == 1) _buildPaketTab(),
-                  if (_selectedTabIndex == 2) _buildGaleriTab(),
-                  if (_selectedTabIndex == 3) _buildUlasanTab(),
-
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
+  // (Fungsi _buildCustomTabBar tetap sama persis)
   Widget _buildCustomTabBar() {
     return Column(
       children: [
@@ -240,25 +287,30 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
     );
   }
 
-  Widget _buildTentangTab() {
+  // 👇 PERUBAHAN PADA TENTANG TAB UNTUK MENERIMA DATA DINAMIS 👇
+  Widget _buildTentangTab(String? aboutText, String companyName) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Tentang CMA Tour & Travel",
-            style: TextStyle(
+          Text(
+            "Tentang $companyName",
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Kami adalah penyelenggara perjalanan ibadah umrah yang berkomitmen memberikan pelayanan terbaik dengan prinsip amanah, profesional, dan transparan. Didukung oleh tim berpengalaman serta mitra resmi di Arab Saudi, kami memastikan setiap proses perjalanan — mulai dari pendaftaran, pengurusan dokumen, hingga kepulangan — berjalan lancar dan nyaman.\n\nKepercayaan jamaah adalah prioritas utama kami, sehingga kami terus menjaga kualitas layanan dan pendampingan ibadah agar setiap perjalanan menjadi pengalaman spiritual yang berkesan.",
+          Text(
+            aboutText ?? "Belum ada deskripsi profil untuk travel ini.",
             textAlign: TextAlign.justify,
-            style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.5),
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+              height: 1.5,
+            ),
           ),
 
           const SizedBox(height: 32),

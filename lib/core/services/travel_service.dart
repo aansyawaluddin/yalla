@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:yalla/core/models/travel_detail_model.dart';
 import 'package:yalla/core/models/travel_model.dart';
 
 class TravelService {
@@ -25,6 +26,26 @@ class TravelService {
       throw Exception(
         'Gagal memuat daftar travel. Status: ${response.statusCode}',
       );
+    }
+  }
+
+  Future<TravelDetailModel> fetchTravelDetail(
+    String userId,
+    String token,
+  ) async {
+    final url = Uri.parse('$_baseUrl/travel/$userId/details');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return TravelDetailModel.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 401) {
+      throw Exception('Sesi login telah habis. Silakan login ulang.');
+    } else {
+      throw Exception('Gagal memuat detail travel (${response.statusCode}).');
     }
   }
 }
