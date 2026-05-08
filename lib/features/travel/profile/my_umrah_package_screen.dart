@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/features/travel/profile/batch_detail_screen.dart';
+import 'package:yalla/features/travel/profile/tambah_paket_screen.dart';
 
 class MyUmrahPackageScreen extends StatelessWidget {
   const MyUmrahPackageScreen({super.key});
@@ -52,7 +53,10 @@ class MyUmrahPackageScreen extends StatelessWidget {
 
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Aksi tambah paket baru
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const TambahPaketScreen()),
+          );
         },
         backgroundColor: const Color(0xFF0066CC),
         shape: const CircleBorder(),
@@ -66,7 +70,7 @@ class MyUmrahPackageScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final data = packages[index];
           return _buildPackageCard(
-            context: context, 
+            context: context,
             batch: data['batch'],
             date: data['date'],
             jamaahCount: data['jamaah'],
@@ -201,9 +205,8 @@ class MyUmrahPackageScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => BatchDetailScreen(
-                            batchName: batch,
-                          ),
+                          builder: (context) =>
+                              BatchDetailScreen(batchName: batch),
                         ),
                       );
                     },
