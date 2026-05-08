@@ -4,6 +4,7 @@ import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/features/user/home/paket/detail_paket_screen.dart';
 
 class PromoCard extends StatelessWidget {
+  final String packageId;
   final String title;
   final String price;
   final String tag;
@@ -12,6 +13,7 @@ class PromoCard extends StatelessWidget {
 
   const PromoCard({
     super.key,
+    required this.packageId, 
     required this.title,
     required this.price,
     required this.tag,
@@ -26,19 +28,20 @@ class PromoCard extends StatelessWidget {
         Navigator.push(
           context,
           PageRouteBuilder(
-            transitionDuration: const Duration(
-              milliseconds: 300,
-            ), 
+            transitionDuration: const Duration(milliseconds: 300),
             reverseTransitionDuration: const Duration(milliseconds: 300),
             pageBuilder: (context, animation, secondaryAnimation) =>
-                const DetailPaketScreen(), 
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              var curvedAnimation = CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOut, 
-              );
-              return FadeTransition(opacity: curvedAnimation, child: child);
-            },
+                DetailPaketScreen(
+                  packageId: packageId,
+                ), 
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  var curvedAnimation = CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOut,
+                  );
+                  return FadeTransition(opacity: curvedAnimation, child: child);
+                },
           ),
         );
       },
@@ -83,8 +86,7 @@ class PromoCard extends StatelessWidget {
                     child: Text(
                       tag,
                       style: AppTypography.bold10.copyWith(
-                        color: AppColors
-                            .primary, 
+                        color: AppColors.primary,
                       ),
                     ),
                   ),

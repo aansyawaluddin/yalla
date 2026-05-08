@@ -28,4 +28,5 @@ class TravelModel {
   }
 
   String get fullName => "$firstName $lastName".trim();
+
 }

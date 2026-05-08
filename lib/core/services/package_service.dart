@@ -62,4 +62,24 @@ class PackageService {
       throw Exception('Gagal memuat daftar paket.');
     }
   }
+
+  Future<PackageModel> fetchPackageById(String id, String token) async {
+    final url = Uri.parse('$_baseUrl/packages/$id');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return PackageModel.fromJson(jsonDecode(response.body));
+    } else if (response.statusCode == 401) {
+      throw Exception('Sesi login telah habis. Silakan login ulang.');
+    } else {
+      throw Exception('Gagal memuat detail paket.');
+    }
+  }
 }

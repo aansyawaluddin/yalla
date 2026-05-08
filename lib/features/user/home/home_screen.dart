@@ -499,6 +499,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(right: 16),
                               child: PromoCard(
+                                packageId: paket.id ?? '',
                                 title: paket.packageName,
                                 price: formattedPrice,
                                 tag: paket.batchName,

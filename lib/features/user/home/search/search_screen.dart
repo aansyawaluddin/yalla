@@ -6,6 +6,7 @@ import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
+import 'package:yalla/features/user/home/travel/travel_profile_screen.dart';
 import 'package:yalla/features/user/plane/flight/detail_flight_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -79,7 +80,7 @@ class _SearchScreenState extends State<SearchScreen> {
           "subtitle": "No. Penerbangan: $flightNo",
           "icon": "assets/icons/plane_3d.png",
           "type": "flight",
-          "data": flight, 
+          "data": flight,
         });
       }
     }
@@ -94,7 +95,7 @@ class _SearchScreenState extends State<SearchScreen> {
           "code": "",
           "subtitle":
               "Rating: ${travel.averageScore} (${travel.totalRatings} ulasan)",
-          "icon": "assets/icons/kaabah.jpeg", 
+          "icon": "assets/icons/kaabah.jpeg",
           "type": "travel",
           "data": travel,
         });
@@ -250,7 +251,27 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               );
             } else if (item['type'] == 'travel') {
-              debugPrint("Arahkan ke Detail Travel: ${item['city']}");
+              final TravelModel travelData = item['data'];
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  transitionDuration: const Duration(milliseconds: 300),
+                  reverseTransitionDuration: const Duration(milliseconds: 300),
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      UserTravelProfileScreen(travelId: travelData.userID),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                        var curvedAnimation = CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOut,
+                        );
+                        return FadeTransition(
+                          opacity: curvedAnimation,
+                          child: child,
+                        );
+                      },
+                ),
+              );
             } else {
               _searchController.text = item['city'];
               setState(() {

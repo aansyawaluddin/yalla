@@ -1,12 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
+import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/core/widgets/paket/facility_item.dart';
 
-class DetailPaketScreen extends StatelessWidget {
-  const DetailPaketScreen({super.key});
+class DetailPaketScreen extends StatefulWidget {
+  final String packageId; 
+
+  const DetailPaketScreen({super.key, required this.packageId});
+
+  @override
+  State<DetailPaketScreen> createState() => _DetailPaketScreenState();
+}
+
+class _DetailPaketScreenState extends State<DetailPaketScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.packageId.isNotEmpty) {
+        context.read<PackageProvider>().getPackageById(widget.packageId);
+      }
+    });
+  }
+
+  String _formatPrice(int price) {
+    String priceStr = price.toString();
+    String result = '';
+    int count = 0;
+    for (int i = priceStr.length - 1; i >= 0; i--) {
+      result = priceStr[i] + result;
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        result = '.$result';
+      }
+    }
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<PackageProvider>();
+    final isLoading = provider.isDetailFetching;
+    final packageData = provider.selectedPackage;
+
+    if (isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF005C99)),
+        ),
+      );
+    }
+
+    if (provider.errorMessage.isNotEmpty && packageData == null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF005C99)),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: ErrorStateWidget(
+          errorMessage: provider.errorMessage,
+          onRetry: () => provider.getPackageById(widget.packageId),
+        ),
+      );
+    }
+
+    final String packageName = packageData?.packageName ?? "Nama Paket";
+    final String batchName = packageData?.batchName ?? "Gelombang";
+    final int price = packageData?.price ?? 0;
+    final int duration = packageData?.durationDays ?? 0;
+
+    final int originalPrice = (price * 1.1).toInt();
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -31,7 +103,7 @@ class DetailPaketScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          "Paket Umrah Spesial",
+          "Detail Paket",
           style: TextStyle(
             color: Colors.black87,
             fontWeight: FontWeight.bold,
@@ -89,28 +161,31 @@ class DetailPaketScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       RichText(
-                        text: const TextSpan(
-                          style: TextStyle(
+                        text: TextSpan(
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             height: 1.3,
                           ),
                           children: [
                             TextSpan(
-                              text: "VVIP Umrah Sebulan Penuh\n- ",
-                              style: TextStyle(color: Colors.white),
+                              text: "$packageName\n- ", 
+                              style: const TextStyle(color: Colors.white),
                             ),
                             TextSpan(
-                              text: "Spesial Ramadhan",
-                              style: TextStyle(color: Color(0xFFFF9800)),
+                              text: batchName, // 👇 Nama Batch Dinamis
+                              style: const TextStyle(color: Color(0xFFFF9800)),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        "30 Hari - Ramadhan 1447 H",
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      Text(
+                        "$duration Hari Keberangkatan", 
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -145,9 +220,9 @@ class DetailPaketScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                "IDR 11.200.000",
-                                style: TextStyle(
+                              Text(
+                                "IDR ${_formatPrice(originalPrice)}", 
+                                style: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.redAccent,
                                   decoration: TextDecoration.lineThrough,
@@ -155,17 +230,18 @@ class DetailPaketScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               RichText(
-                                text: const TextSpan(
+                                text: TextSpan(
                                   children: [
                                     TextSpan(
-                                      text: "IDR 8.599.000",
-                                      style: TextStyle(
+                                      text:
+                                          "IDR ${_formatPrice(price)}",
+                                      style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w900,
                                         color: Colors.black87,
                                       ),
                                     ),
-                                    TextSpan(
+                                    const TextSpan(
                                       text: " /pax",
                                       style: TextStyle(
                                         fontSize: 11,
@@ -214,17 +290,18 @@ class DetailPaketScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     RichText(
-                                      text: const TextSpan(
+                                      text: TextSpan(
                                         children: [
                                           TextSpan(
-                                            text: "Mulai IDR 4.500.000",
-                                            style: TextStyle(
+                                            text:
+                                                "Mulai IDR ${_formatPrice((price / 12).toInt())}", 
+                                            style: const TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.black87,
                                             ),
                                           ),
-                                          TextSpan(
+                                          const TextSpan(
                                             text: "/bulan",
                                             style: TextStyle(
                                               fontSize: 9,
@@ -299,21 +376,21 @@ class DetailPaketScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildTimelineItem(
-                            title: "Hari 1-3: Madinah Al Munawwarah",
+                            title: "Kedatangan & Persiapan",
                             desc:
-                                "Kedatangan, Check-in Hotel, Ziarah Raudhah & Makam Rasulullah SAW.",
+                                "Keberangkatan menuju bandara, check-in, dan persiapan ibadah umrah.",
                             isLast: false,
                           ),
                           _buildTimelineItem(
-                            title: "Hari 4-25: Makkah Al Mukarramah",
+                            title: "Fokus Ibadah & Ziarah",
                             desc:
-                                "Ibadah Umrah, Itikaf Ramadhan, & Tarawih berjamaah di Masjidil Haram.",
+                                "Rangkaian ibadah inti di Makkah dan ziarah di kota Madinah.",
                             isLast: false,
                           ),
                           _buildTimelineItem(
-                            title: "Hari 26-30: Idul Fitri & Kepulangan",
+                            title: "Kepulangan",
                             desc:
-                                "Shalat Idul Fitri di Masjidil Haram dan persiapan kembali ke Tanah air.",
+                                "Meninggalkan tanah suci dan kembali menuju ke Tanah Air.",
                             isLast: true,
                           ),
                         ],

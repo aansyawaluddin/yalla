@@ -89,4 +89,31 @@ class PackageProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+
+  PackageModel? _selectedPackage;
+  PackageModel? get selectedPackage => _selectedPackage;
+
+  bool _isDetailFetching = false;
+  bool get isDetailFetching => _isDetailFetching;
+
+  Future<void> getPackageById(String id) async {
+    _isDetailFetching = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isNotEmpty) {
+        _selectedPackage = await _packageService.fetchPackageById(id, token);
+      }
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll("Exception: ", "");
+    } finally {
+      _isDetailFetching = false;
+      notifyListeners();
+    }
+  }
 }
