@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:yalla/core/models/package_model.dart';
 
 class PackageService {
   final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
@@ -23,6 +24,24 @@ class PackageService {
     } else {
       final errorData = jsonDecode(response.body);
       throw Exception(errorData['message'] ?? 'Gagal membuat paket baru.');
+    }
+  }
+
+  Future<List<PackageModel>> fetchPackages(String userId, String token) async {
+    final url = Uri.parse('$_baseUrl/travels/$userId/packages');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => PackageModel.fromJson(json)).toList();
+    } else if (response.statusCode == 401) {
+      throw Exception('Sesi login telah habis. Silakan login ulang.');
+    } else {
+      throw Exception('Gagal memuat daftar paket.');
     }
   }
 }

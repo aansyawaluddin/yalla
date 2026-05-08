@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
+import 'package:yalla/core/providers/package_provider.dart';
+import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/features/travel/profile/batch_detail_screen.dart';
 import 'package:yalla/features/travel/profile/tambah_paket_screen.dart';
 
-class MyUmrahPackageScreen extends StatelessWidget {
+class MyUmrahPackageScreen extends StatefulWidget {
   const MyUmrahPackageScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> packages = [
-      {"batch": "BATCH 4", "date": "10 Maret 2026", "jamaah": 108},
-      {"batch": "BATCH 3", "date": "10 Maret 2026", "jamaah": 18},
-      {"batch": "BATCH 2", "date": "10 Maret 2026", "jamaah": 40},
-      {"batch": "BATCH 2", "date": "10 Maret 2026", "jamaah": 40},
-      {"batch": "BATCH 2", "date": "10 Maret 2026", "jamaah": 40},
-    ];
+  State<MyUmrahPackageScreen> createState() => _MyUmrahPackageScreenState();
+}
 
+class _MyUmrahPackageScreenState extends State<MyUmrahPackageScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = context.read<AuthProvider>().userData?.userID;
+      if (userId != null && userId.isNotEmpty) {
+        context.read<PackageProvider>().getPackages(userId);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -56,32 +68,88 @@ class MyUmrahPackageScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const TambahPaketScreen()),
-          );
+          ).then((_) {
+            final userId = context.read<AuthProvider>().userData?.userID;
+            if (userId != null) {
+              context.read<PackageProvider>().getPackages(userId);
+            }
+          });
         },
         backgroundColor: const Color(0xFF0066CC),
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
 
-      body: ListView.separated(
-        padding: const EdgeInsets.all(24.0),
-        itemCount: packages.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 24),
-        itemBuilder: (context, index) {
-          final data = packages[index];
-          return _buildPackageCard(
-            context: context,
-            batch: data['batch'],
-            date: data['date'],
-            jamaahCount: data['jamaah'],
+      body: Consumer<PackageProvider>(
+        builder: (context, packageProvider, child) {
+          if (packageProvider.isFetching && packageProvider.packages.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0066CC)),
+            );
+          }
+
+          if (packageProvider.errorMessage.isNotEmpty &&
+              packageProvider.packages.isEmpty) {
+            return ErrorStateWidget(
+              errorMessage: packageProvider.errorMessage,
+              onRetry: () {
+                final userId = context.read<AuthProvider>().userData?.userID;
+                if (userId != null) packageProvider.getPackages(userId);
+              },
+            );
+          }
+
+          if (packageProvider.packages.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(24.0),
+            itemCount: packageProvider.packages.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 24),
+            itemBuilder: (context, index) {
+              final data = packageProvider.packages[index];
+              return _buildPackageCard(
+                context: context,
+                batch: data.batchName, 
+                date: data.batchDate, 
+                jamaahCount:
+                    0, 
+              );
+            },
           );
         },
       ),
     );
   }
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.folder_open, size: 64, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          Text(
+            "Belum Ada Paket",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Ketuk tombol + untuk membuat paket baru.",
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPackageCard({
-    required BuildContext context, // Tambahkan context di parameter
+    required BuildContext context,
     required String batch,
     required String date,
     required int jamaahCount,
@@ -127,7 +195,6 @@ class MyUmrahPackageScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   Positioned(
                     left: 16,
                     bottom: 16,
@@ -153,7 +220,6 @@ class MyUmrahPackageScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   Positioned(
                     right: 16,
                     bottom: 16,
@@ -166,7 +232,7 @@ class MyUmrahPackageScreen extends StatelessWidget {
                         ),
                         SizedBox(width: 4),
                         Text(
-                          "Flyadeal",
+                          "Flyadeal", 
                           style: TextStyle(
                             color: Color(0xFF0099FF),
                             fontSize: 16,
@@ -181,7 +247,6 @@ class MyUmrahPackageScreen extends StatelessWidget {
               ),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
