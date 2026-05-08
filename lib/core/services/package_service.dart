@@ -27,6 +27,24 @@ class PackageService {
     }
   }
 
+  Future<List<PackageModel>> fetchAllPackages(String token) async {
+    final url = Uri.parse('$_baseUrl/packages');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => PackageModel.fromJson(json)).toList();
+    } else if (response.statusCode == 401) {
+      throw Exception('Sesi login telah habis. Silakan login ulang.');
+    } else {
+      throw Exception('Gagal memuat daftar penawaran paket.');
+    }
+  }
+
   Future<List<PackageModel>> fetchPackages(String userId, String token) async {
     final url = Uri.parse('$_baseUrl/travels/$userId/packages');
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
+import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
@@ -33,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<AuthProvider>().fetchUserProfile();
       context.read<FlightProvider>().fetchFlights();
       context.read<TravelProvider>().fetchTravels();
+      context.read<PackageProvider>().getAllPackages();
     });
   }
 
@@ -454,30 +456,65 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    clipBehavior: Clip.none,
-                    child: Row(
-                      children: const [
-                        PromoCard(
-                          title: "VVIP Umrah Sebulan Penuh",
-                          price: "IDR 150 Jt",
-                          tag: "Spesial Ramadhan",
-                          tagColor: Color(0xFFFFB300),
-                          imagePath: 'assets/images/kaabah.jpeg',
+                  Consumer<PackageProvider>(
+                    builder: (context, packageProvider, child) {
+                      if (packageProvider.isGlobalFetching) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 20,
+                          ),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF005C99),
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (packageProvider.globalPackages.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            "Belum ada penawaran paket saat ini.",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        );
+                      }
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        clipBehavior: Clip.none,
+                        child: Row(
+                          children: packageProvider.globalPackages.map((paket) {
+                            String formattedPrice = "IDR ${paket.price}";
+                            if (paket.price >= 1000000) {
+                              double priceInJuta = paket.price / 1000000;
+                              formattedPrice =
+                                  "IDR ${priceInJuta.toStringAsFixed(priceInJuta.truncateToDouble() == priceInJuta ? 0 : 1)} Jt";
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: PromoCard(
+                                title: paket.packageName,
+                                price: formattedPrice,
+                                tag: paket
+                                    .batchName, 
+                                tagColor: const Color(
+                                  0xFFFFB300,
+                                ),
+                                imagePath: 'assets/images/kaabah.jpeg',
+                              ),
+                            );
+                          }).toList(),
                         ),
-                        SizedBox(width: 16),
-                        PromoCard(
-                          title: "Umrah Eksekutif",
-                          price: "IDR 50 Jt",
-                          tag: "Paket Keluarga",
-                          tagColor: AppColors.lightBlue,
-                          imagePath: 'assets/images/kaabah.jpeg',
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
+
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -487,7 +524,6 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
     );
   }
-
   // Widget _buildDot({required bool isActive}) {
   //   return Container(
   //     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -615,7 +651,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: AppTypography.regular12.copyWith(
                     color: AppColors.lightBlue,
                   ),
-                  
                 ),
               ),
             ),

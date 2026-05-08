@@ -36,13 +36,37 @@ class PackageProvider extends ChangeNotifier {
     }
   }
 
+  List<PackageModel> _globalPackages = [];
+  List<PackageModel> get globalPackages => _globalPackages;
+
+  bool _isGlobalFetching = false;
+  bool get isGlobalFetching => _isGlobalFetching;
+
+  Future<void> getAllPackages() async {
+    _isGlobalFetching = true;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isNotEmpty) {
+        _globalPackages = await _packageService.fetchAllPackages(token);
+      }
+    } catch (e) {
+      print("Error fetching global packages: $e");
+    } finally {
+      _isGlobalFetching = false;
+      notifyListeners();
+    }
+  }
+
   List<PackageModel> _packages = [];
   List<PackageModel> get packages => _packages;
 
   bool _isFetching = false;
   bool get isFetching => _isFetching;
 
-  // 👇 TAMBAHKAN FUNGSI GET 👇
   Future<void> getPackages(String userId) async {
     _isFetching = true;
     _errorMessage = '';
