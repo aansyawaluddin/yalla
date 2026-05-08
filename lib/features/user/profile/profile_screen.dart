@@ -156,7 +156,7 @@ class ProfileScreen extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(
                             0xFFEF4444,
-                          ), // Merah Destruktif
+                          ), 
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(

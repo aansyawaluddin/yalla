@@ -7,6 +7,7 @@ import 'package:yalla/features/travel/profile/help_center_screen_travel.dart';
 import 'package:yalla/features/travel/profile/my_umrah_package_screen.dart';
 import 'package:yalla/features/travel/profile/payment_method_screen_travel.dart';
 import 'package:yalla/features/travel/profile/settings_screen_travel.dart';
+import 'package:yalla/splash_screen.dart'; 
 
 void _navigateTo(BuildContext context, Widget targetPage) {
   Navigator.push(
@@ -41,6 +42,163 @@ class _ProfileScreenTravelState extends State<ProfileScreenTravel> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().fetchUserProfile();
     });
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Yakin ingin keluar?",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context, false),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.black54,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Color(0xFFFEE2E2),
+                        child: Icon(
+                          Icons.logout_rounded,
+                          color: Color(0xFFEF4444),
+                          size: 18,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Sesi Anda akan diakhiri",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Dengan keluar dari akun, sesi login Anda akan terhapus dari perangkat ini. Anda harus memasukkan ulang email dan kata sandi untuk masuk kembali.",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF3F4F6),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          "Batal",
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF4444),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          "Keluar",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (confirm == true) {
+      if (!context.mounted) return;
+
+      await context.read<AuthProvider>().logout();
+
+      if (!context.mounted) return;
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const SplashScreen()),
+        (Route<dynamic> route) => false,
+      );
+    }
   }
 
   @override
@@ -133,10 +291,7 @@ class _ProfileScreenTravelState extends State<ProfileScreenTravel> {
                           iconBgColor: const Color(0xFFFAD7FF),
                           title: "Manajemen Paket dan Jamaah",
                           onTap: () {
-                            _navigateTo(
-                              context,
-                              const MyUmrahPackageScreen(),
-                            ); // Sesuaikan target layarnya nanti
+                            _navigateTo(context, const MyUmrahPackageScreen());
                           },
                         ),
 
@@ -196,9 +351,7 @@ class _ProfileScreenTravelState extends State<ProfileScreenTravel> {
                           title: "Keluar",
                           titleColor: const Color(0xFFEF4444),
                           showTrailing: false,
-                          onTap: () {
-                            // Aksi logout
-                          },
+                          onTap: () => _handleLogout(context),
                         ),
                       ],
                     ),
