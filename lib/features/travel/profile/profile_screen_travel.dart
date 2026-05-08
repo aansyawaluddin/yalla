@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/core/widgets/button/travel_custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/profile_card_travel.dart';
 import 'package:yalla/features/travel/profile/help_center_screen_travel.dart';
@@ -25,8 +27,21 @@ void _navigateTo(BuildContext context, Widget targetPage) {
   );
 }
 
-class ProfileScreenTravel extends StatelessWidget {
+class ProfileScreenTravel extends StatefulWidget {
   const ProfileScreenTravel({super.key});
+
+  @override
+  State<ProfileScreenTravel> createState() => _ProfileScreenTravelState();
+}
+
+class _ProfileScreenTravelState extends State<ProfileScreenTravel> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().fetchUserProfile();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,8 +82,8 @@ class ProfileScreenTravel extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.0),
                   child: ProfileCardTravel(),
                 ),
 

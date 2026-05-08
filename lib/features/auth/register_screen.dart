@@ -4,6 +4,7 @@ import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/inputan/custom_text_field.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 
 enum RegistrationType { none, jamaah, travel }
 
@@ -101,23 +102,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     if (emailC.text.isEmpty || passwordC.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email dan kata sandi tidak boleh kosong!'),
-          backgroundColor: Colors.red,
-        ),
+      CustomSnackBar.showError(
+        context,
+        title: "Kolom Belum Lengkap",
+        message: "Email dan kata sandi tidak boleh kosong!",
       );
       return;
     }
 
     if (passwordC.text != confirmPasswordC.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Kata sandi dan Masukkan Ulang Kata Sandi tidak cocok!',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      CustomSnackBar.showError(
+        context,
+        title: "Kata Sandi Berbeda",
+        message: "Kata sandi dan Masukkan Ulang Kata Sandi tidak cocok!",
       );
       return;
     }
@@ -141,13 +138,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
         "gender": "male",
       };
     } else {
+      String fName = companyNameC.text.trim();
+      String lName = "Travel"; 
+
+      if (fName.contains(" ")) {
+        int firstSpace = fName.indexOf(" ");
+        lName = fName.substring(firstSpace + 1);
+        fName = fName.substring(0, firstSpace);
+      }
+
+      String birthDate = _formatDateForApi(dobC.text);
+      String nationality = countryC.text.trim();
+
       payload = {
-        "firstName": companyNameC.text.trim(),
         "email": emailC.text.trim(),
         "password": passwordC.text,
+        "firstName": fName.isNotEmpty ? fName : "Yalla",
+        "lastName": lName,
+        "birth": birthDate.isNotEmpty
+            ? birthDate
+            : "2000-01-01", 
+        "nationality": nationality.isNotEmpty
+            ? nationality
+            : "Indonesia", 
+        "gender": "male",
         "role": "travel",
-        "npwp": npwpC.text.trim(),
-        "travelLicense": travelLicenseC.text.trim(),
       };
     }
 
@@ -159,19 +174,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pendaftaran Berhasil! Silakan Masuk.'),
-          backgroundColor: Colors.green,
-        ),
+      CustomSnackBar.showSuccess(
+        context,
+        title: "Pendaftaran Berhasil",
+        message:
+            "Akun Anda telah berhasil didaftarkan. Silakan masuk untuk melanjutkan.",
       );
-      Navigator.pop(context);
+      Navigator.pop(context); 
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage),
-          backgroundColor: Colors.red,
-        ),
+      CustomSnackBar.showError(
+        context,
+        title: "Pendaftaran Gagal",
+        message: authProvider.errorMessage, 
       );
     }
   }
@@ -587,14 +601,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Padding(
           padding: const EdgeInsets.only(right: 30),
           child: CustomTextField(
-            hint: "Nama Perusahaan",
+            hint: "Nama Perusahaan Travel",
             controller: companyNameC,
             borderRadius: const BorderRadius.horizontal(
               right: Radius.circular(50),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
+
+        Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: GestureDetector(
+                  onTap: () => _selectDate(context),
+                  child: AbsorbPointer(
+                    child: CustomTextField(
+                      hint: "Tgl. Didirikan",
+                      controller: dobC,
+                      borderRadius: const BorderRadius.horizontal(
+                        right: Radius.circular(50),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: CustomTextField(
+                  hint: "Negara",
+                  controller: countryC,
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(50),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
 
         Padding(
           padding: const EdgeInsets.only(right: 30),
@@ -607,39 +656,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-
-        Row(
-          children: [
-            Expanded(
-              flex: 6,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: CustomTextField(
-                  hint: "NPWP/NIB",
-                  controller: npwpC,
-                  borderRadius: const BorderRadius.horizontal(
-                    right: Radius.circular(50),
-                  ),
-                ),
-              ),
-            ),
-            const Expanded(flex: 4, child: SizedBox()),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        Padding(
-          padding: const EdgeInsets.only(right: 30),
-          child: CustomTextField(
-            hint: "Nomor Izin Travel",
-            controller: travelLicenseC,
-            borderRadius: const BorderRadius.horizontal(
-              right: Radius.circular(50),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
 
         Row(
           children: [
@@ -660,7 +677,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(left: 12),
                 child: CustomTextField(
-                  hint: "Masukkan Ulang Kata Sandi",
+                  hint: "Masukkan Ulang",
                   isPassword: true,
                   controller: confirmPasswordC,
                   borderRadius: const BorderRadius.horizontal(
@@ -696,7 +713,127 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ],
         ),
+        const SizedBox(height: 29),
       ],
     );
   }
+  // Widget _buildTravelForm() {
+  //   return Column(
+  //     key: const ValueKey("TravelForm"),
+  //     children: [
+  //       Padding(
+  //         padding: const EdgeInsets.only(right: 30),
+  //         child: CustomTextField(
+  //           hint: "Nama Perusahaan",
+  //           controller: companyNameC,
+  //           borderRadius: const BorderRadius.horizontal(
+  //             right: Radius.circular(50),
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(height: 16),
+
+  //       Padding(
+  //         padding: const EdgeInsets.only(right: 30),
+  //         child: CustomTextField(
+  //           hint: "Email Perusahaan",
+  //           controller: emailC,
+  //           keyboardType: TextInputType.emailAddress,
+  //           borderRadius: const BorderRadius.horizontal(
+  //             right: Radius.circular(50),
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(height: 16),
+
+  //       Row(
+  //         children: [
+  //           Expanded(
+  //             flex: 6,
+  //             child: Padding(
+  //               padding: const EdgeInsets.only(right: 12),
+  //               child: CustomTextField(
+  //                 hint: "NPWP/NIB",
+  //                 controller: npwpC,
+  //                 borderRadius: const BorderRadius.horizontal(
+  //                   right: Radius.circular(50),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //           const Expanded(flex: 4, child: SizedBox()),
+  //         ],
+  //       ),
+  //       const SizedBox(height: 16),
+
+  //       Padding(
+  //         padding: const EdgeInsets.only(right: 30),
+  //         child: CustomTextField(
+  //           hint: "Nomor Izin Travel",
+  //           controller: travelLicenseC,
+  //           borderRadius: const BorderRadius.horizontal(
+  //             right: Radius.circular(50),
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(height: 16),
+
+  //       Row(
+  //         children: [
+  //           Expanded(
+  //             child: Padding(
+  //               padding: const EdgeInsets.only(right: 12),
+  //               child: CustomTextField(
+  //                 hint: "Kata Sandi",
+  //                 isPassword: true,
+  //                 controller: passwordC,
+  //                 borderRadius: const BorderRadius.horizontal(
+  //                   right: Radius.circular(50),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //           Expanded(
+  //             child: Padding(
+  //               padding: const EdgeInsets.only(left: 12),
+  //               child: CustomTextField(
+  //                 hint: "Masukkan Ulang Kata Sandi",
+  //                 isPassword: true,
+  //                 controller: confirmPasswordC,
+  //                 borderRadius: const BorderRadius.horizontal(
+  //                   left: Radius.circular(50),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //       const SizedBox(height: 32),
+
+  //       Row(
+  //         children: [
+  //           const Expanded(flex: 3, child: SizedBox()),
+  //           Expanded(
+  //             flex: 7,
+  //             child: Container(
+  //               height: 54,
+  //               decoration: BoxDecoration(
+  //                 gradient: const LinearGradient(
+  //                   begin: Alignment.centerLeft,
+  //                   end: Alignment.centerRight,
+  //                   colors: [Color(0xFF0099FF), Color(0xFF005C99)],
+  //                 ),
+  //                 borderRadius: const BorderRadius.horizontal(
+  //                   left: Radius.circular(50),
+  //                 ),
+  //                 boxShadow: AppColors.defaultShadow,
+  //               ),
+  //               child: _buildSubmitButton(),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ],
+  //   );
+  // }
 }

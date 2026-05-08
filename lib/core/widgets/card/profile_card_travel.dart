@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/features/travel/profile/travel_profile_screen.dart';
 
 class ProfileCardTravel extends StatelessWidget {
@@ -6,6 +8,18 @@ class ProfileCardTravel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final userData = authProvider.userData;
+    final profile = userData?.profile;
+    final String firstName = profile?.firstName ?? 'Memuat...';
+    final String lastName = profile?.lastName ?? '';
+    final String email = userData?.email ?? 'Memuat email...';
+
+    final String fullName =
+        lastName.isNotEmpty && lastName.toLowerCase() != "travel"
+        ? "$firstName $lastName"
+        : "$firstName Travel";
+
     return Container(
       height: 110,
       decoration: BoxDecoration(
@@ -50,20 +64,23 @@ class ProfileCardTravel extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          "Muhammad Syahdam\nPatriotik",
-                          style: TextStyle(
+                          fullName,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             height: 1.2,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          "syahdam@gmail.com",
-                          style: TextStyle(
+                          email,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -100,13 +117,13 @@ class ProfileCardTravel extends StatelessWidget {
                           PageRouteBuilder(
                             transitionDuration: const Duration(
                               milliseconds: 300,
-                            ), // Durasi 300ms
+                            ),
                             reverseTransitionDuration: const Duration(
                               milliseconds: 300,
                             ),
                             pageBuilder:
                                 (context, animation, secondaryAnimation) =>
-                                    const TravelProfileScreen(), 
+                                    const TravelProfileScreen(),
                             transitionsBuilder:
                                 (
                                   context,
