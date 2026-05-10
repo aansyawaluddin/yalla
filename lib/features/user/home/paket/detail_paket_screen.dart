@@ -6,7 +6,7 @@ import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/core/widgets/paket/facility_item.dart';
 
 class DetailPaketScreen extends StatefulWidget {
-  final String packageId; 
+  final String packageId;
 
   const DetailPaketScreen({super.key, required this.packageId});
 
@@ -37,6 +37,31 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
       }
     }
     return result;
+  }
+
+  IconData _getFacilityIcon(String slug) {
+    switch (slug.toLowerCase()) {
+      case 'visa':
+        return Icons.article_outlined;
+      case 'asuransi':
+        return Icons.health_and_safety_outlined;
+      case 'mutawwif':
+        return Icons.headset_mic_outlined;
+      case 'transportasi':
+        return Icons.directions_bus_outlined;
+      case 'konsumsi':
+        return Icons.restaurant;
+      case 'air-zamzam':
+      case 'air_zamzam':
+        return Icons.water_drop_outlined;
+      case 'hotel':
+        return Icons.business;
+      case 'penerbangan':
+      case 'tiket':
+        return Icons.flight_takeoff;
+      default:
+        return Icons.check_circle_outline;
+    }
   }
 
   @override
@@ -77,6 +102,8 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
     final int price = packageData?.price ?? 0;
     final int duration = packageData?.durationDays ?? 0;
 
+    final List<dynamic> facilities = packageData?.facilities ?? [];
+
     final int originalPrice = (price * 1.1).toInt();
 
     return Scaffold(
@@ -111,7 +138,6 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
           ),
         ),
       ),
-
       body: Column(
         children: [
           SizedBox(
@@ -169,11 +195,11 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                           ),
                           children: [
                             TextSpan(
-                              text: "$packageName\n- ", 
+                              text: "$packageName\n- ",
                               style: const TextStyle(color: Colors.white),
                             ),
                             TextSpan(
-                              text: batchName, // 👇 Nama Batch Dinamis
+                              text: batchName,
                               style: const TextStyle(color: Color(0xFFFF9800)),
                             ),
                           ],
@@ -181,7 +207,7 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "$duration Hari Keberangkatan", 
+                        "$duration Hari Keberangkatan",
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
@@ -193,7 +219,6 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
               ],
             ),
           ),
-
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -221,7 +246,7 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                "IDR ${_formatPrice(originalPrice)}", 
+                                "IDR ${_formatPrice(originalPrice)}",
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.redAccent,
@@ -233,8 +258,7 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                                 text: TextSpan(
                                   children: [
                                     TextSpan(
-                                      text:
-                                          "IDR ${_formatPrice(price)}",
+                                      text: "IDR ${_formatPrice(price)}",
                                       style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w900,
@@ -294,7 +318,7 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                                         children: [
                                           TextSpan(
                                             text:
-                                                "Mulai IDR ${_formatPrice((price / 12).toInt())}", 
+                                                "Mulai IDR ${_formatPrice((price / 12).toInt())}",
                                             style: const TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold,
@@ -329,38 +353,39 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    GridView.count(
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      crossAxisCount: 2,
-                      childAspectRatio: 2.8,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      children: const [
-                        FacilityItem(
-                          icon: Icons.flight_takeoff,
-                          title: "Tiket Pulang -\nPergi",
+
+                    if (facilities.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          "Belum ada fasilitas khusus untuk paket ini.",
+                          style: TextStyle(color: Colors.grey, fontSize: 13),
                         ),
-                        FacilityItem(
-                          icon: Icons.business,
-                          title: "Hotel Bintang 5",
-                        ),
-                        FacilityItem(
-                          icon: Icons.article_outlined,
-                          title: "Visa Umrah",
-                        ),
-                        FacilityItem(icon: Icons.restaurant, title: "Sarapan"),
-                        FacilityItem(
-                          icon: Icons.headset_mic_outlined,
-                          title: "Mutawwif",
-                        ),
-                        FacilityItem(
-                          icon: Icons.health_and_safety_outlined,
-                          title: "Asuransi",
-                        ),
-                      ],
-                    ),
+                      )
+                    else
+                      GridView.builder(
+                        padding: EdgeInsets.zero,
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 2.8,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                            ),
+                        itemCount: facilities.length,
+                        itemBuilder: (context, index) {
+                          final facilityData = facilities[index];
+                          final String name = facilityData.name;
+                          final String slug = facilityData.slug;
+
+                          return FacilityItem(
+                            icon: _getFacilityIcon(slug),
+                            title: name,
+                          );
+                        },
+                      ),
                     const SizedBox(height: 32),
                     const Text(
                       "Rencana Perjalanan Utama",
@@ -404,7 +429,6 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
           ),
         ],
       ),
-
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
