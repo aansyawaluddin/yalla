@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
@@ -6,6 +8,7 @@ import 'package:yalla/core/widgets/button/travel_custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/widgets/modals/calendar_bottom_sheet.dart';
 import 'package:yalla/core/widgets/modals/passenger_class_bottom_sheet.dart';
+import 'package:yalla/core/widgets/eror/error_state_widget.dart'; 
 import 'package:yalla/features/travel/home/list_flight_travel_screen.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
 
@@ -20,7 +23,19 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
   bool isOneWay = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TravelProvider>().fetchTravels();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final travelProvider = context.watch<TravelProvider>();
+    final isLoadingTravels = travelProvider.isLoading;
+    final travels = travelProvider.travels;
+
     return Scaffold(
       backgroundColor: Colors.white,
       extendBody: true,
@@ -122,9 +137,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(
-                                  0.15,
-                                ), // Efek drop shadow
+                                color: Colors.black.withOpacity(0.15),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -134,12 +147,11 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                             icon: const Icon(
-                              Icons.notifications_none_outlined, 
+                              Icons.notifications_none_outlined,
                               color: Colors.white,
                               size: 20,
                             ),
-                            onPressed: () {
-                            },
+                            onPressed: () {},
                           ),
                         ),
                       ],
@@ -349,44 +361,63 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  // SingleChildScrollView(
-                  //   scrollDirection: Axis.horizontal,
-                  //   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  //   clipBehavior: Clip.none,
-                  //   child: Row(
-                  //     children: const [
-                  //       TravelCard(
-                  //         title: "CMA Tour &\nTravel",
-                  //         rating: 4.9,
-                  //         reviews: "2.4k",
-                  //         badgeText: "Terverifikasi",
-                  //         badgeColor: Color(0xFF0099FF),
-                  //         badgeIcon: Icons.verified,
-                  //         imagePath: 'assets/images/kaabah.jpeg',
-                  //       ),
-                  //       SizedBox(width: 16),
-                  //       TravelCard(
-                  //         title: "Rabbani Tour",
-                  //         rating: 4.9,
-                  //         reviews: "2.4k",
-                  //         badgeText: "Top Rated",
-                  //         badgeColor: Color(0xFFFF8C00),
-                  //         badgeIcon: Icons.emoji_events,
-                  //         imagePath: 'assets/images/kaabah.jpeg',
-                  //       ),
-                  //       SizedBox(width: 16),
-                  //       TravelCard(
-                  //         title: "Rabbani Tour",
-                  //         rating: 4.9,
-                  //         reviews: "2.4k",
-                  //         badgeText: "Top Rated",
-                  //         badgeColor: Color(0xFFFF8C00),
-                  //         badgeIcon: Icons.emoji_events,
-                  //         imagePath: 'assets/images/kaabah.jpeg',
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
+
+                  if (isLoadingTravels)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF005C99),
+                        ),
+                      ),
+                    )
+                  else if (travelProvider.errorMessage.isNotEmpty &&
+                      travels.isEmpty)
+                    ErrorStateWidget(
+                      errorMessage: travelProvider.errorMessage,
+                      onRetry: () =>
+                          context.read<TravelProvider>().fetchTravels(),
+                    )
+                  else if (travels.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 20,
+                      ),
+                      child: Text(
+                        "Belum ada data travel yang tersedia.",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  else
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      clipBehavior: Clip.none,
+                      child: Row(
+                        children: travels.map((travel) {
+                          final travelName = travel.fullName.isNotEmpty
+                              ? travel.fullName
+                              : "Agen Travel";
+
+                          final score = (travel.averageScore).toDouble();
+
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 16),
+                            child: TravelCard(
+                              travelId: travel.userID,
+                              title: travelName,
+                              rating: score > 0 ? score : 0.0,
+                              reviews: "${travel.totalRatings}",
+                              badgeText: "Terverifikasi",
+                              badgeColor: const Color(0xFF0099FF),
+                              badgeIcon: Icons.verified,
+                              imagePath: 'assets/images/kaabah.jpeg',
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -402,9 +433,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(
-          24,
-        ), // Luar sedikit lebih besar agar proporsional
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
@@ -415,7 +444,6 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  // 1. Efek Gradien Menyudut (Linear) sesuai Figma
                   gradient: isOneWay
                       ? const LinearGradient(
                           begin: Alignment.topLeft,
@@ -425,21 +453,17 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                             Colors.white, // 100% FFFFFF
                           ],
                         )
-                      : null, // Jika tidak aktif, tidak ada background
-                  // 2. Corner Radius 20 sesuai Figma
+                      : null,
                   borderRadius: BorderRadius.circular(20),
-                  // 3. Drop Shadow sesuai Figma
                   boxShadow: isOneWay
                       ? [
                           BoxShadow(
-                            color: Colors.black.withOpacity(
-                              0.08,
-                            ), // Efek Drop Shadow halus
+                            color: Colors.black.withOpacity(0.08),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                         ]
-                      : [], // Jika tidak aktif, tidak ada bayangan
+                      : [],
                 ),
                 child: Center(
                   child: Text(

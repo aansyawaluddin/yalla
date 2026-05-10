@@ -1,20 +1,30 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/features/travel/home/detail_flight_travel_screen.dart';
 
 class FlightOptionCardTravel extends StatelessWidget {
+  final FlightModel? flight;
+  final bool isLoading;
   final bool isHighlighted;
 
-  const FlightOptionCardTravel({super.key, this.isHighlighted = false});
+  const FlightOptionCardTravel({
+    super.key,
+    this.flight,
+    this.isLoading = false,
+    this.isHighlighted = false,
+  });
 
   void _navigateToDetail(BuildContext context) {
+    if (flight == null) return;
     Navigator.push(
       context,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 300),
         reverseTransitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (context, animation, secondaryAnimation) =>
-            const DetailFlightTravelScreen(),
+            const DetailFlightTravelScreen(), 
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           var curvedAnimation = CurvedAnimation(
             parent: animation,
@@ -24,6 +34,55 @@ class FlightOptionCardTravel extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String _calculateDuration(String? dep, String? arr) {
+    if (dep == null || arr == null) return "-";
+    try {
+      final d = DateTime.parse(dep);
+      final a = DateTime.parse(arr);
+      final diff = a.difference(d);
+      final hours = diff.inHours;
+      final mins = diff.inMinutes.remainder(60);
+      return "${hours}j ${mins}m";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  String _formatPrice(num? price) {
+    if (price == null || price == 0) return "IDR -";
+    String s = price.toInt().toString();
+    String res = "";
+    for (int i = 0; i < s.length; i++) {
+      res += s[i];
+      if ((s.length - 1 - i) % 3 == 0 && i != s.length - 1) res += ".";
+    }
+    return "IDR $res";
+  }
+
+  String _formatShortDate(String? isoDate) {
+    if (isoDate == null) return "-";
+    try {
+      final date = DateTime.parse(isoDate);
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+      return "${date.day} ${months[date.month - 1]}";
+    } catch (e) {
+      return "-";
+    }
   }
 
   @override
@@ -40,6 +99,39 @@ class FlightOptionCardTravel extends StatelessWidget {
     final Color dashedLineColor = isHighlighted
         ? Colors.white54
         : const Color(0xFFD1D5DB);
+
+    if (isLoading) {
+      return Container(
+        height: 180,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(color: Color(0xFF005C99)),
+        ),
+      );
+    }
+
+    if (flight == null) {
+      return const SizedBox.shrink();
+    }
+
+    final bool isOutbound = flight!.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String destCode = isOutbound ? "JED" : "UPG";
+    final String depTime = DateFormatter.formatTime(flight!.departureTime);
+    final String arrTime = DateFormatter.formatTime(flight!.arrivalTime);
+
+    final String depDate = _formatShortDate(flight!.departureTime);
+    final String arrDate = _formatShortDate(flight!.arrivalTime);
+
+    final String flightNo = flight!.flightNo ?? "Unknown";
+    final String duration = _calculateDuration(
+      flight!.departureTime,
+      flight!.arrivalTime,
+    );
+    final String priceText = _formatPrice(flight!.price);
 
     return GestureDetector(
       onTap: () => _navigateToDetail(context),
@@ -121,7 +213,7 @@ class FlightOptionCardTravel extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Flydeal Air",
+                                  "Flydeal Air $flightNo",
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
@@ -179,16 +271,25 @@ class FlightOptionCardTravel extends StatelessWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  "02:00 AM",
+                                  depTime,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
                                     color: textColor,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Text(
-                                  "UPG",
+                                  depDate,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: subTextColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  originCode,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
@@ -203,7 +304,7 @@ class FlightOptionCardTravel extends StatelessWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  "11j 15m",
+                                  duration,
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: subTextColor,
@@ -259,16 +360,25 @@ class FlightOptionCardTravel extends StatelessWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  "12:15 PM",
+                                  arrTime,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
                                     color: textColor,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Text(
-                                  "JED",
+                                  arrDate,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: subTextColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  destCode,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
@@ -308,17 +418,17 @@ class FlightOptionCardTravel extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       RichText(
-                        text: const TextSpan(
+                        text: TextSpan(
                           children: [
                             TextSpan(
-                              text: "IDR 11.000.000",
-                              style: TextStyle(
+                              text: priceText,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
                                 color: Color(0xFF0084FF),
                               ),
                             ),
-                            TextSpan(
+                            const TextSpan(
                               text: " /pax",
                               style: TextStyle(
                                 fontSize: 12,
