@@ -24,7 +24,7 @@ class FlightOptionCardTravel extends StatelessWidget {
         transitionDuration: const Duration(milliseconds: 300),
         reverseTransitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (context, animation, secondaryAnimation) =>
-            const DetailFlightTravelScreen(), 
+            DetailFlightTravelScreen(flight: flight!),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           var curvedAnimation = CurvedAnimation(
             parent: animation,

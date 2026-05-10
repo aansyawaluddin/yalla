@@ -18,7 +18,6 @@ class FlightOptionCard extends StatelessWidget {
 
   void _navigateToDetail(BuildContext context) {
     if (flight == null) return;
-
     Navigator.push(
       context,
       PageRouteBuilder(
