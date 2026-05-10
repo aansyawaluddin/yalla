@@ -16,6 +16,15 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
   final TextEditingController namaPaketC = TextEditingController();
   final TextEditingController hargaC = TextEditingController();
   final TextEditingController durasiC = TextEditingController();
+  final List<String> _selectedFacilities = [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PackageProvider>().getFacilities();
+    });
+  }
 
   @override
   void dispose() {
@@ -66,16 +75,16 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
   }
 
   Future<void> _handleTambahPaket() async {
-    // 1. Validasi Inputan
     if (batchC.text.isEmpty ||
         batchDateC.text.isEmpty ||
         namaPaketC.text.isEmpty ||
         hargaC.text.isEmpty ||
-        durasiC.text.isEmpty) {
+        durasiC.text.isEmpty ||
+        _selectedFacilities.isEmpty) {
       CustomSnackBar.showError(
         context,
         title: "Data Belum Lengkap",
-        message: "Mohon lengkapi seluruh detail paket terlebih dahulu.",
+        message: "Mohon lengkapi seluruh detail dan pilih minimal satu fasilitas.",
       );
       return;
     }
@@ -86,6 +95,7 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
       "duration_days": int.tryParse(durasiC.text.trim()) ?? 0,
       "batch_name": batchC.text.trim(),
       "price": int.tryParse(hargaC.text.trim()) ?? 0,
+      "facility_ids": _selectedFacilities, 
     };
 
     FocusScope.of(context).unfocus();
@@ -113,7 +123,8 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = context.watch<PackageProvider>().isLoading;
+    final packageProvider = context.watch<PackageProvider>();
+    final isLoading = packageProvider.isLoading;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -207,11 +218,108 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
               ],
             ),
 
+            const SizedBox(height: 32),
+
+            _buildSectionTitle("Fasilitas"),
+            const SizedBox(height: 16),
+            _buildFacilitiesSection(packageProvider),
+
             const SizedBox(height: 100),
           ],
         ),
       ),
       bottomNavigationBar: _buildBottomBar(isLoading),
+    );
+  }
+
+  Widget _buildFacilitiesSection(PackageProvider provider) {
+    if (provider.isFacilitiesLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(color: Color(0xFF004CB9)),
+        ),
+      );
+    }
+
+    if (provider.facilities.isEmpty) {
+      return const Text(
+        "Gagal memuat fasilitas. Pastikan koneksi stabil.",
+        style: TextStyle(color: Colors.grey, fontSize: 12),
+      );
+    }
+
+    return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 3.5,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: provider.facilities.length,
+      itemBuilder: (context, index) {
+        final facility = provider.facilities[index];
+        final isSelected = _selectedFacilities.contains(facility.id);
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                _selectedFacilities.remove(facility.id);
+              } else {
+                _selectedFacilities.add(facility.id);
+              }
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFFE6F0FF) : const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isSelected ? const Color(0xFF004CB9) : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                // Lingkaran Radio Button
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected ? const Color(0xFF004CB9) : Colors.white,
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFF004CB9) : Colors.grey.shade400,
+                      width: 2,
+                    ),
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, size: 12, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    facility.name,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      color: isSelected ? const Color(0xFF004CB9) : Colors.black87,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

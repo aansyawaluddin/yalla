@@ -1,6 +1,8 @@
+import 'dart:core';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yalla/core/models/package_model.dart';
+import 'package:yalla/core/models/facility_model.dart'; 
 import 'package:yalla/core/services/package_service.dart';
 
 class PackageProvider extends ChangeNotifier {
@@ -80,7 +82,6 @@ class PackageProvider extends ChangeNotifier {
         throw Exception("Sesi login tidak ditemukan. Silakan login ulang.");
       }
 
-      // Memanggil fungsi fetch dari service
       _packages = await _packageService.fetchPackages(userId, token);
     } catch (e) {
       _errorMessage = e.toString().replaceAll("Exception: ", "");
@@ -89,7 +90,6 @@ class PackageProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
 
   PackageModel? _selectedPackage;
   PackageModel? get selectedPackage => _selectedPackage;
@@ -113,6 +113,28 @@ class PackageProvider extends ChangeNotifier {
       _errorMessage = e.toString().replaceAll("Exception: ", "");
     } finally {
       _isDetailFetching = false;
+      notifyListeners();
+    }
+  }
+  
+  List<FacilityModel> _facilities = [];
+  List<FacilityModel> get facilities => _facilities;
+
+  bool _isFacilitiesLoading = false;
+  bool get isFacilitiesLoading => _isFacilitiesLoading;
+
+  Future<void> getFacilities() async {
+    _isFacilitiesLoading = true;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+      _facilities = await _packageService.fetchFacilities(token);
+    } catch (e) {
+      print("Error fetching facilities: $e");
+    } finally {
+      _isFacilitiesLoading = false;
       notifyListeners();
     }
   }
