@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:yalla/features/user/home/paket/detail_paket_screen.dart';
 
 class SmallPaketCard extends StatelessWidget {
+  final String packageId;
   final String title;
   final String duration;
   final String price;
@@ -8,6 +10,7 @@ class SmallPaketCard extends StatelessWidget {
 
   const SmallPaketCard({
     super.key,
+    required this.packageId, 
     required this.title,
     required this.duration,
     required this.price,
@@ -16,87 +19,99 @@ class SmallPaketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 180, 
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        image: DecorationImage(image: AssetImage(imagePath), fit: BoxFit.cover),
-      ),
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailPaketScreen(packageId: packageId),
+          ),
+        );
+      },
+      child: Container(
+        height: 180,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          image: DecorationImage(
+            image: AssetImage(imagePath),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
+                ),
               ),
             ),
-          ),
 
-          // Konten Teks
-          Positioned(
-            bottom: 12,
-            left: 12,
-            right: 12,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    height: 1.2,
+            // Konten Teks
+            Positioned(
+              bottom: 12,
+              left: 12,
+              right: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
+                  const SizedBox(height: 6),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        duration,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 9,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                    RichText(
-                      textAlign: TextAlign.right,
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 9,
-                          color: Colors.white70,
-                        ),
-                        children: [
-                          const TextSpan(text: "Mulai dari\n"),
-                          TextSpan(
-                            text: price,
-                            style: const TextStyle(
-                              color: Colors
-                                  .white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          duration,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 9,
+                            height: 1.3,
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      RichText(
+                        textAlign: TextAlign.right,
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 9,
+                            color: Colors.white70,
+                          ),
+                          children: [
+                            const TextSpan(text: "Mulai dari\n"),
+                            TextSpan(
+                              text: price,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
