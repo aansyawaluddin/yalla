@@ -8,7 +8,7 @@ import 'package:yalla/core/widgets/button/travel_custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/widgets/modals/calendar_bottom_sheet.dart';
 import 'package:yalla/core/widgets/modals/passenger_class_bottom_sheet.dart';
-import 'package:yalla/core/widgets/eror/error_state_widget.dart'; 
+import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/features/travel/home/list_flight_travel_screen.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
 
@@ -61,10 +61,11 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.white.withOpacity(0.5),
-                      const Color(0xFFF5F6F8),
+                      Colors.white.withOpacity(0.1),
+                      Colors.white.withOpacity(0.8),
+                      Colors.white,
                     ],
-                    stops: const [0.4, 0.8, 1.0],
+                    stops: const [0.3, 0.6, 0.85, 1.0],
                   ),
                 ),
               ),

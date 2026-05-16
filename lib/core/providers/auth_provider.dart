@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yalla/core/services/auth_service.dart';
@@ -107,10 +108,39 @@ class AuthProvider extends ChangeNotifier {
     final token = prefs.getString('auth_token');
     final role = prefs.getString('user_role');
 
-    if (token != null && token.isNotEmpty) {
-      return role ?? 'jamaah';
+    if (token == null || token.isEmpty || role == null) {
+      return null;
     }
-    return null;
+
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        await logout(); 
+        return null;
+      }
+
+      final payloadStr = parts[1];
+      final normalized = base64Url.normalize(payloadStr);
+      final payloadString = utf8.decode(base64Url.decode(normalized));
+      final payloadMap = jsonDecode(payloadString);
+
+      if (payloadMap is Map<String, dynamic> && payloadMap.containsKey('exp')) {
+        final exp = payloadMap['exp'] * 1000;
+        final expDate = DateTime.fromMillisecondsSinceEpoch(exp);
+
+        if (DateTime.now().isAfter(expDate)) {
+          print("Token sudah basi! Mengembalikan ke halaman Login.");
+          await logout(); 
+          return null; 
+        }
+      }
+    } catch (e) {
+      print("Gagal membaca JWT: $e");
+      await logout();
+      return null;
+    }
+
+    return role;
   }
 
   Future<void> logout() async {
