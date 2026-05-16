@@ -64,7 +64,7 @@ class FlightOptionCardTravel extends StatelessWidget {
   String _formatShortDate(String? isoDate) {
     if (isoDate == null) return "-";
     try {
-      final date = DateTime.parse(isoDate);
+      final date = DateTime.parse(isoDate).toLocal();
       const months = [
         'Jan',
         'Feb',
