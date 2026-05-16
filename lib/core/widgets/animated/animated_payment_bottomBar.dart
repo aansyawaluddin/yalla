@@ -1,5 +1,8 @@
+import 'dart:async'; 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; 
+import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/features/user/plane/flight/payment_succes_screen.dart';
 
@@ -16,6 +19,8 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
   late final AnimationController _loadingController;
   late final AnimationController _successController;
 
+  Timer? _pollingTimer; 
+
   bool _isLoading = false;
   bool _isSuccess = false;
 
@@ -25,19 +30,10 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
   void initState() {
     super.initState();
 
-    _loadingController =
-        AnimationController(
-          vsync: this,
-          duration: const Duration(milliseconds: 4200),
-        )..addStatusListener((status) {
-          if (status == AnimationStatus.completed && mounted) {
-            setState(() {
-              _isLoading = false;
-              _isSuccess = true;
-            });
-            _successController.forward(from: 0);
-          }
-        });
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 4200),
+    );
 
     _successController =
         AnimationController(
@@ -75,6 +71,7 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
 
   @override
   void dispose() {
+    _pollingTimer?.cancel(); 
     _loadingController.dispose();
     _successController.dispose();
     super.dispose();
@@ -87,7 +84,38 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
     });
 
     _successController.reset();
-    _loadingController.forward(from: 0);
+
+    _loadingController.repeat();
+
+    _startOrderStatusPolling();
+  }
+
+  void _startOrderStatusPolling() {
+    final orderProvider = context.read<OrderProvider>();
+    final String orderId = orderProvider.lastOrderId;
+
+    if (orderId.isEmpty) return;
+
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      String currentStatus = await orderProvider.checkOrderStatus(orderId);
+
+      if (currentStatus == 'approved') {
+        _pollingTimer?.cancel(); 
+
+        if (!mounted) return;
+
+        _loadingController.stop(); 
+
+        setState(() {
+          _isLoading = false;
+          _isSuccess = true;
+        });
+
+        _successController.forward(
+          from: 0,
+        );
+      }
+    });
   }
 
   @override
@@ -196,7 +224,7 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
                           child: const Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              "Menunggu....",
+                              "Menunggu Pembayaran...", 
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.black54,
@@ -286,7 +314,7 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
         ),
         const SizedBox(height: 16),
         PrimaryGradientButton(
-          text: "Menunggu Pembayaran",
+          text: "Mulai Mengecek",
           onPressed: _startPaymentAnimation,
         ),
       ],

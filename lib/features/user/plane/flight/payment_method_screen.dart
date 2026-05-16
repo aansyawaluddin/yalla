@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/payment_button.dart';
 import 'package:yalla/core/widgets/modals/payment_method.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 import 'package:yalla/features/user/plane/flight/payment_screen.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
-  const PaymentMethodScreen({super.key});
+  final FlightModel flight;
+  final Map<String, dynamic> passengerData;
+
+  const PaymentMethodScreen({
+    super.key,
+    required this.flight,
+    required this.passengerData,
+  });
 
   @override
   State<PaymentMethodScreen> createState() => _PaymentMethodScreenState();
@@ -14,8 +26,117 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   String _selectedScheme = 'Lunas';
   String? _selectedPaymentMethod;
 
+  String _formatPrice(num? price) {
+    if (price == null || price == 0) return "IDR 0";
+    String s = price.toInt().toString();
+    String res = "";
+    for (int i = 0; i < s.length; i++) {
+      res += s[i];
+      if ((s.length - 1 - i) % 3 == 0 && i != s.length - 1) res += ".";
+    }
+    return "IDR $res";
+  }
+
+  String _calculateDuration(String? dep, String? arr) {
+    if (dep == null || arr == null) return "-";
+    try {
+      final d = DateTime.parse(dep);
+      final a = DateTime.parse(arr);
+      final diff = a.difference(d);
+      final hours = diff.inHours;
+      final mins = diff.inMinutes.remainder(60);
+      return "${hours}j ${mins}m";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  void _handleCheckoutAndPay() async {
+    if (_selectedPaymentMethod == null) {
+      CustomSnackBar.showError(
+        context,
+        title: "Metode Pembayaran",
+        message: "Mohon pilih metode pembayaran terlebih dahulu.",
+      );
+      return;
+    }
+
+    final num totalPrice = widget.flight.price ?? 0;
+    num amountToPay = totalPrice;
+    if (_selectedScheme == 'DP') amountToPay = totalPrice * 0.3;
+    if (_selectedScheme == 'Cicil') amountToPay = totalPrice * 0.4;
+
+    Map<String, dynamic> payload = {
+      "email": widget.passengerData["email"],
+      "phone_number": widget.passengerData["phone_number"], 
+      "departure_flight_id": widget.flight.id, 
+      "passengers": [
+        widget.passengerData,
+      ],
+    };
+
+    final orderProvider = context.read<OrderProvider>();
+
+    final success = await orderProvider.processCheckoutAndPayment(payload);
+
+    if (!mounted) return;
+
+    if (success && orderProvider.gatewayUrl.isNotEmpty) {
+      final Uri url = Uri.parse(orderProvider.gatewayUrl);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentScreen(
+              flight: widget.flight,
+              paymentAmount: amountToPay, 
+              paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
+            ),
+          ),
+        );
+      } else {
+        CustomSnackBar.showError(
+          context,
+          title: "Gagal",
+          message: "Tidak dapat membuka link pembayaran.",
+        );
+      }
+    } else {
+      CustomSnackBar.showError(
+        context,
+        title: "Checkout Gagal",
+        message: orderProvider.errorMessage,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final num totalPrice = widget.flight.price ?? 0;
+    final num dpPrice = totalPrice * 0.3;
+    final num cicilPrice = totalPrice * 0.4;
+
+    num currentPaymentAmount = totalPrice;
+    if (_selectedScheme == 'DP') currentPaymentAmount = dpPrice;
+    if (_selectedScheme == 'Cicil') currentPaymentAmount = cicilPrice;
+
+    num remainingBalance = totalPrice - currentPaymentAmount;
+
+    final isLoading = context.watch<OrderProvider>().isLoading;
+
+    final bool isOutbound = widget.flight.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String destCode = isOutbound ? "JED" : "UPG";
+    final String originCity = isOutbound ? "Makassar" : "Jeddah";
+    final String destCity = isOutbound ? "Jeddah" : "Makassar";
+    final String flightNo = widget.flight.flightNo ?? "-";
+    final String duration = _calculateDuration(
+      widget.flight.departureTime,
+      widget.flight.arrivalTime,
+    );
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -100,8 +221,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
-                                  children: const [
-                                    Text(
+                                  children: [
+                                    const Text(
                                       "Ringkasan Pesanan",
                                       style: TextStyle(
                                         fontSize: 14,
@@ -109,9 +230,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                                       ),
                                     ),
                                     Text(
-                                      "#D0129312",
-                                      style: TextStyle(
+                                      "#$flightNo",
+                                      style: const TextStyle(
                                         fontSize: 14,
+                                        fontWeight: FontWeight.bold,
                                         color: Color(0xFF0084FF),
                                       ),
                                     ),
@@ -119,14 +241,16 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                                 ),
                                 const SizedBox(height: 20),
                                 Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Container(
                                       width: 48,
                                       height: 48,
-                                      decoration: const BoxDecoration(
+                                      decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        image: DecorationImage(
+                                        border: Border.all(
+                                          color: const Color(0xffDADADA),
+                                        ),
+                                        image: const DecorationImage(
                                           image: AssetImage(
                                             'assets/images/logo_flydeal.png',
                                           ),
@@ -135,146 +259,158 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: const [
-                                        Text(
-                                          "Flydeal Air",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "JT 6655",
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.black54,
-                                              ),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Text(
-                                              "Ekonomi",
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.black54,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    const Spacer(),
-                                    Column(
-                                      children: const [
-                                        Text(
-                                          "UPG",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Makassar",
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                      ),
+                                    Expanded(
+                                      flex: 3,
                                       child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Container(
-                                            width: 30,
-                                            height: 1,
-                                            color: const Color(0xFF0084FF),
+                                          const Text(
+                                            "Flydeal Air",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
                                           ),
                                           const SizedBox(height: 4),
-                                          const Text(
-                                            "11j 15m",
+                                          Text(
+                                            "$flightNo  •  Ekonomi",
                                             style: TextStyle(
-                                              fontSize: 8,
-                                              color: Colors.black54,
+                                              fontSize: 10,
+                                              color: Colors.grey.shade500,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    Column(
-                                      children: const [
-                                        Text(
-                                          "JED",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.black87,
+                                    Expanded(
+                                      flex: 4,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Column(
+                                            children: [
+                                              Text(
+                                                originCode,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                              Text(
+                                                originCity,
+                                                style: const TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        Text(
-                                          "Jeddah",
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.black54,
+                                          Column(
+                                            children: [
+                                              Container(
+                                                width: 30,
+                                                height: 1,
+                                                color: Colors.grey.shade400,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                duration,
+                                                style: const TextStyle(
+                                                  fontSize: 8,
+                                                  color: Colors.black38,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                      ],
+                                          Column(
+                                            children: [
+                                              Text(
+                                                destCode,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                              Text(
+                                                destCity,
+                                                style: const TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 24),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: _buildInfoItem(
-                                        "Nama Penumpang",
-                                        "Muhammad Fauzan Bachtiar",
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: _buildInfoItem("Status", "Dewasa"),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: _buildInfoItem(
-                                        "Waktu Keberangkatan",
-                                        "Jumat, 02 Juni 2026 - 18:15",
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: _buildInfoItem(
-                                        "Waktu Tiba",
-                                        "Ahad, 04 Juni 2026 - 03:25",
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
                                 const Text(
-                                  "Fasilitas",
+                                  "Skema Pembayaran",
                                   style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.black54,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildSchemeCard(
+                                        title: "Lunas",
+                                        price: _formatPrice(totalPrice),
+                                        subtitle: "Sekali Bayar",
+                                        isSelected: _selectedScheme == 'Lunas',
+                                        onTap: () => setState(
+                                          () => _selectedScheme = 'Lunas',
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildSchemeCard(
+                                        title: "DP",
+                                        price: _formatPrice(dpPrice),
+                                        subtitle: "Uang Muka",
+                                        isSelected: _selectedScheme == 'DP',
+                                        onTap: () => setState(
+                                          () => _selectedScheme = 'DP',
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildSchemeCard(
+                                        title: "Cicil",
+                                        price: _formatPrice(cicilPrice),
+                                        subtitle: "Bertahap",
+                                        isSelected: _selectedScheme == 'Cicil',
+                                        onTap: () => setState(
+                                          () => _selectedScheme = 'Cicil',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                AnimatedSize(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOut,
+                                  alignment: Alignment.topCenter,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 300),
+                                    child: _buildExpandedArea(
+                                      totalPrice,
+                                      currentPaymentAmount,
+                                      remainingBalance,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -284,97 +420,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
-
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Ringkasan Pembayaran",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
-                                "Harga Tiket",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                              Text(
-                                "IDR 11.000.000",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
-                                "Pajak dan Biaya",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                              Text(
-                                "IDR 0",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
-                                "Total Pembayaran",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                              Text(
-                                "IDR 11.000.000",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
                     const SizedBox(height: 24),
 
                     const Text(
-                      "Skema Pembayaran",
+                      "Metode Pembayaran",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -382,58 +431,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildSchemeCard(
-                            title: "Lunas",
-                            price: "IDR 11.000.000",
-                            subtitle: "Sekali Bayar",
-                            isSelected: _selectedScheme == 'Lunas',
-                            onTap: () =>
-                                setState(() => _selectedScheme = 'Lunas'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildSchemeCard(
-                            title: "DP",
-                            price: "IDR 3.300.000",
-                            subtitle: "Uang Muka",
-                            isSelected: _selectedScheme == 'DP',
-                            onTap: () => setState(() => _selectedScheme = 'DP'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildSchemeCard(
-                            title: "Cicil",
-                            price: "IDR 4.000.000",
-                            subtitle: "Bertahap",
-                            isSelected: _selectedScheme == 'Cicil',
-                            onTap: () =>
-                                setState(() => _selectedScheme = 'Cicil'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      alignment: Alignment.topCenter,
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        switchInCurve: Curves.easeOut,
-                        switchOutCurve: Curves.easeOut,
-                        child: _buildExpandedArea(),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
                     GestureDetector(
                       onTap: () async {
                         final selectedMethod =
@@ -458,7 +455,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(
+                            color: _selectedPaymentMethod == null
+                                ? Colors.grey.shade300
+                                : const Color(0xFF0084FF),
+                            width: _selectedPaymentMethod == null ? 1.0 : 1.5,
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -467,16 +469,24 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                               width: 40,
                               height: 40,
                               fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(
+                                    Icons.account_balance_wallet,
+                                    color: Color(0xFF005C99),
+                                    size: 32,
+                                  ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Text(
                                 _selectedPaymentMethod ??
                                     "Pilih Metode Pembayaran",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: _selectedPaymentMethod == null
+                                      ? Colors.black54
+                                      : Colors.black87,
                                 ),
                               ),
                             ),
@@ -496,7 +506,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           ],
         ),
       ),
-
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         decoration: BoxDecoration(
@@ -517,7 +526,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
                 Text(
-                  "Total Harga",
+                  "Total Dibayar Sekarang",
                   style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
                 Text(
@@ -532,11 +541,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              _selectedScheme == 'Lunas'
-                  ? "IDR 11.000.000"
-                  : _selectedScheme == 'DP'
-                  ? "IDR 3.300.000"
-                  : "IDR 4.000.000",
+              _formatPrice(
+                currentPaymentAmount,
+              ), // Dinamis sesuai skema yang dipilih
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -545,481 +552,18 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             ),
             const SizedBox(height: 16),
 
-            PaymentButton(
-              text: "Bayar Sekarang",
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  PageRouteBuilder(
-                    transitionDuration: const Duration(milliseconds: 800),
-                    reverseTransitionDuration: const Duration(
-                      milliseconds: 800,
-                    ),
-                    pageBuilder: (context, animation, secondaryAnimation) =>
-                        const PaymentScreen(), 
-                    transitionsBuilder:
-                        (context, animation, secondaryAnimation, child) {
-                          var curvedAnimation = CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeInOut,
-                          );
-
-                          return FadeTransition(
-                            opacity: curvedAnimation,
-                            child: child,
-                          );
-                        },
+            // TOMBOL BAYAR DENGAN LOADING STATE
+            isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF0084FF)),
+                  )
+                : PaymentButton(
+                    text: "Bayar Sekarang",
+                    onPressed: _handleCheckoutAndPay,
                   ),
-                );
-              },
-            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildExpandedArea() {
-    if (_selectedScheme == 'Lunas') {
-      return Container(
-        key: const ValueKey('LunasBanner'),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF0F8FF),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFFE1F0FF)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
-            Text(
-              "Jumlah Bayar Sekarang:",
-              style: TextStyle(fontSize: 12, color: Colors.black87),
-            ),
-            Text(
-              "IDR 11.000.000",
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else if (_selectedScheme == 'DP') {
-      return Column(
-        key: const ValueKey('DetailDP'),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFC8E6C9)),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE8FAED),
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.payments_outlined,
-                            size: 16,
-                            color: Color(0xFF1E8A00),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            "Skema Pembayaran",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Text(
-                        "DP",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E8A00),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text(
-                            "Total Paket",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            "IDR 11.000.000",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: const [
-                              Text(
-                                "DP Minimum ",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              Text(
-                                "(2jt/pax)",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Text(
-                            "IDR 3.300.000",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E8A00),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text(
-                            "Sisa Tagihan",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            "IDR 7.700.000",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE8FAED),
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(8),
-                    ),
-                  ),
-                  child: RichText(
-                    text: const TextSpan(
-                      text: "Pelunasan Maksimal ",
-                      style: TextStyle(fontSize: 10, color: Colors.black87),
-                      children: [
-                        TextSpan(
-                          text: "H-7 ",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E8A00),
-                          ),
-                        ),
-                        TextSpan(
-                          text: "(23 Juni 2026)",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    } else {
-      return Column(
-        key: const ValueKey('DetailCicil'),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF66B2FF)),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF0F8FF),
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.payments_outlined,
-                            size: 16,
-                            color: Color(0xFF005C99),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            "Skema Pembayaran",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Text(
-                        "CICIL",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0084FF),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text(
-                            "Total Tagihan",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            "IDR 11.000.000",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text(
-                            "Total Dibayar",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            "IDR 4.000.000",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0084FF),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text(
-                            "Sisa Tagihan",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            "IDR 7.700.000",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          "74% Dibayar",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0084FF),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: 0.74,
-                          minHeight: 6,
-                          backgroundColor: Colors.grey.shade200,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Color(0xFF0084FF),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        "Pembayaran dapat dilakukan secara bertahap tanpa jumlah tetap. Pelunasan wajib dilakukan maksimal 7 hari sebelum keberangkatan",
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.black54,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            "Masukkan Nominal Pembayaran",
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildInputBox("4.000.000"),
-        ],
-      );
-    }
-  }
-
-  Widget _buildInputBox(String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        children: [
-          const Text(
-            "IDR",
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(String title, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 10, color: Colors.black54),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-      ],
     );
   }
 
@@ -1034,7 +578,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFF6FBFF) : Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -1046,32 +590,21 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected
-                        ? const Color(0xFF0084FF)
-                        : const Color(0xFF005C99),
-                  ),
-                ),
-                if (isSelected)
-                  const Icon(
-                    Icons.check_circle_outline,
-                    size: 14,
-                    color: Color(0xFF0084FF),
-                  ),
-              ],
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isSelected
+                    ? const Color(0xFF0084FF)
+                    : const Color(0xFF005C99),
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               price,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
@@ -1079,11 +612,165 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: const TextStyle(fontSize: 10, color: Colors.black54),
+              style: const TextStyle(fontSize: 9, color: Colors.black54),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildExpandedArea(num total, num current, num remaining) {
+    if (_selectedScheme == 'Lunas') {
+      return Container(
+        key: const ValueKey('LunasBanner'),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F8FF),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFE1F0FF)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Jumlah Bayar Sekarang:",
+              style: TextStyle(fontSize: 12, color: Colors.black87),
+            ),
+            Text(
+              _formatPrice(current),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        key: ValueKey('Detail$_selectedScheme'),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFF66B2FF)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF0F8FF),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(
+                        Icons.payments_outlined,
+                        size: 16,
+                        color: Color(0xFF005C99),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        "Detail Skema",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    _selectedScheme,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0084FF),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Total Tagihan",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        _formatPrice(total),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Total Dibayar",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        _formatPrice(current),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0084FF),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Sisa Tagihan",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        _formatPrice(remaining),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

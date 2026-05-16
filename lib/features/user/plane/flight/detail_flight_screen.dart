@@ -55,7 +55,7 @@ class DetailFlightScreen extends StatelessWidget {
           ),
         ),
         title: Text(
-          destName, 
+          destName,
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -104,7 +104,7 @@ class DetailFlightScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Text(
-                                  originCode, 
+                                  originCode,
                                   style: const TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w900,
@@ -178,7 +178,7 @@ class DetailFlightScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  destCode, 
+                                  destCode,
                                   style: const TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w900,
@@ -274,7 +274,7 @@ class DetailFlightScreen extends StatelessWidget {
                                 color: Colors.white.withOpacity(0.2),
                                 child: Center(
                                   child: Text(
-                                    priceText, 
+                                    priceText,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -302,7 +302,9 @@ class DetailFlightScreen extends StatelessWidget {
                                             context,
                                             animation,
                                             secondaryAnimation,
-                                          ) => const DetailPassengerScreen(),
+                                          ) => DetailPassengerScreen(
+                                            flight: flight,
+                                          ),
                                       transitionsBuilder:
                                           (
                                             context,

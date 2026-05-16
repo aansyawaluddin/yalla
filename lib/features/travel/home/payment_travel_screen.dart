@@ -321,11 +321,11 @@ class PaymentTravelScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const Positioned(
-                          top: -20,
-                          right: 20,
-                          child: CountdownTimer(),
-                        ),
+                        // const Positioned(
+                        //   top: -20,
+                        //   right: 20,
+                        //   child: CountdownTimer(),
+                        // ),
                       ],
                     ),
 

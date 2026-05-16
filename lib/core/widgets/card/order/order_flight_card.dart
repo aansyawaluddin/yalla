@@ -1,29 +1,102 @@
-import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:yalla/features/user/plane/flight/detail_flight_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/providers/order_provider.dart';
+import 'package:yalla/features/user/plane/flight/payment_screen.dart';
 
 class OrderFlightCard extends StatelessWidget {
-  const OrderFlightCard({super.key});
+  final Map<String, dynamic> order;
 
-  // void _navigateToDetail(BuildContext context) {
-  //   Navigator.push(
-  //     context,
-  //     PageRouteBuilder(
-  //       transitionDuration: const Duration(milliseconds: 300),
-  //       reverseTransitionDuration: const Duration(milliseconds: 300),
-  //       pageBuilder: (context, animation, secondaryAnimation) =>
-  //           const DetailFlightScreen(),
-  //       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-  //         var curvedAnimation = CurvedAnimation(
-  //           parent: animation,
-  //           curve: Curves.easeOut,
-  //         );
-  //         return FadeTransition(opacity: curvedAnimation, child: child);
-  //       },
-  //     ),
-  //   );
-  // }
+  const OrderFlightCard({super.key, required this.order});
+
+  void _navigateToDetail(BuildContext context, String currentStatus) {
+    if (currentStatus == 'waiting_payment') {
+      context.read<OrderProvider>().setLastOrderId(order['id']);
+      final double? safePrice = (order['price'] as num?)?.toDouble();
+
+      DateTime createdAt = DateTime.now();
+      if (order['created_at'] != null) {
+        createdAt = DateTime.parse(order['created_at']).toLocal();
+      }
+      final DateTime absoluteDeadline = createdAt.add(
+        const Duration(hours: 24),
+      );
+
+      final dummyFlight = FlightModel(
+        id: order['departure_flight_id'],
+        flightNo: "Pesanan Lanjutan",
+        price: safePrice,
+      );
+
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              PaymentScreen(
+                flight: dummyFlight,
+                paymentAmount: order['price'] ?? 0,
+                paymentDeadline: absoluteDeadline,
+              ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      );
+    } else if (currentStatus == 'on_process') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Pembayaran Anda sedang diverifikasi oleh Admin. Mohon tunggu.',
+          ),
+        ),
+      );
+    } else if (currentStatus == 'approved') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pesanan sudah lunas! Mengarahkan ke E-Ticket...'),
+        ),
+      );
+    }
+  }
+
+  String _formatPrice(num? price) {
+    if (price == null || price == 0) return "IDR 0";
+    String s = price.toInt().toString();
+    String res = "";
+    for (int i = 0; i < s.length; i++) {
+      res += s[i];
+      if ((s.length - 1 - i) % 3 == 0 && i != s.length - 1) res += ".";
+    }
+    return "IDR $res";
+  }
+
+  String _formatTime(String? isoString, String fallback) {
+    if (isoString == null) return fallback;
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      String hour = date.hour.toString().padLeft(2, '0');
+      String minute = date.minute.toString().padLeft(2, '0');
+      return "$hour:$minute";
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  String _calculateDuration(String? dep, String? arr, String fallback) {
+    if (dep == null || arr == null) return fallback;
+    try {
+      final d = DateTime.parse(dep);
+      final a = DateTime.parse(arr);
+      final diff = a.difference(d);
+      final hours = diff.inHours;
+      final mins = diff.inMinutes.remainder(60);
+      return "${hours}j ${mins}m";
+    } catch (e) {
+      return fallback;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +104,57 @@ class OrderFlightCard extends StatelessWidget {
     const Color textDark = Color(0xFF111827);
     const Color textGrey = Color(0xFF6B7280);
 
+    final num price = order['price'] ?? 0;
+    final String status = order['status'] ?? '';
+    final List passengers = order['passengers'] ?? [];
+    final int paxCount = passengers.isNotEmpty ? passengers.length : 1;
+
+    final Map<String, dynamic> flightData = order['flight'] ?? {};
+    final String airline = flightData['airline_name'] ?? "Flydeal Air";
+    final String originCode = flightData['origin_code'] ?? "UPG";
+    final String destCode = flightData['destination_code'] ?? "JED";
+    final String depTime = _formatTime(
+      flightData['departure_time'],
+      "02:00 AM",
+    );
+    final String arrTime = _formatTime(flightData['arrival_time'], "12:15 PM");
+    final String duration = _calculateDuration(
+      flightData['departure_time'],
+      flightData['arrival_time'],
+      "11j 15m",
+    );
+
+    final bool isWaitingPayment = status == 'waiting_payment';
+    final bool isOnProcess = status == 'on_process';
+
+    String badgeText;
+    Color badgeColor;
+    Color badgeBg;
+    String progressText;
+    double progressValue;
+
+    if (isWaitingPayment) {
+      badgeText = "Menunggu";
+      badgeColor = Colors.orange;
+      badgeBg = Colors.orange.shade50;
+      progressText = "Belum Lunas";
+      progressValue = 0.0;
+    } else if (isOnProcess) {
+      badgeText = "Diproses Admin";
+      badgeColor = brandBlue;
+      badgeBg = Colors.blue.shade50;
+      progressText = "Verifikasi";
+      progressValue = 0.5;
+    } else {
+      badgeText = "Sukses";
+      badgeColor = Colors.green;
+      badgeBg = Colors.green.shade50;
+      progressText = "Lunas";
+      progressValue = 1.0;
+    }
+
     return GestureDetector(
-      // onTap: () => _navigateToDetail(context),
+      onTap: () => _navigateToDetail(context, status),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         clipBehavior: Clip.antiAlias,
@@ -88,64 +210,92 @@ class OrderFlightCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Flydeal Air",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: textDark,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              airline,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: textDark,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: const [
-                              Icon(
-                                Icons.work_outline,
-                                size: 14,
-                                color: textGrey,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                "25 Kg",
-                                style: TextStyle(
-                                  fontSize: 12,
+                            const SizedBox(height: 6),
+                            Row(
+                              children: const [
+                                Icon(
+                                  Icons.work_outline,
+                                  size: 14,
                                   color: textGrey,
-                                  fontWeight: FontWeight.w500,
                                 ),
-                              ),
-                              SizedBox(width: 12),
-                              Icon(
-                                Icons.restaurant_menu,
-                                size: 14,
-                                color: textGrey,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Text(
-                                "1 Dewasa",
-                                style: TextStyle(fontSize: 11, color: textGrey),
-                              ),
-                              Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 8,
+                                SizedBox(width: 4),
+                                Text(
+                                  "25 Kg",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: textGrey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                                width: 1,
-                                height: 10,
-                                color: Colors.grey.shade400,
-                              ),
-                              const Text(
-                                "Ekonomi",
-                                style: TextStyle(fontSize: 11, color: textGrey),
-                              ),
-                            ],
+                                SizedBox(width: 12),
+                                Icon(
+                                  Icons.restaurant_menu,
+                                  size: 14,
+                                  color: textGrey,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Text(
+                                  "$paxCount Penumpang",
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: textGrey,
+                                  ),
+                                ),
+                                Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  width: 1,
+                                  height: 10,
+                                  color: Colors.grey.shade400,
+                                ),
+                                const Text(
+                                  "Ekonomi",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: textGrey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 👇 BADGE STATUS DINAMIS 👇
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: badgeBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: badgeColor),
+                        ),
+                        child: Text(
+                          badgeText,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: badgeColor,
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -156,26 +306,26 @@ class OrderFlightCard extends StatelessWidget {
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
+                        children: [
                           Text(
-                            "02:00 AM",
-                            style: TextStyle(
+                            depTime,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
                               color: textDark,
                             ),
                           ),
                           Text(
-                            "11j 15m",
-                            style: TextStyle(
+                            duration,
+                            style: const TextStyle(
                               fontSize: 11,
                               color: textGrey,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           Text(
-                            "12:15 PM",
-                            style: TextStyle(
+                            arrTime,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
                               color: textDark,
@@ -186,9 +336,9 @@ class OrderFlightCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Text(
-                            "UPG",
-                            style: TextStyle(
+                          Text(
+                            originCode,
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: textGrey,
@@ -230,24 +380,15 @@ class OrderFlightCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Text(
-                            "JED",
-                            style: TextStyle(
+                          Text(
+                            destCode,
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: textGrey,
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        "1 Transit",
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: textGrey,
-                          fontWeight: FontWeight.w500,
-                        ),
                       ),
                     ],
                   ),
@@ -270,9 +411,9 @@ class OrderFlightCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              "IDR 1.250.000",
-                              style: TextStyle(
+                            Text(
+                              _formatPrice(price),
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
                                 color: brandBlue,
@@ -281,8 +422,8 @@ class OrderFlightCard extends StatelessWidget {
                             const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: const [
-                                Text(
+                              children: [
+                                const Text(
                                   "Progress Pembayaran",
                                   style: TextStyle(
                                     fontSize: 10,
@@ -291,8 +432,8 @@ class OrderFlightCard extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  "70%",
-                                  style: TextStyle(
+                                  progressText,
+                                  style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     color: brandBlue,
@@ -312,11 +453,11 @@ class OrderFlightCard extends StatelessWidget {
                                   ),
                                 ),
                                 FractionallySizedBox(
-                                  widthFactor: 0.7,
+                                  widthFactor: progressValue,
                                   child: Container(
                                     height: 6,
                                     decoration: BoxDecoration(
-                                      color: brandBlue,
+                                      color: badgeColor,
                                       borderRadius: BorderRadius.circular(3),
                                     ),
                                   ),
@@ -326,61 +467,34 @@ class OrderFlightCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 24),
-                      SizedBox(
-                        height: 34,
-                        width: 100,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: brandBlue,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      if (isWaitingPayment) ...[
+                        const SizedBox(width: 24),
+                        SizedBox(
+                          height: 34,
+                          width: 90,
+                          child: ElevatedButton(
+                            onPressed: () => _navigateToDetail(context, status),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: brandBlue,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                          ),
-                          child: const Text(
-                            "Bayar",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                            child: const Text(
+                              "Bayar",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ],
-              ),
-            ),
-
-            Positioned(
-              top: 24,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [Color(0xFF0099FF), Color(0xFF005C99)],
-                  ),
-                  borderRadius: BorderRadius.horizontal(
-                    left: Radius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  "12 Agustus 2026",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
               ),
             ),
           ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
-import 'package:yalla/features/user/plane/flight/detail_passenger_screen.dart';
+import 'package:yalla/features/travel/home/detail_passenger_travel_screen.dart';
 
 class DetailFlightTravelScreen extends StatelessWidget {
   final FlightModel flight;
@@ -302,7 +302,7 @@ class DetailFlightTravelScreen extends StatelessWidget {
                                             context,
                                             animation,
                                             secondaryAnimation,
-                                          ) => const DetailPassengerScreen(),
+                                          ) => const DetailPassengerTravelScreen(),
                                       transitionsBuilder:
                                           (
                                             context,

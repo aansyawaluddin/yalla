@@ -1,24 +1,181 @@
 import 'package:flutter/material.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 import 'package:yalla/features/user/plane/flight/payment_method_screen.dart';
 
-class DetailPassengerScreen extends StatelessWidget {
-  const DetailPassengerScreen({super.key});
+class DetailPassengerScreen extends StatefulWidget {
+  final FlightModel flight;
+
+  const DetailPassengerScreen({super.key, required this.flight});
+
+  @override
+  State<DetailPassengerScreen> createState() => _DetailPassengerScreenState();
+}
+
+class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
+  final TextEditingController nameC = TextEditingController();
+  final TextEditingController emailC = TextEditingController();
+  final TextEditingController phoneC = TextEditingController();
+  final TextEditingController dobC = TextEditingController();
+  final TextEditingController passportNumC = TextEditingController();
+  final TextEditingController passportNameC = TextEditingController();
+  final TextEditingController passportIssueC = TextEditingController();
+  final TextEditingController passportExpiryC = TextEditingController();
+
+  String _selectedTitle = "Tuan";
+
+  @override
+  void dispose() {
+    nameC.dispose();
+    emailC.dispose();
+    phoneC.dispose();
+    dobC.dispose();
+    passportNumC.dispose();
+    passportNameC.dispose();
+    passportIssueC.dispose();
+    passportExpiryC.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate(
+    BuildContext context,
+    TextEditingController controller, {
+    bool isPassport = false,
+  }) async {
+    DateTime now = DateTime.now();
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: isPassport ? now : DateTime(1995, 1, 1),
+      firstDate: isPassport ? DateTime(2010) : DateTime(1920),
+      lastDate: isPassport ? DateTime(2045) : now,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dialogBackgroundColor: Colors.white,
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF0084FF),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF0084FF),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      String day = picked.day.toString().padLeft(2, '0');
+      String month = picked.month.toString().padLeft(2, '0');
+      setState(() {
+        controller.text = "${picked.year}-$month-$day";
+      });
+    }
+  }
+
+  String _formatPrice(num? price) {
+    if (price == null || price == 0) return "IDR 0";
+    String s = price.toInt().toString();
+    String res = "";
+    for (int i = 0; i < s.length; i++) {
+      res += s[i];
+      if ((s.length - 1 - i) % 3 == 0 && i != s.length - 1) res += ".";
+    }
+    return "IDR $res";
+  }
+
+  String _formatFullDate(String? isoDate) {
+    if (isoDate == null) return "-";
+    try {
+      final date = DateTime.parse(isoDate).toLocal();
+      const months = [
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
+      ];
+      return "${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  void _handleNextStep() {
+    if (nameC.text.isEmpty ||
+        emailC.text.isEmpty ||
+        phoneC.text.isEmpty ||
+        dobC.text.isEmpty ||
+        passportNumC.text.isEmpty ||
+        passportNameC.text.isEmpty ||
+        passportIssueC.text.isEmpty ||
+        passportExpiryC.text.isEmpty) {
+      CustomSnackBar.showError(
+        context,
+        title: "Form Belum Lengkap",
+        message:
+            "Mohon lengkapi seluruh detail data diri dan paspor bertanda bintang (*) terlebih dahulu.",
+      );
+      return;
+    }
+
+    Map<String, dynamic> passengerData = {
+      "full_name": nameC.text.trim(),
+      "email": emailC.text.trim(),
+      "phone_number": phoneC.text.trim(),
+      "date_of_birth": dobC.text.trim(),
+      "passport_number": passportNumC.text.trim(),
+      "passport_issue_date": passportIssueC.text.trim(),
+      "passport_expiry_date": passportExpiryC.text.trim(),
+      "passport_country_id": 100,
+    };
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PaymentMethodScreen(
+          flight: widget.flight,
+          passengerData: passengerData,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool isOutbound = widget.flight.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String destCode = isOutbound ? "JED" : "UPG";
+    final String originCity = isOutbound ? "Makassar" : "Jeddah";
+    final String destCity = isOutbound ? "Jeddah" : "Makassar";
+
+    final String depTime = DateFormatter.formatTime(
+      widget.flight.departureTime,
+    );
+    final String depDateFull = _formatFullDate(widget.flight.departureTime);
+    final String priceText = _formatPrice(widget.flight.price);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
+            // APP BAR CUSTOM
             Padding(
-              padding: const EdgeInsets.only(
-                top: 16,
-                left: 24,
-                right: 24,
-                bottom: 8,
-              ),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Row(
                 children: [
                   Container(
@@ -62,14 +219,13 @@ class DetailPassengerScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- FLIGHT DETAIL CARD ---
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.shade100),
+                        border: Border.all(color: Colors.grey.shade200),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.03),
@@ -84,8 +240,8 @@ class DetailPassengerScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                width: 48,
-                                height: 48,
+                                width: 44,
+                                height: 44,
                                 decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
                                   image: DecorationImage(
@@ -104,7 +260,7 @@ class DetailPassengerScreen extends StatelessWidget {
                                     const Text(
                                       "Flydeal Air",
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black87,
                                       ),
@@ -115,21 +271,21 @@ class DetailPassengerScreen extends StatelessWidget {
                                         Icon(
                                           Icons.work_outline,
                                           size: 12,
-                                          color: Colors.black54,
+                                          color: Colors.black45,
                                         ),
                                         SizedBox(width: 4),
                                         Text(
                                           "25 Kg",
                                           style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.black54,
+                                            fontSize: 11,
+                                            color: Colors.black45,
                                           ),
                                         ),
-                                        SizedBox(width: 12),
+                                        SizedBox(width: 10),
                                         Icon(
                                           Icons.restaurant_menu,
                                           size: 12,
-                                          color: Colors.black54,
+                                          color: Colors.black45,
                                         ),
                                       ],
                                     ),
@@ -142,46 +298,43 @@ class DetailPassengerScreen extends StatelessWidget {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF0084FF,
-                                  ).withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: const Color(0xFF004AAB),
-                                    width: 1.5,
+                                    color: const Color(0xFF007BFF),
                                   ),
                                 ),
                                 child: const Text(
                                   "Ekonomi",
                                   style: TextStyle(
-                                    color: Color(0xFF004AAB),
+                                    color: Color(0xFF007BFF),
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Column(
-                                children: const [
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Text(
-                                    "UPG",
-                                    style: TextStyle(
-                                      fontSize: 16,
+                                    originCode,
+                                    style: const TextStyle(
+                                      fontSize: 18,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.black87,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
                                   Text(
-                                    "Makassar",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
+                                    originCity,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.black45,
                                     ),
                                   ),
                                 ],
@@ -189,51 +342,30 @@ class DetailPassengerScreen extends StatelessWidget {
                               Expanded(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
+                                    horizontal: 12,
                                   ),
                                   child: Row(
                                     children: [
                                       Expanded(
-                                        child: Container(
-                                          height: 2,
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                Colors.transparent,
-                                                const Color(
-                                                  0xFF0084FF,
-                                                ).withOpacity(0.5),
-                                              ],
-                                            ),
-                                          ),
+                                        child: Divider(
+                                          color: Colors.grey.shade300,
+                                          thickness: 1,
                                         ),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(
                                           horizontal: 4,
                                         ),
-                                        child: Transform.rotate(
-                                          angle: 1.5708,
-                                          child: const Icon(
-                                            Icons.flight,
-                                            color: Color(0xFF0084FF),
-                                            size: 20,
-                                          ),
+                                        child: Icon(
+                                          Icons.flight_takeoff,
+                                          color: Color(0xFF0084FF),
+                                          size: 16,
                                         ),
                                       ),
                                       Expanded(
-                                        child: Container(
-                                          height: 2,
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                const Color(
-                                                  0xFF0084FF,
-                                                ).withOpacity(0.5),
-                                                Colors.transparent,
-                                              ],
-                                            ),
-                                          ),
+                                        child: Divider(
+                                          color: Colors.grey.shade300,
+                                          thickness: 1,
                                         ),
                                       ),
                                     ],
@@ -241,47 +373,45 @@ class DetailPassengerScreen extends StatelessWidget {
                                 ),
                               ),
                               Column(
-                                children: const [
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
                                   Text(
-                                    "JED",
-                                    style: TextStyle(
-                                      fontSize: 16,
+                                    destCode,
+                                    style: const TextStyle(
+                                      fontSize: 18,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.black87,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
                                   Text(
-                                    "Jeddah",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
+                                    destCity,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.black45,
                                     ),
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
-                          Container(
-                            height: 1,
-                            color: const Color(0xFF0084FF).withOpacity(0.8),
-                          ),
                           const SizedBox(height: 16),
+                          Divider(color: Colors.grey.shade100, thickness: 1),
+                          const SizedBox(height: 12),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(
-                                children: const [
-                                  Icon(
+                                children: [
+                                  const Icon(
                                     Icons.calendar_today_outlined,
-                                    size: 16,
+                                    size: 14,
                                     color: Color(0xFF0084FF),
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    "06 Juni 2026",
-                                    style: TextStyle(
+                                    depDateFull,
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.black87,
@@ -290,16 +420,16 @@ class DetailPassengerScreen extends StatelessWidget {
                                 ],
                               ),
                               Row(
-                                children: const [
-                                  Icon(
-                                    Icons.access_time,
-                                    size: 16,
+                                children: [
+                                  const Icon(
+                                    Icons.access_time_filled,
+                                    size: 14,
                                     color: Color(0xFF0084FF),
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    "08 : 30 WITA",
-                                    style: TextStyle(
+                                    "$depTime WITA",
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.black87,
@@ -313,12 +443,11 @@ class DetailPassengerScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
-
+                    const SizedBox(height: 28),
                     const Text(
                       "Data Diri",
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
@@ -327,27 +456,31 @@ class DetailPassengerScreen extends StatelessWidget {
 
                     _buildCustomTextField(
                       "Nama Lengkap",
+                      controller: nameC,
                       isRequired: true,
                       keyboardType: TextInputType.name,
                     ),
                     const SizedBox(height: 16),
                     _buildCustomTextField(
                       "Email",
+                      controller: emailC,
                       isRequired: true,
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
                     _buildCustomTextField(
                       "Nomor Telepon",
+                      controller: phoneC,
                       isRequired: true,
                       keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 16),
-
                     _buildCustomTextField(
                       "Tanggal Lahir",
+                      controller: dobC,
                       isRequired: true,
-                      keyboardType: TextInputType.datetime,
+                      readOnly: true,
+                      onTap: () => _selectDate(context, dobC),
                     ),
                     const SizedBox(height: 16),
 
@@ -360,12 +493,12 @@ class DetailPassengerScreen extends StatelessWidget {
                         Expanded(child: _buildTitleOption("Nona")),
                       ],
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
 
                     const Text(
                       "Informasi Paspor",
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
@@ -374,31 +507,44 @@ class DetailPassengerScreen extends StatelessWidget {
 
                     _buildCustomTextField(
                       "Nomor Paspor",
-                      isRequired: true,
+                      controller: passportNumC,
                       keyboardType: TextInputType.text,
+                      isRequired: true,
                     ),
                     const SizedBox(height: 16),
                     _buildCustomTextField(
                       "Nama Lengkap (Sesuai Paspor)",
-                      isRequired: true,
+                      controller: passportNameC,
                       keyboardType: TextInputType.name,
+                      isRequired: true,
                     ),
                     const SizedBox(height: 16),
                     _buildCustomTextField(
                       "Tanggal Penerbitan Paspor",
+                      controller: passportIssueC,
+                      readOnly: true,
+                      onTap: () => _selectDate(
+                        context,
+                        passportIssueC,
+                        isPassport: true,
+                      ),
                       isRequired: true,
-                      keyboardType: TextInputType.datetime,
                     ),
                     const SizedBox(height: 16),
                     _buildCustomTextField(
                       "Tanggal Kadaluarsa Paspor",
+                      controller: passportExpiryC,
+                      readOnly: true,
+                      onTap: () => _selectDate(
+                        context,
+                        passportExpiryC,
+                        isPassport: true,
+                      ),
                       isRequired: true,
-                      keyboardType: TextInputType.datetime,
                     ),
                     const SizedBox(height: 16),
-                    // Pilihan Negara
                     _buildCountrySelector(),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -445,9 +591,9 @@ class DetailPassengerScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            const Text(
-              "IDR 11.000.000",
-              style: TextStyle(
+            Text(
+              priceText,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
                 color: Colors.black87,
@@ -456,31 +602,7 @@ class DetailPassengerScreen extends StatelessWidget {
             const SizedBox(height: 16),
             PrimaryGradientButton(
               text: "Lanjut ke Metode Pembayaran",
-              onPressed: () {
-                Navigator.of(context).push(
-                  PageRouteBuilder(
-                    transitionDuration: const Duration(milliseconds: 300),
-                    pageBuilder: (context, animation, secondaryAnimation) =>
-                        const PaymentMethodScreen(),
-                    transitionsBuilder:
-                        (context, animation, secondaryAnimation, child) {
-                          const begin = Offset(1.0, 0.0);
-                          const end = Offset.zero;
-                          const curve = Curves.easeOut; 
-
-                          var tween = Tween(
-                            begin: begin,
-                            end: end,
-                          ).chain(CurveTween(curve: curve));
-
-                          return SlideTransition(
-                            position: animation.drive(tween),
-                            child: child,
-                          );
-                        },
-                  ),
-                );
-              },
+              onPressed: _handleNextStep,
             ),
           ],
         ),
@@ -490,11 +612,14 @@ class DetailPassengerScreen extends StatelessWidget {
 
   Widget _buildCustomTextField(
     String hint, {
+    required TextEditingController controller,
     bool isRequired = false,
     TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false,
+    VoidCallback? onTap,
   }) {
     return Container(
-      height: 40,
+      height: 46,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -502,20 +627,22 @@ class DetailPassengerScreen extends StatelessWidget {
       ),
       child: Center(
         child: TextField(
+          controller: controller,
           keyboardType: keyboardType,
+          readOnly: readOnly,
+          onTap: onTap,
           style: const TextStyle(fontSize: 14, color: Colors.black87),
-          textAlignVertical: TextAlignVertical.center,
           decoration: InputDecoration(
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 15,
+              vertical: 16,
             ),
             border: InputBorder.none,
             label: RichText(
               text: TextSpan(
                 text: hint,
-                style: const TextStyle(color: Colors.black45, fontSize: 14),
+                style: const TextStyle(color: Colors.black45, fontSize: 13),
                 children: [
                   if (isRequired)
                     const TextSpan(
@@ -533,20 +660,27 @@ class DetailPassengerScreen extends StatelessWidget {
   }
 
   Widget _buildTitleOption(String title) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF33A1FF), width: 1),
-      ),
-      child: Center(
-        child: Text(
-          title,
-          style: const TextStyle(
-            color: Color(0xFF33A1FF),
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+    bool isSelected = _selectedTitle == title;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTitle = title),
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF0F8FF) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0084FF) : Colors.grey.shade300,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: isSelected ? const Color(0xFF0084FF) : Colors.black54,
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -555,7 +689,7 @@ class DetailPassengerScreen extends StatelessWidget {
 
   Widget _buildCountrySelector() {
     return Container(
-      height: 60,
+      height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -563,29 +697,16 @@ class DetailPassengerScreen extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey.shade100,
-              // Jika Anda sudah punya gambar bendera di assets, gunakan ini:
-              // image: const DecorationImage(
-              //   image: AssetImage('assets/images/flag_id.png'),
-              //   fit: BoxFit.cover,
-              // ),
-            ),
-            child: const Icon(Icons.flag, size: 16, color: Colors.red),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
+        children: const [
+          Icon(Icons.flag, size: 16, color: Colors.red),
+          SizedBox(width: 12),
+          Expanded(
             child: Text(
               "Indonesia",
               style: TextStyle(fontSize: 14, color: Colors.black87),
             ),
           ),
-          const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
+          Icon(Icons.keyboard_arrow_down, color: Colors.black54),
         ],
       ),
     );

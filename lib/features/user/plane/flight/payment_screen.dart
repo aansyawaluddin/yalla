@@ -1,12 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/animated/animated_payment_bottomBar.dart';
 import 'package:yalla/core/widgets/animated/countdown_timer.dart';
+import 'package:yalla/features/user/home/home_screen.dart';
 
 class PaymentScreen extends StatelessWidget {
-  const PaymentScreen({super.key});
+  final FlightModel flight;
+  final num paymentAmount;
+  final DateTime paymentDeadline;
+
+  const PaymentScreen({
+    super.key,
+    required this.flight,
+    required this.paymentAmount,
+    required this.paymentDeadline,
+  });
+
+  String _formatPrice(num? price) {
+    if (price == null || price == 0) return "IDR 0";
+    String s = price.toInt().toString();
+    String res = "";
+    for (int i = 0; i < s.length; i++) {
+      res += s[i];
+      if ((s.length - 1 - i) % 3 == 0 && i != s.length - 1) res += ".";
+    }
+    return "IDR $res";
+  }
+
+  String _calculateDuration(String? dep, String? arr) {
+    if (dep == null || arr == null) return "-";
+    try {
+      final d = DateTime.parse(dep);
+      final a = DateTime.parse(arr);
+      final diff = a.difference(d);
+      final hours = diff.inHours;
+      final mins = diff.inMinutes.remainder(60);
+      return "${hours}j ${mins}m";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  String _formatPaymentDeadline() {
+    final date = DateTime.now().add(const Duration(hours: 24));
+
+    const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+
+    String dayName = days[date.weekday - 1];
+    String day = date.day.toString().padLeft(2, '0');
+    String monthName = months[date.month - 1];
+    String year = date.year.toString();
+    String hour = date.hour.toString().padLeft(2, '0');
+    String minute = date.minute.toString().padLeft(2, '0');
+
+    return "$dayName, $day $monthName $year  •  $hour:$minute";
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool isOutbound = flight.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String destCode = isOutbound ? "JED" : "UPG";
+    final String originCity = isOutbound ? "Makassar" : "Jeddah";
+    final String destCity = isOutbound ? "Jeddah" : "Makassar";
+    final String flightNo = flight.flightNo ?? "-";
+    final String duration = _calculateDuration(
+      flight.departureTime,
+      flight.arrivalTime,
+    );
+    final String priceText = _formatPrice(paymentAmount);
+
+    final String deadlineText = _formatPaymentDeadline();
+
+    final orderProvider = context.read<OrderProvider>();
+    final String orderIdShort = orderProvider.lastOrderId.isNotEmpty
+        ? orderProvider.lastOrderId.substring(0, 8).toUpperCase()
+        : "TRV99281";
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -36,7 +122,15 @@ class PaymentScreen extends StatelessWidget {
                         color: Color(0xFF0084FF),
                         size: 18,
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HomeScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -52,6 +146,7 @@ class PaymentScreen extends StatelessWidget {
               ),
             ),
 
+            // --- KONTEN HALAMAN ---
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -74,8 +169,8 @@ class PaymentScreen extends StatelessWidget {
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
+                            children: [
+                              const Text(
                                 "Ringkasan Pesanan",
                                 style: TextStyle(
                                   fontSize: 14,
@@ -83,8 +178,8 @@ class PaymentScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                "#TRV99281",
-                                style: TextStyle(
+                                "#$orderIdShort",
+                                style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF0084FF),
@@ -100,7 +195,9 @@ class PaymentScreen extends StatelessWidget {
                                 height: 48,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Color(0xffDADADA)),
+                                  border: Border.all(
+                                    color: const Color(0xffDADADA),
+                                  ),
                                   image: const DecorationImage(
                                     image: AssetImage(
                                       'assets/images/logo_flydeal.png',
@@ -125,7 +222,7 @@ class PaymentScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      "JT 6655  •  Ekonomi",
+                                      "$flightNo  •  Ekonomi",
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: Colors.grey.shade500,
@@ -141,18 +238,18 @@ class PaymentScreen extends StatelessWidget {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Column(
-                                      children: const [
+                                      children: [
                                         Text(
-                                          "UPG",
-                                          style: TextStyle(
+                                          originCode,
+                                          style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w900,
                                             color: Colors.black87,
                                           ),
                                         ),
                                         Text(
-                                          "Makassar",
-                                          style: TextStyle(
+                                          originCity,
+                                          style: const TextStyle(
                                             fontSize: 10,
                                             color: Colors.black54,
                                           ),
@@ -167,9 +264,9 @@ class PaymentScreen extends StatelessWidget {
                                           color: Colors.grey.shade400,
                                         ),
                                         const SizedBox(height: 4),
-                                        const Text(
-                                          "11j 15m",
-                                          style: TextStyle(
+                                        Text(
+                                          duration,
+                                          style: const TextStyle(
                                             fontSize: 8,
                                             color: Colors.black38,
                                           ),
@@ -177,18 +274,18 @@ class PaymentScreen extends StatelessWidget {
                                       ],
                                     ),
                                     Column(
-                                      children: const [
+                                      children: [
                                         Text(
-                                          "JED",
-                                          style: TextStyle(
+                                          destCode,
+                                          style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w900,
                                             color: Colors.black87,
                                           ),
                                         ),
                                         Text(
-                                          "Jeddah",
-                                          style: TextStyle(
+                                          destCity,
+                                          style: const TextStyle(
                                             fontSize: 10,
                                             color: Colors.black54,
                                           ),
@@ -220,7 +317,7 @@ class PaymentScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Color(0xffDADADA)),
+                            border: Border.all(color: const Color(0xffDADADA)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,9 +331,9 @@ class PaymentScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                "Jum, 27 Feb 2026  •  16:00",
-                                style: TextStyle(
+                              Text(
+                                deadlineText,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.black54,
                                 ),
@@ -251,9 +348,9 @@ class PaymentScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                "IDR 11.000.000",
-                                style: TextStyle(
+                              Text(
+                                priceText,
+                                style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF0084FF),
@@ -321,16 +418,19 @@ class PaymentScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const Positioned(
+                        // Timer Countdown
+                        // 👇 Hapus kata 'const' di awal 👇
+                        Positioned(
                           top: -20,
                           right: 20,
-                          child: CountdownTimer(),
+                          child: CountdownTimer(deadline: paymentDeadline),
                         ),
                       ],
                     ),
 
                     const SizedBox(height: 16),
 
+                    // 3. CARA PEMBAYARAN (EXPANSION TILE)
                     _buildPaymentGuideCard(),
                   ],
                 ),
@@ -340,7 +440,8 @@ class PaymentScreen extends StatelessWidget {
         ),
       ),
 
-      bottomNavigationBar: _buildBottomBar(),
+      // ANIMATED BOTTOM BAR
+      bottomNavigationBar: const AnimatedPaymentBottomBar(),
     );
   }
 
@@ -391,9 +492,5 @@ class PaymentScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Widget _buildBottomBar() {
-    return const AnimatedPaymentBottomBar();
   }
 }

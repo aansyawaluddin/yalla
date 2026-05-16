@@ -1,0 +1,85 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+class OrderService {
+  final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+
+  Future<Map<String, dynamic>> createOrder(
+    Map<String, dynamic> payload,
+    String token,
+  ) async {
+    final url = Uri.parse('$_baseUrl/orders');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Gagal membuat pesanan tiket.');
+    }
+  }
+
+  Future<Map<String, dynamic>> initiatePayment(
+    String orderId,
+    String token,
+  ) async {
+    final url = Uri.parse('$_baseUrl/orders/$orderId/payment');
+
+    final response = await http.post(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Gagal memuat link pembayaran.');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchOrderById(
+    String orderId,
+    String token,
+  ) async {
+    final url = Uri.parse('$_baseUrl/orders/$orderId');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Gagal memeriksa status pesanan.');
+    }
+  }
+
+  Future<List<dynamic>> fetchOrders(String token) async {
+    final url = Uri.parse('$_baseUrl/orders');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Gagal mengambil data pesanan.');
+    }
+  }
+}

@@ -2,12 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class CountdownTimer extends StatefulWidget {
-  final Duration initialDuration;
+  final DateTime deadline; 
 
-  const CountdownTimer({
-    super.key,
-    this.initialDuration = const Duration(hours: 1, minutes: 59, seconds: 59),
-  });
+  const CountdownTimer({super.key, required this.deadline});
 
   @override
   State<CountdownTimer> createState() => _CountdownTimerState();
@@ -15,21 +12,30 @@ class CountdownTimer extends StatefulWidget {
 
 class _CountdownTimerState extends State<CountdownTimer> {
   Timer? _timer;
-  late Duration _timeLeft;
+  Duration _timeLeft = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _timeLeft = widget.initialDuration;
+    _calculateTimeLeft();
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_timeLeft.inSeconds > 0) {
-        setState(() {
-          _timeLeft -= const Duration(seconds: 1);
-        });
-      } else {
-        _timer?.cancel();
-      }
+      _calculateTimeLeft();
     });
+  }
+
+  void _calculateTimeLeft() {
+    final now = DateTime.now();
+    if (widget.deadline.isAfter(now)) {
+      setState(() {
+        _timeLeft = widget.deadline.difference(now);
+      });
+    } else {
+      setState(() {
+        _timeLeft = Duration.zero; 
+      });
+      _timer?.cancel();
+    }
   }
 
   @override

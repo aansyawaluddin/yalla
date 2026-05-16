@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/order/order_flight_card.dart';
-import 'package:yalla/core/widgets/card/order/order_hotel_card.dart';
-import 'package:yalla/core/widgets/card/order/order_visa_card.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -15,7 +15,22 @@ class _OrderScreenState extends State<OrderScreen> {
   int _selectedTabIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OrderProvider>().fetchOrders();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final provider = context.watch<OrderProvider>();
+    final isLoading = provider.isLoading;
+
+    final List<dynamic> currentOrders = _selectedTabIndex == 0
+        ? provider.activeOrders
+        : provider.historyOrders;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F8),
       body: Stack(
@@ -68,39 +83,38 @@ class _OrderScreenState extends State<OrderScreen> {
                 const SizedBox(height: 30),
 
                 _buildMainTabs(),
-
                 const SizedBox(height: 16),
-
                 _buildCategoryChips(),
-
                 const SizedBox(height: 20),
 
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(
-                        milliseconds: 300,
-                      ), 
-                      switchInCurve: Curves.easeOut,
-                      switchOutCurve: Curves.easeOut, 
-                      child: _selectedTabIndex == 0
-                          ? Column(
-                              key: const ValueKey('TabAktif'),
-                              children: const [
-                                OrderFlightCard(),
-                                OrderHotelCard(),
-                                OrderVisaCard(),
-                              ],
-                            )
-                          : Column(
-                              key: const ValueKey('TabRiwayat'),
-                              children: const [
-                                OrderFlightCard(),
-                              ],
-                            ),
-                    ),
-                  ),
+                  child: isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF0084FF),
+                          ),
+                        )
+                      : currentOrders.isEmpty
+                      ? Center(
+                          child: Text(
+                            _selectedTabIndex == 0
+                                ? "Belum ada pesanan aktif."
+                                : "Belum ada riwayat pesanan.",
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 8.0,
+                          ),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: currentOrders.length,
+                          itemBuilder: (context, index) {
+                            final orderData = currentOrders[index];
+                            return OrderFlightCard(order: orderData);
+                          },
+                        ),
                 ),
               ],
             ),
@@ -114,26 +128,20 @@ class _OrderScreenState extends State<OrderScreen> {
   Widget _buildMainTabs() {
     return Container(
       color: Colors.white,
-      height: 48, 
+      height: 48,
       child: Stack(
         children: [
           Row(
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedTabIndex = 0;
-                    });
-                  },
+                  onTap: () => setState(() => _selectedTabIndex = 0),
                   child: Container(
                     color: Colors.transparent,
                     child: Center(
                       child: AnimatedDefaultTextStyle(
-                        duration: const Duration(
-                          milliseconds: 300,
-                        ), 
-                        curve: Curves.easeOut, 
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: _selectedTabIndex == 0
@@ -151,19 +159,13 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedTabIndex = 1;
-                    });
-                  },
+                  onTap: () => setState(() => _selectedTabIndex = 1),
                   child: Container(
                     color: Colors.transparent,
                     child: Center(
                       child: AnimatedDefaultTextStyle(
-                        duration: const Duration(
-                          milliseconds: 300,
-                        ), 
-                        curve: Curves.easeOut, 
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: _selectedTabIndex == 1
@@ -181,7 +183,6 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ],
           ),
-
           Positioned(
             bottom: 0,
             left: 0,
@@ -193,8 +194,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   ? Alignment.bottomLeft
                   : Alignment.bottomRight,
               child: FractionallySizedBox(
-                widthFactor:
-                    0.5, 
+                widthFactor: 0.5,
                 child: Container(height: 3, color: const Color(0xFF004CBF)),
               ),
             ),
@@ -225,7 +225,9 @@ class _OrderScreenState extends State<OrderScreen> {
                         fontWeight: isActive
                             ? FontWeight.bold
                             : FontWeight.w500,
-                        color: const Color(0xFF004CBF),
+                        color: isActive
+                            ? const Color(0xFF004CBF)
+                            : Colors.grey.shade500,
                       ),
                     ),
                   );
@@ -233,7 +235,6 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
           ),
-          // Tombol Filter
           TextButton.icon(
             onPressed: () {},
             icon: const Text("Filter", style: TextStyle(color: Colors.black87)),

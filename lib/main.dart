@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
+import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/splash_screen.dart';
@@ -19,6 +20,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => FlightProvider()),
         ChangeNotifierProvider(create: (_) => TravelProvider()),
         ChangeNotifierProvider(create: (_) => PackageProvider()),
+        ChangeNotifierProvider(create: (_) => OrderProvider()),
       ],
       child: const MyApp(),
     ),
