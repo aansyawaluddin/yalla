@@ -16,6 +16,7 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
   bool isLoading = false;
   String? _selectedFileName;
   String? _selectedFilePath;
+
   Future<void> _pickFile() async {
     try {
       fp.FilePickerResult? result = await fp.FilePicker.platform.pickFiles(
@@ -71,10 +72,8 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
                 "Jadwal penerbangan telah berhasil disimpan dan kini tersedia dalam daftar.",
           );
 
-          setState(() {
-            _selectedFileName = null;
-            _selectedFilePath = null;
-          });
+          Navigator.pop(context);
+          return;
         } else {
           if (!mounted) return;
           CustomSnackBar.showError(
@@ -103,177 +102,185 @@ class _AdminFlightFormScreenState extends State<AdminFlightFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.grey.shade300),
+      // 👇 MENGGUNAKAN STACK UNTUK OVERLAY LOADING
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Color(0xFF0091FF),
+                            size: 20,
+                          ),
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: Color(0xFF0091FF),
-                        size: 20,
+                      const SizedBox(width: 16),
+                      const Text(
+                        "Formulir Jadwal Penerbangan",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  const Text(
-                    "Formulir Jadwal Penerbangan",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
 
-            // Form Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Sub Header & Toggle
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Form Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Expanded(
-                          child: Text(
-                            "Informasi Penerbangan",
+                        // Sub Header & Toggle
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                "Informasi Penerbangan",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildToggleSwitch(),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        if (isManual) ...[
+                          _buildTextField("Nomor Penerbangan"),
+                          _buildDropdownField("Maskapai"),
+                          _buildTextField("Asal"),
+                          _buildTextField("Tujuan"),
+                          _buildTextField("Keberangkatan"),
+                          _buildTextField("Kedatangan"),
+                          _buildTextField("Harga Tiket"),
+                        ] else ...[
+                          _buildDocumentUpload(),
+                        ],
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Container(
+                  padding: const EdgeInsets.all(24.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, -10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Info/Warning Text
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            color: Color(0xFF0091FF),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: RichText(
+                              text: const TextSpan(
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF0091FF),
+                                  height: 1.4,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: "Penting: ",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text:
+                                        "Periksa kembali data yang telah diubah sebelum menyimpan untuk menghindari kesalahan jadwal.",
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 👇 TOMBOL SIMPAN DIKEMBALIKAN NORMAL 👇
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: isLoading ? null : _simpanData,
+                          icon: const Icon(Icons.save, color: Colors.white),
+                          label: const Text(
+                            "Simpan",
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: Colors.white,
                             ),
                           ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0091FF),
+                            disabledBackgroundColor: Colors.grey.shade400,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        _buildToggleSwitch(),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    if (isManual) ...[
-                      _buildTextField("Nomor Penerbangan"),
-                      _buildDropdownField("Maskapai"),
-                      _buildTextField("Asal"),
-                      _buildTextField("Tujuan"),
-                      _buildTextField("Keberangkatan"),
-                      _buildTextField("Kedatangan"),
-                      _buildTextField("Harga Tiket"),
-                    ] else ...[
-                      _buildDocumentUpload(),
+                      ),
                     ],
-
-                    const SizedBox(height: 40),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
+          ),
 
+          if (isLoading)
             Container(
-              padding: const EdgeInsets.all(24.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 20,
-                    offset: const Offset(0, -10),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Info/Warning Text
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: Color(0xFF0091FF),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF0091FF),
-                              height: 1.4,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: "Penting: ",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              TextSpan(
-                                text:
-                                    "Periksa kembali data yang telah diubah sebelum menyimpan untuk menghindari kesalahan jadwal.",
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Simpan Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: isLoading ? null : _simpanData,
-                      icon: isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.save, color: Colors.white),
-                      label: Text(
-                        isLoading ? "Menyimpan..." : "Simpan",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0091FF),
-                        disabledBackgroundColor: Colors.grey.shade400,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
+              color: Colors.black.withOpacity(
+                0.3,
+              ), // Background gelap transparan
+              child: const Center(
+                child: CircularProgressIndicator(color: Color(0xFF0091FF)),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -498,13 +505,12 @@ class DashedRectPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
 
-    // Garis atas
     double startX = 0;
     while (startX < size.width) {
       canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
       startX += dashWidth + dashSpace;
     }
-    // Garis Kanan
+
     double startY = 0;
     while (startY < size.height) {
       canvas.drawLine(
@@ -514,7 +520,7 @@ class DashedRectPainter extends CustomPainter {
       );
       startY += dashWidth + dashSpace;
     }
-    // Garis Bawah
+
     startX = size.width;
     while (startX > 0) {
       canvas.drawLine(
@@ -524,7 +530,7 @@ class DashedRectPainter extends CustomPainter {
       );
       startX -= dashWidth + dashSpace;
     }
-    // Garis Kiri
+
     startY = size.height;
     while (startY > 0) {
       canvas.drawLine(Offset(0, startY), Offset(0, startY - dashWidth), paint);
