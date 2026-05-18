@@ -2,30 +2,33 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/features/user/plane/flight/payment_screen.dart';
 
 class OrderFlightCard extends StatelessWidget {
-  final Map<String, dynamic> order;
+  final OrderModel order;
 
   const OrderFlightCard({super.key, required this.order});
 
   void _navigateToDetail(BuildContext context, String currentStatus) {
     if (currentStatus == 'waiting_payment') {
-      context.read<OrderProvider>().setLastOrderId(order['id']);
-      final double? safePrice = (order['price'] as num?)?.toDouble();
+      context.read<OrderProvider>().setLastOrderId(order.id);
+      final double? safePrice = order.price.toDouble();
 
       DateTime createdAt = DateTime.now();
-      if (order['created_at'] != null) {
-        createdAt = DateTime.parse(order['created_at']).toLocal();
+      if (order.createdAt.isNotEmpty) {
+        createdAt = DateTime.parse(order.createdAt).toLocal();
       }
       final DateTime absoluteDeadline = createdAt.add(
         const Duration(hours: 24),
       );
 
-      final dummyFlight = FlightModel(
-        id: order['departure_flight_id'],
-        flightNo: "Pesanan Lanjutan",
+      final dataFlight = FlightModel(
+        id: order.departureFlightId,
+        flightNo: order.flight?.flightNo ?? "Pesanan Lanjutan",
+        departureTime: order.flight?.departureTime,
+        arrivalTime: order.flight?.arrivalTime,
         price: safePrice,
       );
 
@@ -35,8 +38,8 @@ class OrderFlightCard extends StatelessWidget {
           transitionDuration: const Duration(milliseconds: 300),
           pageBuilder: (context, animation, secondaryAnimation) =>
               PaymentScreen(
-                flight: dummyFlight,
-                paymentAmount: order['price'] ?? 0,
+                flight: dataFlight,
+                paymentAmount: order.price,
                 paymentDeadline: absoluteDeadline,
               ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -73,7 +76,7 @@ class OrderFlightCard extends StatelessWidget {
   }
 
   String _formatTime(String? isoString, String fallback) {
-    if (isoString == null) return fallback;
+    if (isoString == null || isoString.isEmpty) return fallback;
     try {
       final date = DateTime.parse(isoString).toLocal();
       String hour = date.hour.toString().padLeft(2, '0');
@@ -85,7 +88,8 @@ class OrderFlightCard extends StatelessWidget {
   }
 
   String _calculateDuration(String? dep, String? arr, String fallback) {
-    if (dep == null || arr == null) return fallback;
+    if (dep == null || arr == null || dep.isEmpty || arr.isEmpty)
+      return fallback;
     try {
       final d = DateTime.parse(dep);
       final a = DateTime.parse(arr);
@@ -104,23 +108,24 @@ class OrderFlightCard extends StatelessWidget {
     const Color textDark = Color(0xFF111827);
     const Color textGrey = Color(0xFF6B7280);
 
-    final num price = order['price'] ?? 0;
-    final String status = order['status'] ?? '';
-    final List passengers = order['passengers'] ?? [];
+    final num price = order.price;
+    final String status = order.status;
+    final List<PassengerModel> passengers = order.passengers;
     final int paxCount = passengers.isNotEmpty ? passengers.length : 1;
 
-    final Map<String, dynamic> flightData = order['flight'] ?? {};
-    final String airline = flightData['airline_name'] ?? "Flydeal Air";
-    final String originCode = flightData['origin_code'] ?? "UPG";
-    final String destCode = flightData['destination_code'] ?? "JED";
-    final String depTime = _formatTime(
-      flightData['departure_time'],
-      "02:00 AM",
-    );
-    final String arrTime = _formatTime(flightData['arrival_time'], "12:15 PM");
+    final FlightModel? flightData = order.flight;
+
+    final String airline = "Flydeal Air";
+
+    final bool isOutbound = flightData?.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String destCode = isOutbound ? "JED" : "UPG";
+
+    final String depTime = _formatTime(flightData?.departureTime, "02:00 AM");
+    final String arrTime = _formatTime(flightData?.arrivalTime, "12:15 PM");
     final String duration = _calculateDuration(
-      flightData['departure_time'],
-      flightData['arrival_time'],
+      flightData?.departureTime,
+      flightData?.arrivalTime,
       "11j 15m",
     );
 
@@ -277,7 +282,6 @@ class OrderFlightCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // 👇 BADGE STATUS DINAMIS 👇
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,

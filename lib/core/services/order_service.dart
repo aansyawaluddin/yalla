@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:yalla/core/models/order_model.dart'; 
 
 class OrderService {
   final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
@@ -48,10 +49,7 @@ class OrderService {
     }
   }
 
-  Future<Map<String, dynamic>> fetchOrderById(
-    String orderId,
-    String token,
-  ) async {
+  Future<OrderModel> fetchOrderById(String orderId, String token) async {
     final url = Uri.parse('$_baseUrl/orders/$orderId');
 
     final response = await http.get(
@@ -60,14 +58,15 @@ class OrderService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final json = jsonDecode(response.body);
+      return OrderModel.fromJson(json); 
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['message'] ?? 'Gagal memeriksa status pesanan.');
     }
   }
 
-  Future<List<dynamic>> fetchOrders(String token) async {
+  Future<List<OrderModel>> fetchOrders(String token) async {
     final url = Uri.parse('$_baseUrl/orders');
 
     final response = await http.get(
@@ -76,7 +75,8 @@ class OrderService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => OrderModel.fromJson(json)).toList();
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['message'] ?? 'Gagal mengambil data pesanan.');

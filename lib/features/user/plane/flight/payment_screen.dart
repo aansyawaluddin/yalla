@@ -44,7 +44,7 @@ class PaymentScreen extends StatelessWidget {
   }
 
   String _formatPaymentDeadline() {
-    final date = DateTime.now().add(const Duration(hours: 24));
+    final date = paymentDeadline;
 
     const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     const months = [
@@ -419,7 +419,6 @@ class PaymentScreen extends StatelessWidget {
                           ),
                         ),
                         // Timer Countdown
-                        // 👇 Hapus kata 'const' di awal 👇
                         Positioned(
                           top: -20,
                           right: 20,
@@ -440,7 +439,6 @@ class PaymentScreen extends StatelessWidget {
         ),
       ),
 
-      // ANIMATED BOTTOM BAR
       bottomNavigationBar: const AnimatedPaymentBottomBar(),
     );
   }

@@ -27,6 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ? authProvider.firstName
         : "Memuat...";
     return Scaffold(
+      extendBody: true,
       backgroundColor: const Color(0xFFF8F9FA),
       body: Stack(
         children: [

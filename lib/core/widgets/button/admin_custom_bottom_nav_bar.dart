@@ -49,7 +49,7 @@ class CustomAdminBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 95, // Tinggi sama dengan nav user
+      height: 75, 
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [

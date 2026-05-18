@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yalla/core/models/order_model.dart'; 
 import 'package:yalla/core/services/order_service.dart';
 
 class OrderProvider extends ChangeNotifier {
@@ -16,6 +17,21 @@ class OrderProvider extends ChangeNotifier {
 
   String _lastOrderId = '';
   String get lastOrderId => _lastOrderId;
+
+  List<OrderModel> _orders = [];
+  List<OrderModel> get orders => _orders;
+
+  List<OrderModel> get activeOrders => _orders
+      .where((o) => o.status == 'waiting_payment' || o.status == 'on_process')
+      .toList();
+
+  List<OrderModel> get historyOrders =>
+      _orders.where((o) => o.status == 'approved').toList();
+
+  void setLastOrderId(String id) {
+    _lastOrderId = id;
+    notifyListeners();
+  }
 
   Future<bool> processCheckoutAndPayment(Map<String, dynamic> payload) async {
     _isLoading = true;
@@ -39,7 +55,7 @@ class OrderProvider extends ChangeNotifier {
         _lastOrderId,
         token,
       );
-      _gatewayUrl = paymentResponse['gateway_url'];
+      _gatewayUrl = paymentResponse['gateway_url'] ?? '';
 
       return true;
     } catch (e) {
@@ -56,29 +72,15 @@ class OrderProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token') ?? '';
 
-      final orderData = await _orderService.fetchOrderById(orderId, token);
-      return orderData['status'] ?? 'waiting_payment';
+      final OrderModel orderData = await _orderService.fetchOrderById(
+        orderId,
+        token,
+      );
+      return orderData.status;
     } catch (e) {
       print("Error polling status: $e");
       return 'waiting_payment';
     }
-  }
-
-  List<dynamic> _orders = [];
-  List<dynamic> get orders => _orders;
-
-  List<dynamic> get activeOrders => _orders
-      .where(
-        (o) => o['status'] == 'waiting_payment' || o['status'] == 'on_process',
-      )
-      .toList();
-
-  List<dynamic> get historyOrders =>
-      _orders.where((o) => o['status'] == 'approved').toList();
-
-  void setLastOrderId(String id) {
-    _lastOrderId = id;
-    notifyListeners();
   }
 
   Future<void> fetchOrders() async {

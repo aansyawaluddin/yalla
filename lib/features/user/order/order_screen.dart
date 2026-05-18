@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/custom_bottom_nav_bar.dart';
 import 'package:yalla/core/widgets/card/order/order_flight_card.dart';
@@ -27,12 +28,13 @@ class _OrderScreenState extends State<OrderScreen> {
     final provider = context.watch<OrderProvider>();
     final isLoading = provider.isLoading;
 
-    final List<dynamic> currentOrders = _selectedTabIndex == 0
+    final List<OrderModel> currentOrders = _selectedTabIndex == 0
         ? provider.activeOrders
         : provider.historyOrders;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      extendBody: true,
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           Positioned(
@@ -106,7 +108,7 @@ class _OrderScreenState extends State<OrderScreen> {
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20.0,
-                            vertical: 8.0,
+                            vertical: 2.0,
                           ),
                           physics: const BouncingScrollPhysics(),
                           itemCount: currentOrders.length,
