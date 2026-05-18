@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:yalla/core/models/flight_model.dart'; 
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 
 class CalendarBottomSheet extends StatefulWidget {
-  const CalendarBottomSheet({super.key});
+  final List<FlightModel> flights;
+
+  const CalendarBottomSheet({super.key, required this.flights});
 
   @override
   State<CalendarBottomSheet> createState() => _CalendarBottomSheetState();
@@ -36,6 +39,11 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
     _selectedDate = DateTime(now.year, now.month, now.day);
   }
 
+  String _formatDateOnly(DateTime dt) {
+    String pad(int n) => n.toString().padLeft(2, '0');
+    return "${dt.year}-${pad(dt.month)}-${pad(dt.day)}";
+  }
+
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
@@ -51,6 +59,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
       ),
       child: Stack(
         children: [
+          // Background decorations
           Positioned(
             top: -50,
             right: -50,
@@ -111,7 +120,19 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildLegendItem(AppColors.lightBlue, "UPG → JED"),
+                    const SizedBox(width: 16),
+                    _buildLegendItem(Colors.orange, "JED → UPG"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
 
               Expanded(
                 child: SingleChildScrollView(
@@ -140,25 +161,30 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
             right: 0,
             child: Container(
               padding: const EdgeInsets.only(
-                top: 24, 
+                top: 24,
                 left: 24,
                 right: 24,
                 bottom: 32,
               ),
               decoration: BoxDecoration(
-                color: Colors.white, 
+                color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15), 
+                    color: Colors.black.withOpacity(0.15),
                     blurRadius: 10,
-                    offset: const Offset(0, -4), 
+                    offset: const Offset(0, -4),
                   ),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  PrimaryGradientButton(text: "Terapkan", onPressed: () {}),
+                  PrimaryGradientButton(
+                    text: "Terapkan",
+                    onPressed: () {
+                      Navigator.pop(context, _selectedDate);
+                    },
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     _selectedDate != null
@@ -174,6 +200,27 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String text) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: Colors.black54,
+          ),
+        ),
+      ],
     );
   }
 
@@ -207,7 +254,6 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
             ),
           ),
           const SizedBox(height: 24),
-
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Row(
@@ -222,7 +268,6 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
                   .toList(),
             ),
           ),
-
           _buildDatesGrid(monthDate, emptyDaysAtStart, totalDays),
         ],
       ),
@@ -246,14 +291,25 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
 
     for (int i = 1; i <= totalDays; i++) {
       DateTime cellDate = DateTime(monthDate.year, monthDate.month, i);
+      String formattedCellDate = _formatDateOnly(cellDate);
 
       bool isPastDate = cellDate.isBefore(today);
-
       bool isSelected =
           _selectedDate != null &&
           _selectedDate!.year == cellDate.year &&
           _selectedDate!.month == cellDate.month &&
           _selectedDate!.day == cellDate.day;
+
+      bool hasOutbound = false;
+      bool hasInbound = false;
+
+      for (var flight in widget.flights) {
+        if (flight.departureTime != null &&
+            flight.departureTime!.startsWith(formattedCellDate)) {
+          if (flight.isOutbound == true) hasOutbound = true;
+          if (flight.isOutbound == false) hasInbound = true;
+        }
+      }
 
       currentCells.add(
         GestureDetector(
@@ -267,14 +323,50 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
           child: Container(
             height: 48,
             color: isSelected ? const Color(0xFFEAF4FF) : Colors.transparent,
-            alignment: Alignment.center,
-            child: Text(
-              i.toString(),
-              style: AppTypography.bold14.copyWith(
-                color: isPastDate
-                    ? AppColors.textGrey.withOpacity(0.5)
-                    : (isSelected ? AppColors.lightBlue : AppColors.textDark),
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  i.toString(),
+                  style: AppTypography.bold14.copyWith(
+                    color: isPastDate
+                        ? AppColors.textGrey.withOpacity(0.5)
+                        : (isSelected
+                              ? AppColors.lightBlue
+                              : AppColors.textDark),
+                  ),
+                ),
+                // 👇 Render Titik Indikator 👇
+                if (hasOutbound || hasInbound) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (hasOutbound)
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: AppColors.lightBlue,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      if (hasOutbound && hasInbound) const SizedBox(width: 3),
+                      if (hasInbound)
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Colors.orange,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
+                  ),
+                ] else ...[
+                  const SizedBox(height: 8),
+                ],
+              ],
             ),
           ),
         ),

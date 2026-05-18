@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
@@ -22,6 +23,8 @@ class HomePlaneTravelScreen extends StatefulWidget {
 class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
   bool isOneWay = true;
 
+  DateTime _selectedDate = DateTime.now();
+
   @override
   void initState() {
     super.initState();
@@ -30,8 +33,31 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
     });
   }
 
+  String _formatDate(DateTime date) {
+    const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    String dayName = days[date.weekday - 1];
+    String day = date.day.toString().padLeft(2, '0');
+    String monthName = months[date.month - 1];
+    return "$dayName, $day $monthName ${date.year}";
+  }
+
   @override
   Widget build(BuildContext context) {
+    final flightList = context.read<FlightProvider>().flights;
     final travelProvider = context.watch<TravelProvider>();
     final isLoadingTravels = travelProvider.isLoading;
     final travels = travelProvider.travels;
@@ -249,19 +275,29 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                           children: [
                             Expanded(
                               child: GestureDetector(
-                                onTap: () {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (context) {
-                                      return const CalendarBottomSheet();
-                                    },
-                                  );
+                                onTap: () async {
+                                  final DateTime? pickedDate =
+                                      await showModalBottomSheet<DateTime>(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) {
+                                          return CalendarBottomSheet(
+                                            flights:
+                                                flightList, 
+                                          );
+                                        },
+                                      );
+
+                                  if (pickedDate != null) {
+                                    setState(() {
+                                      _selectedDate = pickedDate;
+                                    });
+                                  }
                                 },
                                 child: _buildSmallInputCard(
                                   label: "Tanggal Keberangkatan",
-                                  value: "Sen, 14 Jan 2026",
+                                  value: _formatDate(_selectedDate),
                                   icon: Icons.calendar_today_outlined,
                                 ),
                               ),

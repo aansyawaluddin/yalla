@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
+import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
@@ -21,17 +22,45 @@ class HomePlaneUserScreen extends StatefulWidget {
 
 class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
   bool isOneWay = true;
+  DateTime _selectedDate = DateTime.now();
+
+  bool _isOutboundRoute = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().fetchUserProfile();
+      context.read<TravelProvider>().fetchTravels();
     });
+  }
+
+  String _formatDate(DateTime date) {
+    const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    String dayName = days[date.weekday - 1];
+    String day = date.day.toString().padLeft(2, '0');
+    String monthName = months[date.month - 1];
+    return "$dayName, $day $monthName ${date.year}";
   }
 
   @override
   Widget build(BuildContext context) {
+    final flightList = context.read<FlightProvider>().flights;
+
     final authProvider = context.watch<AuthProvider>();
     final displayFirstName = authProvider.firstName.isNotEmpty
         ? authProvider.firstName
@@ -192,15 +221,19 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                               children: [
                                 _buildLocationInput(
                                   label: "Dari",
-                                  code: "UPG",
-                                  city: "Makassar",
+                                  code: _isOutboundRoute ? "UPG" : "JED",
+                                  city: _isOutboundRoute
+                                      ? "Makassar"
+                                      : "Jeddah",
                                   icon: Icons.flight_takeoff,
                                 ),
                                 const SizedBox(height: 12),
                                 _buildLocationInput(
                                   label: "Ke",
-                                  code: "JED",
-                                  city: "Jeddah",
+                                  code: _isOutboundRoute ? "JED" : "UPG",
+                                  city: _isOutboundRoute
+                                      ? "Jeddah"
+                                      : "Makassar",
                                   icon: Icons.flight_land,
                                 ),
                               ],
@@ -228,7 +261,11 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                                   ],
                                 ),
                                 child: IconButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    setState(() {
+                                      _isOutboundRoute = !_isOutboundRoute;
+                                    });
+                                  },
                                   icon: const Icon(
                                     Icons.swap_vert,
                                     color: Colors.white,
@@ -246,19 +283,28 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                           children: [
                             Expanded(
                               child: GestureDetector(
-                                onTap: () {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (context) {
-                                      return const CalendarBottomSheet();
-                                    },
-                                  );
+                                onTap: () async {
+                                  final DateTime? pickedDate =
+                                      await showModalBottomSheet<DateTime>(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) {
+                                          return CalendarBottomSheet(
+                                            flights: flightList,
+                                          );
+                                        },
+                                      );
+
+                                  if (pickedDate != null) {
+                                    setState(() {
+                                      _selectedDate = pickedDate;
+                                    });
+                                  }
                                 },
                                 child: _buildSmallInputCard(
                                   label: "Tanggal Keberangkatan",
-                                  value: "Sen, 14 Jan 2026",
+                                  value: _formatDate(_selectedDate),
                                   icon: Icons.calendar_today_outlined,
                                 ),
                               ),
@@ -301,8 +347,14 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                                   milliseconds: 300,
                                 ),
                                 pageBuilder:
-                                    (context, animation, secondaryAnimation) =>
-                                        const ListFlightScreen(),
+                                    (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                    ) => ListFlightScreen(
+                                      selectedDate: _selectedDate,
+                                      isOutbound: _isOutboundRoute,
+                                    ),
                                 transitionsBuilder:
                                     (
                                       context,
@@ -652,7 +704,6 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
               ],
             ],
           ),
-
           if (showAction)
             GestureDetector(
               onTap: onActionTap,
