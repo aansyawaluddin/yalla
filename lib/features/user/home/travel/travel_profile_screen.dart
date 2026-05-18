@@ -1,10 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:yalla/core/providers/package_provider.dart'; 
+import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/widgets/eror/error_state_widget.dart';
-import 'package:yalla/features/user/home/paket/detail_paket_screen.dart'; 
+import 'package:yalla/features/user/home/paket/detail_paket_screen.dart';
 
 class UserTravelProfileScreen extends StatefulWidget {
   final String travelId;
@@ -43,6 +43,31 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
       }
     }
     return result;
+  }
+
+  String _formatDate(String isoDate) {
+    if (isoDate.isEmpty) return "-";
+    try {
+      final dt = DateTime.parse(isoDate).toLocal();
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+      String monthName = months[dt.month - 1];
+      return "${dt.day} $monthName ${dt.year}";
+    } catch (e) {
+      return isoDate.split('T').first;
+    }
   }
 
   @override
@@ -210,10 +235,10 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                         if (_selectedTabIndex == 0)
                           _buildTentangTab(profileData?.aboutText, companyName),
 
-                        if (_selectedTabIndex == 1) _buildPaketTab(), 
+                        if (_selectedTabIndex == 1) _buildPaketTab(),
                         if (_selectedTabIndex == 2) _buildGaleriTab(),
                         if (_selectedTabIndex == 3) _buildUlasanTab(),
-                        
+
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -393,7 +418,8 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
           );
         }
 
-        if (packageProvider.errorMessage.isNotEmpty && packageProvider.packages.isEmpty) {
+        if (packageProvider.errorMessage.isNotEmpty &&
+            packageProvider.packages.isEmpty) {
           return Padding(
             padding: const EdgeInsets.all(24.0),
             child: ErrorStateWidget(
@@ -419,17 +445,30 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
             children: packageProvider.packages.map((paket) {
-              final originalPrice = (paket.price * 1.1).toInt(); //
-              
+              final originalPrice = (paket.price * 1.1).toInt();
+
+              List<String> facilityNames = [];
+              if (paket.facilities != null && paket.facilities!.isNotEmpty) {
+                facilityNames = paket.facilities!
+                    .take(3)
+                    .map((e) => e.name)
+                    .toList();
+              } else {
+                facilityNames = ["Fasilitas Standar"];
+              }
+
+              String displayDate = _formatDate(paket.departureFlight?.departureTime ?? '');
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 24),
                 child: _buildPaketCard(
-                  packageId: paket.id ?? '', 
+                  packageId: paket.id ?? '',
                   imageUrl: 'assets/images/kaabah.jpeg',
                   title: paket.packageName,
-                  subtitle: "${paket.durationDays} Hari - Keberangkatan: ${paket.batchDate}",
+                  subtitle:
+                      "${paket.durationDays} Hari - Keberangkatan: $displayDate",
                   isBestSeller: true,
-                  features: ["Penerbangan Langsung", "Air Zamzam", "Gratis Visa"],
+                  features: facilityNames,
                   originalPrice: "IDR ${_formatPrice(originalPrice)}",
                   discountPrice: "IDR ${_formatPrice(paket.price)}",
                 ),
@@ -599,7 +638,8 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => DetailPaketScreen(packageId: packageId),
+                              builder: (context) =>
+                                  DetailPaketScreen(packageId: packageId),
                             ),
                           );
                         },

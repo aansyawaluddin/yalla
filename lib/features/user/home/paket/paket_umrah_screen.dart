@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/models/package_model.dart';
 import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/core/widgets/paket/large_paket_umrah.dart';
@@ -30,6 +31,13 @@ class _PaketUmrahScreenState extends State<PaketUmrahScreen> {
       return "IDR ${priceInJuta.toStringAsFixed(priceInJuta.truncateToDouble() == priceInJuta ? 0 : 1)} Jt";
     }
     return "IDR $price";
+  }
+
+  // 👇 Helper untuk memformat teks info pesawat 👇
+  String _formatFlightInfo(PackageModel package) {
+    String depFlight = package.departureFlight?.flightNo ?? "TBA";
+    String retFlight = package.returnFlight?.flightNo ?? "TBA";
+    return "✈ $depFlight ⇌ $retFlight";
   }
 
   @override
@@ -98,15 +106,16 @@ class _PaketUmrahScreenState extends State<PaketUmrahScreen> {
                 }
 
                 final packages = provider.globalPackages;
-
                 List<Widget> packageWidgets = [];
 
+                // 👇 Sisipkan _formatFlightInfo ke dalam properti duration 👇
                 packageWidgets.add(
                   LargePaketCard(
                     packageId: packages[0].id ?? '',
                     titleNormal: "${packages[0].packageName}\n- ",
                     titleHighlight: packages[0].batchName,
-                    duration: "${packages[0].durationDays} Hari",
+                    duration:
+                        "${packages[0].durationDays} Hari | ${_formatFlightInfo(packages[0])}",
                     price: _formatPrice(packages[0].price),
                     imagePath: 'assets/images/kaabah.jpeg',
                     isPopular: true,
@@ -119,7 +128,9 @@ class _PaketUmrahScreenState extends State<PaketUmrahScreen> {
                     child: SmallPaketCard(
                       packageId: packages[i].id ?? '',
                       title: packages[i].packageName,
-                      duration: "${packages[i].durationDays} Hari",
+                      // 👇 Sisipkan info flight di sini juga
+                      duration:
+                          "${packages[i].durationDays} Hari\n${_formatFlightInfo(packages[i])}",
                       price: _formatPrice(packages[i].price),
                       imagePath: 'assets/images/kaabah.jpeg',
                     ),
@@ -130,7 +141,8 @@ class _PaketUmrahScreenState extends State<PaketUmrahScreen> {
                           child: SmallPaketCard(
                             packageId: packages[i + 1].id ?? '',
                             title: packages[i + 1].packageName,
-                            duration: "${packages[i + 1].durationDays} Hari",
+                            duration:
+                                "${packages[i + 1].durationDays} Hari\n${_formatFlightInfo(packages[i + 1])}",
                             price: _formatPrice(packages[i + 1].price),
                             imagePath: 'assets/images/kaabah.jpeg',
                           ),

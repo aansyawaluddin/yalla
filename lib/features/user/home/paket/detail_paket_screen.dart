@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/core/widgets/eror/error_state_widget.dart';
@@ -37,6 +38,35 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
       }
     }
     return result;
+  }
+
+  String _formatDateTime(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) return "-";
+    try {
+      final dt = DateTime.parse(isoDate).toLocal();
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+      String day = dt.day.toString().padLeft(2, '0');
+      String month = months[dt.month - 1];
+      String hour = dt.hour.toString().padLeft(2, '0');
+      String minute = dt.minute.toString().padLeft(2, '0');
+
+      return "$day $month ${dt.year}, $hour:$minute";
+    } catch (e) {
+      return isoDate.split('T').first;
+    }
   }
 
   IconData _getFacilityIcon(String slug) {
@@ -104,6 +134,9 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
 
     final List<dynamic> facilities = packageData?.facilities ?? [];
 
+    final FlightModel? depFlight = packageData?.departureFlight;
+    final FlightModel? retFlight = packageData?.returnFlight;
+
     final int originalPrice = (price * 1.1).toInt();
 
     return Scaffold(
@@ -150,13 +183,13 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
                       colors: [
+                        Colors.black.withOpacity(1), 
                         Colors.transparent,
-                        Colors.black.withOpacity(0.8),
                       ],
-                      stops: const [0.4, 1.0],
+                      stops: const [0.0, 1.0],
                     ),
                   ),
                 ),
@@ -344,6 +377,20 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                       ],
                     ),
                     const SizedBox(height: 32),
+
+                    const Text(
+                      "Informasi Penerbangan",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildFlightInfoSection(depFlight, retFlight),
+
+                    const SizedBox(height: 32),
+
                     const Text(
                       "Fasilitas Termasuk",
                       style: TextStyle(
@@ -448,6 +495,99 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFlightInfoSection(FlightModel? dep, FlightModel? ret) {
+    if (dep == null && ret == null) {
+      return const Text(
+        "Detail penerbangan belum tersedia.",
+        style: TextStyle(color: Colors.grey, fontSize: 13),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          if (dep != null) _buildFlightDetailItem("Keberangkatan", dep),
+          if (dep != null && ret != null)
+            const Divider(height: 24, thickness: 1, color: Color(0xFFEEEEEE)),
+          if (ret != null) _buildFlightDetailItem("Kepulangan", ret),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlightDetailItem(String title, FlightModel flight) {
+    bool isOutbound = flight.isOutbound ?? true;
+    String routeName = isOutbound ? "UPG ✈ JED" : "JED ✈ UPG";
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "$title ($routeName)",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: Color(0xFF005C99),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F8FF),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                flight.flightNo ?? "-",
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            const Icon(Icons.flight_takeoff, size: 16, color: Colors.grey),
+            const SizedBox(width: 8),
+            Text(
+              "Berangkat: ${_formatDateTime(flight.departureTime)}",
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            const Icon(Icons.flight_land, size: 16, color: Colors.grey),
+            const SizedBox(width: 8),
+            Text(
+              "Tiba: ${_formatDateTime(flight.arrivalTime)}",
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

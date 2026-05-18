@@ -1,4 +1,5 @@
 import 'package:yalla/core/models/facility_model.dart';
+import 'package:yalla/core/models/flight_model.dart'; // 👇 Pastikan ini di-import
 
 class PackageModel {
   final String? id;
@@ -10,6 +11,9 @@ class PackageModel {
   final String travelUserId;
   final List<FacilityModel>? facilities;
 
+  final FlightModel? departureFlight;
+  final FlightModel? returnFlight;
+
   PackageModel({
     this.id,
     required this.batchDate,
@@ -19,6 +23,8 @@ class PackageModel {
     required this.price,
     required this.travelUserId,
     this.facilities,
+    this.departureFlight,
+    this.returnFlight,
   });
 
   factory PackageModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +41,12 @@ class PackageModel {
               json['facilities'].map((f) => FacilityModel.fromJson(f)),
             )
           : [],
+      departureFlight: json['departure_flight'] != null
+          ? FlightModel.fromJson(json['departure_flight'])
+          : null,
+      returnFlight: json['return_flight'] != null
+          ? FlightModel.fromJson(json['return_flight'])
+          : null,
     );
   }
 }
