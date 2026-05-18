@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 
 class AdminEditFlightScreen extends StatefulWidget {
   final FlightModel flight;
@@ -214,18 +215,19 @@ class _AdminEditFlightScreenState extends State<AdminEditFlightScreen> {
 
     if (isSuccess) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Jadwal penerbangan berhasil diperbarui!"),
-        ),
+      CustomSnackBar.showSuccess(
+        context,
+        title: "Pembaruan Berhasil",
+        message: "Jadwal penerbangan telah sukses diperbarui.",
       );
       Navigator.pop(context);
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Gagal memperbarui: ${provider.detailErrorMessage}"),
-        ),
+      CustomSnackBar.showError(
+        context,
+        title: "Gagal Memperbarui",
+        message:
+            provider.detailErrorMessage,
       );
     }
   }
@@ -234,275 +236,279 @@ class _AdminEditFlightScreenState extends State<AdminEditFlightScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: Color(0xFF0091FF),
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Text(
-                      "Edit Jadwal Penerbangan",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF4CAF50),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Color(0xFF0091FF),
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          "Aktif",
+                      ),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Text(
+                          "Edit Jadwal Penerbangan",
                           style: TextStyle(
-                            color: Color(0xFF4CAF50),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Informasi Penerbangan",
-                          style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0F8FF),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF4CAF50),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              "Aktif",
+                              style: TextStyle(
+                                color: Color(0xFF4CAF50),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Informasi Penerbangan",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0F8FF),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(
-                                    Icons.history,
-                                    size: 12,
-                                    color: Color(0xFF004CB9),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.history,
+                                        size: 12,
+                                        color: Color(0xFF004CB9),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        "Terakhir di modifikasi:",
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF004CB9),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 4),
-                                  const Text(
-                                    "Terakhir di modifikasi:",
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "Baru saja",
                                     style: TextStyle(
                                       fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF004CB9),
+                                      color: Colors.grey.shade500,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                "Baru saja",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    _buildDropdownRoute(),
-                    _buildTextField(
-                      "Nomor Penerbangan (Cth: GA-123)",
-                      _flightNoController,
-                    ),
-
-                    _buildDateTimeField(
-                      "Waktu Keberangkatan",
-                      _departureController,
-                      true,
-                    ),
-                    _buildDateTimeField(
-                      "Waktu Kedatangan",
-                      _arrivalController,
-                      false,
-                    ),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTextField(
-                            "Kursi Ekonomi",
-                            _economyController,
-                            isNumber: true,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildTextField(
-                            "Kursi Bisnis",
-                            _businessController,
-                            isNumber: true,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    _buildTextField(
-                      "Harga Tiket",
-                      _priceController,
-                      isNumber: true,
-                      formatters: [CurrencyInputFormatter()],
-                    ),
-
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
-
-            Container(
-              padding: const EdgeInsets.all(24.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 20,
-                    offset: const Offset(0, -10),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: Color(0xFF0091FF),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF0091FF),
-                              height: 1.4,
                             ),
-                            children: [
-                              TextSpan(
-                                text: "Penting: ",
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        _buildDropdownRoute(),
+                        _buildTextField(
+                          "Nomor Penerbangan (Cth: GA-123)",
+                          _flightNoController,
+                        ),
+
+                        _buildDateTimeField(
+                          "Waktu Keberangkatan",
+                          _departureController,
+                          true,
+                        ),
+                        _buildDateTimeField(
+                          "Waktu Kedatangan",
+                          _arrivalController,
+                          false,
+                        ),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                "Kursi Ekonomi",
+                                _economyController,
+                                isNumber: true,
                               ),
-                              TextSpan(
-                                text:
-                                    "Periksa kembali data yang telah diubah sebelum menyimpan untuk menghindari kesalahan jadwal.",
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildTextField(
+                                "Kursi Bisnis",
+                                _businessController,
+                                isNumber: true,
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+
+                        _buildTextField(
+                          "Harga Tiket",
+                          _priceController,
+                          isNumber: true,
+                          formatters: [CurrencyInputFormatter()],
+                        ),
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Container(
+                  padding: const EdgeInsets.all(24.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, -10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            color: Color(0xFF0091FF),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: RichText(
+                              text: const TextSpan(
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF0091FF),
+                                  height: 1.4,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: "Penting: ",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text:
+                                        "Periksa kembali data yang telah diubah sebelum menyimpan untuk menghindari kesalahan jadwal.",
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: _isLoading ? null : _simpanPerubahan,
+                          icon: const Icon(Icons.save, color: Colors.white),
+                          label: const Text(
+                            "Simpan",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0091FF),
+                            disabledBackgroundColor: Colors.grey.shade400,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _simpanPerubahan,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.save, color: Colors.white),
-                      label: Text(
-                        _isLoading ? "Menyimpan..." : "Simpan",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0091FF),
-                        disabledBackgroundColor: Colors.grey.shade400,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(color: Color(0xFF0091FF)),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -549,8 +555,8 @@ class _AdminEditFlightScreenState extends State<AdminEditFlightScreen> {
       padding: const EdgeInsets.only(bottom: 20.0),
       child: TextFormField(
         controller: controller,
-        readOnly: true, // Mencegah keyboard muncul
-        onTap: () => _selectDateTime(context, isDeparture), // Membuka Kalender
+        readOnly: true, 
+        onTap: () => _selectDateTime(context, isDeparture),
         decoration: InputDecoration(
           labelText: labelText,
           labelStyle: const TextStyle(color: Color(0xFF004CB9), fontSize: 13),
