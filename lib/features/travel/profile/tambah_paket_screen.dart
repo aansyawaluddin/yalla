@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 
@@ -14,15 +16,18 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
   final TextEditingController batchC = TextEditingController();
   final TextEditingController batchDateC = TextEditingController();
   final TextEditingController namaPaketC = TextEditingController();
-  final TextEditingController hargaC = TextEditingController();
-  final TextEditingController durasiC = TextEditingController();
+
   final List<String> _selectedFacilities = [];
+
+  String? _selectedDepartureFlightId;
+  String? _selectedReturnFlightId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PackageProvider>().getFacilities();
+      context.read<FlightProvider>().fetchFlights();
     });
   }
 
@@ -31,8 +36,6 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
     batchC.dispose();
     batchDateC.dispose();
     namaPaketC.dispose();
-    hargaC.dispose();
-    durasiC.dispose();
     super.dispose();
   }
 
@@ -74,17 +77,43 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
     }
   }
 
+  String _formatSimpleDate(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) return "-";
+    try {
+      final dt = DateTime.parse(isoDate).toLocal();
+      const months = [
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
+      ];
+      String monthName = months[dt.month - 1];
+      return "${dt.day} $monthName ${dt.year}";
+    } catch (e) {
+      return isoDate.split('T').first;
+    }
+  }
+
   Future<void> _handleTambahPaket() async {
     if (batchC.text.isEmpty ||
         batchDateC.text.isEmpty ||
         namaPaketC.text.isEmpty ||
-        hargaC.text.isEmpty ||
-        durasiC.text.isEmpty ||
+        _selectedDepartureFlightId == null ||
+        _selectedReturnFlightId == null ||
         _selectedFacilities.isEmpty) {
       CustomSnackBar.showError(
         context,
         title: "Data Belum Lengkap",
-        message: "Mohon lengkapi seluruh detail dan pilih minimal satu fasilitas.",
+        message:
+            "Mohon lengkapi seluruh detail form, pilih rute penerbangan, dan minimal satu fasilitas.",
       );
       return;
     }
@@ -92,10 +121,10 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
     Map<String, dynamic> payload = {
       "batch_date": batchDateC.text.trim(),
       "package_name": namaPaketC.text.trim(),
-      "duration_days": int.tryParse(durasiC.text.trim()) ?? 0,
       "batch_name": batchC.text.trim(),
-      "price": int.tryParse(hargaC.text.trim()) ?? 0,
-      "facility_ids": _selectedFacilities, 
+      "departure_flight_id": _selectedDepartureFlightId,
+      "return_flight_id": _selectedReturnFlightId,
+      "facility_ids": _selectedFacilities,
     };
 
     FocusScope.of(context).unfocus();
@@ -126,109 +155,256 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
     final packageProvider = context.watch<PackageProvider>();
     final isLoading = packageProvider.isLoading;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        scrolledUnderElevation: 0,
-        elevation: 0,
-        centerTitle: true,
-        leadingWidth: 62,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 24.0, top: 8, bottom: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF0084FF),
-                size: 18,
+    final flightProvider = context.watch<FlightProvider>();
+    final List<FlightModel> outboundFlights = flightProvider.flights
+        .where((f) => f.isOutbound == true)
+        .toList();
+    final List<FlightModel> inboundFlights = flightProvider.flights
+        .where((f) => f.isOutbound == false)
+        .toList();
+
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            scrolledUnderElevation: 0,
+            elevation: 0,
+            centerTitle: true,
+            leadingWidth: 62,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 24.0, top: 8, bottom: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Color(0xFF0084FF),
+                    size: 18,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ),
-              onPressed: () => Navigator.pop(context),
+            ),
+            title: const Text(
+              "Tambah Paket",
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
-        ),
-        title: const Text(
-          "Tambah Paket",
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionTitle("Detail Paket"),
-            const SizedBox(height: 16),
-
-            _buildInputField(
-              label: "Nama Batch",
-              controller: batchC,
-              hint: "e.g Gelombang 1 - Agustus",
-            ),
-            const SizedBox(height: 16),
-
-            _buildInputField(
-              label: "Nama Paket",
-              controller: namaPaketC,
-              hint: "e.g Umrah Hemat Bintang 3",
-            ),
-            const SizedBox(height: 16),
-
-            _buildInputField(
-              label: "Tanggal Keberangkatan",
-              controller: batchDateC,
-              hint: "Pilih tanggal keberangkatan",
-              onTap: () => _selectBatchDate(context),
-            ),
-            const SizedBox(height: 16),
-
-            Row(
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  flex: 6,
-                  child: _buildInputField(
-                    label: "Harga",
-                    controller: hargaC,
-                    hint: "25500000",
-                    prefixText: "IDR  ",
-                    keyboardType: TextInputType.number,
-                  ),
+                _buildSectionTitle("Detail Paket"),
+                const SizedBox(height: 16),
+
+                _buildInputField(
+                  label: "Nama Batch",
+                  controller: batchC,
+                  hint: "e.g Gelombang 1 - Agustus",
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 4,
-                  child: _buildInputField(
-                    label: "Durasi (Hari)",
-                    controller: durasiC,
-                    hint: "9",
-                    keyboardType: TextInputType.number,
-                  ),
+                const SizedBox(height: 16),
+
+                _buildInputField(
+                  label: "Nama Paket",
+                  controller: namaPaketC,
+                  hint: "e.g Umrah Hemat Bintang 3",
                 ),
+                const SizedBox(height: 16),
+
+                _buildInputField(
+                  label: "Tanggal Batch",
+                  controller: batchDateC,
+                  hint: "Pilih tanggal keberangkatan",
+                  onTap: () => _selectBatchDate(context),
+                ),
+                const SizedBox(height: 24),
+
+                _buildSectionTitle("Jadwal Penerbangan"),
+                const SizedBox(height: 16),
+
+                _buildFlightDropdown(
+                  label: "Penerbangan Keberangkatan",
+                  items: outboundFlights,
+                  value: _selectedDepartureFlightId,
+                  hint: "Pilih tiket keberangkatan",
+                  icon: Icons.flight_takeoff,
+                  onChanged: (val) {
+                    setState(() => _selectedDepartureFlightId = val);
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                _buildFlightDropdown(
+                  label: "Penerbangan Kepulangan",
+                  items: inboundFlights,
+                  value: _selectedReturnFlightId,
+                  hint: "Pilih tiket kepulangan",
+                  icon: Icons.flight_land,
+                  onChanged: (val) {
+                    setState(() => _selectedReturnFlightId = val);
+                  },
+                ),
+
+                const SizedBox(height: 32),
+
+                _buildSectionTitle("Fasilitas"),
+                const SizedBox(height: 16),
+                _buildFacilitiesSection(packageProvider),
+
+                const SizedBox(height: 100),
               ],
             ),
-
-            const SizedBox(height: 32),
-
-            _buildSectionTitle("Fasilitas"),
-            const SizedBox(height: 16),
-            _buildFacilitiesSection(packageProvider),
-
-            const SizedBox(height: 100),
-          ],
+          ),
+          bottomNavigationBar: _buildBottomBar(isLoading),
         ),
-      ),
-      bottomNavigationBar: _buildBottomBar(isLoading),
+
+        if (isLoading)
+          Container(
+            color: Colors.black.withOpacity(0.3), 
+            child: const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0084FF)),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildFlightDropdown({
+    required String label,
+    required List<FlightModel> items,
+    required String? value,
+    required String hint,
+    required IconData icon,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          elevation: 4,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFF0084FF),
+                width: 1.5,
+              ),
+            ),
+          ),
+          hint: Text(
+            hint,
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+          ),
+          selectedItemBuilder: (BuildContext context) {
+            return items.map<Widget>((FlightModel flight) {
+              String flightNo = flight.flightNo ?? 'Unknown';
+              String dateText = _formatSimpleDate(flight.departureTime);
+              return Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: 14, color: const Color(0xFF0084FF)),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    "$dateText ($flightNo)",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              );
+            }).toList();
+          },
+          items: items.map((flight) {
+            String flightNo = flight.flightNo ?? 'Unknown';
+            String dateText = _formatSimpleDate(flight.departureTime);
+            return DropdownMenuItem<String>(
+              value: flight.id,
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade100),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(icon, size: 14, color: Colors.black87),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "$dateText ($flightNo)",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 
@@ -277,16 +453,19 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFE6F0FF) : const Color(0xFFF5F5F5),
+              color: isSelected
+                  ? const Color(0xFFE6F0FF)
+                  : const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isSelected ? const Color(0xFF004CB9) : Colors.transparent,
+                color: isSelected
+                    ? const Color(0xFF004CB9)
+                    : Colors.transparent,
                 width: 1.5,
               ),
             ),
             child: Row(
               children: [
-                // Lingkaran Radio Button
                 Container(
                   width: 20,
                   height: 20,
@@ -294,7 +473,9 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
                     shape: BoxShape.circle,
                     color: isSelected ? const Color(0xFF004CB9) : Colors.white,
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF004CB9) : Colors.grey.shade400,
+                      color: isSelected
+                          ? const Color(0xFF004CB9)
+                          : Colors.grey.shade400,
                       width: 2,
                     ),
                   ),
@@ -308,8 +489,12 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
                     facility.name,
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      color: isSelected ? const Color(0xFF004CB9) : Colors.black87,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w600,
+                      color: isSelected
+                          ? const Color(0xFF004CB9)
+                          : Colors.black87,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -454,23 +639,15 @@ class _TambahPaketScreenState extends State<TambahPaketScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text(
-                        "Tambah Paket",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                // 👇 Teks tombol dikembalikan normal 👇
+                child: const Text(
+                  "Tambah Paket",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],

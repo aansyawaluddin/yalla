@@ -6,7 +6,14 @@ import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/widgets/card/flight_card_travel.dart';
 
 class ListFlightTravelScreen extends StatefulWidget {
-  const ListFlightTravelScreen({super.key});
+  final DateTime selectedDate;
+  final bool isOutbound;
+
+  const ListFlightTravelScreen({
+    super.key,
+    required this.selectedDate,
+    required this.isOutbound,
+  });
 
   @override
   State<ListFlightTravelScreen> createState() => _ListFlightTravelScreenState();
@@ -53,10 +60,22 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
     final flightProvider = context.watch<FlightProvider>();
     final isLoading = flightProvider.isLoading;
 
-    List<FlightModel> allFlights = List.from(flightProvider.flights);
+    String pad(int n) => n.toString().padLeft(2, '0');
+    String targetDateString =
+        "${widget.selectedDate.year}-${pad(widget.selectedDate.month)}-${pad(widget.selectedDate.day)}";
+
+    List<FlightModel> filteredFlights = flightProvider.flights.where((flight) {
+      if (flight.departureTime == null) return false;
+
+      bool isSameDate = flight.departureTime!.startsWith(targetDateString);
+      bool isSameRoute = flight.isOutbound == widget.isOutbound;
+
+      return isSameDate && isSameRoute;
+    }).toList();
+
     DateTime now = DateTime.now();
 
-    allFlights.sort((a, b) {
+    filteredFlights.sort((a, b) {
       if (a.departureTime == null || b.departureTime == null) return 0;
       try {
         final dateA = DateTime.parse(a.departureTime!);
@@ -73,21 +92,14 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
       }
     });
 
-    FlightModel? highlightedFlight = allFlights.isNotEmpty
-        ? allFlights.first
+    FlightModel? highlightedFlight = filteredFlights.isNotEmpty
+        ? filteredFlights.first
         : null;
-    List<FlightModel> otherFlights = allFlights.length > 1
-        ? allFlights.sublist(1)
+    List<FlightModel> otherFlights = filteredFlights.length > 1
+        ? filteredFlights.sublist(1)
         : [];
 
-    String displayDate = _formatIndonesianDate(now);
-    if (highlightedFlight != null && highlightedFlight.departureTime != null) {
-      try {
-        displayDate = _formatIndonesianDate(
-          DateTime.parse(highlightedFlight.departureTime!),
-        );
-      } catch (e) {}
-    }
+    String displayDate = _formatIndonesianDate(widget.selectedDate);
 
     return Scaffold(
       backgroundColor: const Color(0xFFE8F1F8),
@@ -173,20 +185,25 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                // 👇 4. Teks rute header dibuat dinamis 👇
                                 RichText(
-                                  text: const TextSpan(
+                                  text: TextSpan(
                                     children: [
                                       TextSpan(
-                                        text: 'Makassar ',
-                                        style: TextStyle(
+                                        text: widget.isOutbound
+                                            ? 'Makassar '
+                                            : 'Jeddah ',
+                                        style: const TextStyle(
                                           color: AppColors.secondary,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
                                         ),
                                       ),
                                       TextSpan(
-                                        text: '- UPG',
-                                        style: TextStyle(
+                                        text: widget.isOutbound
+                                            ? '- UPG'
+                                            : '- JED',
+                                        style: const TextStyle(
                                           color: Colors.black87,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
@@ -200,19 +217,23 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
                                   color: Colors.blue,
                                 ),
                                 RichText(
-                                  text: const TextSpan(
+                                  text: TextSpan(
                                     children: [
                                       TextSpan(
-                                        text: 'Jeddah ',
-                                        style: TextStyle(
+                                        text: widget.isOutbound
+                                            ? 'Jeddah '
+                                            : 'Makassar ',
+                                        style: const TextStyle(
                                           color: AppColors.secondary,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
                                         ),
                                       ),
                                       TextSpan(
-                                        text: '- JED',
-                                        style: TextStyle(
+                                        text: widget.isOutbound
+                                            ? '- JED'
+                                            : '- UPG',
+                                        style: const TextStyle(
                                           color: Colors.black87,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,

@@ -24,6 +24,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
   bool isOneWay = true;
 
   DateTime _selectedDate = DateTime.now();
+  bool _isOutboundRoute = true;
 
   @override
   void initState() {
@@ -219,17 +220,22 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                           children: [
                             Column(
                               children: [
+                                // 👇 Rute Dinamis 👇
                                 _buildLocationInput(
                                   label: "Dari",
-                                  code: "UPG",
-                                  city: "Makassar",
+                                  code: _isOutboundRoute ? "UPG" : "JED",
+                                  city: _isOutboundRoute
+                                      ? "Makassar"
+                                      : "Jeddah",
                                   icon: Icons.flight_takeoff,
                                 ),
                                 const SizedBox(height: 12),
                                 _buildLocationInput(
                                   label: "Ke",
-                                  code: "JED",
-                                  city: "Jeddah",
+                                  code: _isOutboundRoute ? "JED" : "UPG",
+                                  city: _isOutboundRoute
+                                      ? "Jeddah"
+                                      : "Makassar",
                                   icon: Icons.flight_land,
                                 ),
                               ],
@@ -257,7 +263,11 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                   ],
                                 ),
                                 child: IconButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    setState(() {
+                                      _isOutboundRoute = !_isOutboundRoute;
+                                    });
+                                  },
                                   icon: const Icon(
                                     Icons.swap_vert,
                                     color: Colors.white,
@@ -283,8 +293,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                         backgroundColor: Colors.transparent,
                                         builder: (context) {
                                           return CalendarBottomSheet(
-                                            flights:
-                                                flightList, 
+                                            flights: flightList,
                                           );
                                         },
                                       );
@@ -340,8 +349,14 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                   milliseconds: 300,
                                 ),
                                 pageBuilder:
-                                    (context, animation, secondaryAnimation) =>
-                                        const ListFlightTravelScreen(),
+                                    (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                    ) => ListFlightTravelScreen(
+                                      selectedDate: _selectedDate,
+                                      isOutbound: _isOutboundRoute,
+                                    ),
                                 transitionsBuilder:
                                     (
                                       context,
