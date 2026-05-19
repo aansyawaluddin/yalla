@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:yalla/core/models/order_model.dart'; 
+import 'package:yalla/core/models/order_model.dart';
 
 class OrderService {
   final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
@@ -22,11 +22,16 @@ class OrderService {
       body: jsonEncode(payload),
     );
 
+    print("STATUS CODE: ${response.statusCode}");
+    print("RESPONSE BODY: ${response.body}");
+
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
       final error = jsonDecode(response.body);
-      throw Exception(error['message'] ?? 'Gagal membuat pesanan tiket.');
+      throw Exception(
+        error['message'] ?? error['error'] ?? 'Gagal membuat pesanan tiket.',
+      );
     }
   }
 
@@ -59,7 +64,7 @@ class OrderService {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      return OrderModel.fromJson(json); 
+      return OrderModel.fromJson(json);
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['message'] ?? 'Gagal memeriksa status pesanan.');

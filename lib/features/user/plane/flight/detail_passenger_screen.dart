@@ -161,6 +161,7 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
     final String destCode = isOutbound ? "JED" : "UPG";
     final String originCity = isOutbound ? "Makassar" : "Jeddah";
     final String destCity = isOutbound ? "Jeddah" : "Makassar";
+    final String flightNo = widget.flight.flightNo ?? "Airline";
 
     final String depTime = DateFormatter.formatTime(
       widget.flight.departureTime,
@@ -173,7 +174,6 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // APP BAR CUSTOM
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Row(
@@ -257,9 +257,9 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      "Flydeal Air",
-                                      style: TextStyle(
+                                    Text(
+                                      "Flydeal Air $flightNo",
+                                      style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black87,
@@ -410,7 +410,9 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    depDateFull,
+                                    DateFormatter.formatDate(
+                                      widget.flight.departureTime ?? '',
+                                    ),
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,

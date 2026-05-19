@@ -19,6 +19,31 @@ class DetailFlightTravelScreen extends StatelessWidget {
     return "IDR $res";
   }
 
+  String _formatShortDate(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) return "-";
+    try {
+      final dt = DateTime.parse(isoDate).toLocal();
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+      String monthName = months[dt.month - 1];
+      return "${dt.day} $monthName";
+    } catch (e) {
+      return isoDate.split('T').first;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isOutbound = flight.isOutbound ?? true;
@@ -28,6 +53,10 @@ class DetailFlightTravelScreen extends StatelessWidget {
 
     final String depTime = DateFormatter.formatTime(flight.departureTime);
     final String arrTime = DateFormatter.formatTime(flight.arrivalTime);
+
+    final String depDate = _formatShortDate(flight.departureTime);
+    final String arrDate = _formatShortDate(flight.arrivalTime);
+
     final String priceText = _formatPrice(flight.price);
 
     return Scaffold(
@@ -125,6 +154,15 @@ class DetailFlightTravelScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 2),
+                            Text(
+                              depDate,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Text(
                               depTime,
@@ -186,6 +224,15 @@ class DetailFlightTravelScreen extends StatelessWidget {
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              arrDate,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -302,7 +349,10 @@ class DetailFlightTravelScreen extends StatelessWidget {
                                             context,
                                             animation,
                                             secondaryAnimation,
-                                          ) => const DetailPassengerTravelScreen(),
+                                          ) =>
+                                              DetailPassengerTravelScreen(
+                                                flight: flight ,
+                                              ),
                                       transitionsBuilder:
                                           (
                                             context,

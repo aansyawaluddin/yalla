@@ -1,18 +1,123 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 import 'package:yalla/features/travel/home/payment_method_travel_screen.dart';
 
-class DetailPassengerTravelScreen extends StatelessWidget {
-  const DetailPassengerTravelScreen({super.key});
+class DetailPassengerTravelScreen extends StatefulWidget {
+  final FlightModel flight;
+
+  const DetailPassengerTravelScreen({super.key, required this.flight});
+
+  @override
+  State<DetailPassengerTravelScreen> createState() =>
+      _DetailPassengerTravelScreenState();
+}
+
+class _DetailPassengerTravelScreenState
+    extends State<DetailPassengerTravelScreen> {
+  bool _isUploading = false;
+  List<dynamic> _parsedPassengers = [];
+
+  String? _uploadedFileName;
+
+  String _formatPrice(num? price) {
+    if (price == null || price == 0) return "IDR -";
+    String s = price.toInt().toString();
+    String res = "";
+    for (int i = 0; i < s.length; i++) {
+      res += s[i];
+      if ((s.length - 1 - i) % 3 == 0 && i != s.length - 1) res += ".";
+    }
+    return "IDR $res";
+  }
+
+  Future<void> _uploadAndParseManifest() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['xlsx', 'xls'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _isUploading = true;
+          _uploadedFileName = result.files.single.name;
+        });
+
+        final filePath = result.files.single.path!;
+        final baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+        final url = Uri.parse('$baseUrl/parse-manifest');
+
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('auth_token') ?? '';
+
+        var request = http.MultipartRequest('POST', url);
+        request.headers.addAll({
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        });
+
+        request.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+        var streamedResponse = await request.send();
+        var response = await http.Response.fromStream(streamedResponse);
+
+        if (response.statusCode == 200) {
+          final List<dynamic> jsonList = jsonDecode(response.body);
+          setState(() {
+            _parsedPassengers = jsonList;
+          });
+          if (!mounted) return;
+          CustomSnackBar.showSuccess(
+            context,
+            title: "Berhasil",
+            message: "${jsonList.length} data jamaah berhasil diekstrak.",
+          );
+        } else {
+          final error = jsonDecode(response.body);
+          setState(() => _uploadedFileName = null);
+          throw Exception(error['message'] ?? 'Gagal memproses file Excel.');
+        }
+      }
+    } catch (e) {
+      setState(() => _uploadedFileName = null);
+      if (!mounted) return;
+      CustomSnackBar.showError(
+        context,
+        title: "Gagal Mengunggah",
+        message: e.toString().replaceAll("Exception: ", ""),
+      );
+    } finally {
+      setState(() => _isUploading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool isOutbound = widget.flight.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String destCode = isOutbound ? "JED" : "UPG";
+    final String originName = isOutbound ? "Makassar" : "Jeddah";
+    final String destName = isOutbound ? "Jeddah" : "Makassar";
+    final String depTime = DateFormatter.formatTime(
+      widget.flight.departureTime,
+    );
+    final String flightNo = widget.flight.flightNo ?? "Airline";
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
+            // HEADER NAV
             Padding(
               padding: const EdgeInsets.only(
                 top: 16,
@@ -101,9 +206,9 @@ class DetailPassengerTravelScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      "Flydeal Air",
-                                      style: TextStyle(
+                                    Text(
+                                      "Flydeal Air $flightNo",
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black87,
@@ -167,19 +272,19 @@ class DetailPassengerTravelScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Column(
-                                children: const [
+                                children: [
                                   Text(
-                                    "UPG",
-                                    style: TextStyle(
+                                    originCode,
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.black87,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
+                                  const SizedBox(height: 4),
                                   Text(
-                                    "Makassar",
-                                    style: TextStyle(
+                                    originName,
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       color: Colors.black54,
                                     ),
@@ -241,19 +346,19 @@ class DetailPassengerTravelScreen extends StatelessWidget {
                                 ),
                               ),
                               Column(
-                                children: const [
+                                children: [
                                   Text(
-                                    "JED",
-                                    style: TextStyle(
+                                    destCode,
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.black87,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
+                                  const SizedBox(height: 4),
                                   Text(
-                                    "Jeddah",
-                                    style: TextStyle(
+                                    destName,
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       color: Colors.black54,
                                     ),
@@ -272,16 +377,18 @@ class DetailPassengerTravelScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(
-                                children: const [
-                                  Icon(
+                                children: [
+                                  const Icon(
                                     Icons.calendar_today_outlined,
                                     size: 16,
                                     color: Color(0xFF0084FF),
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    "06 Juni 2026",
-                                    style: TextStyle(
+                                    DateFormatter.formatDate(
+                                      widget.flight.departureTime ?? '',
+                                    ),
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.black87,
@@ -290,16 +397,16 @@ class DetailPassengerTravelScreen extends StatelessWidget {
                                 ],
                               ),
                               Row(
-                                children: const [
-                                  Icon(
+                                children: [
+                                  const Icon(
                                     Icons.access_time,
                                     size: 16,
                                     color: Color(0xFF0084FF),
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    "08 : 30 WITA",
-                                    style: TextStyle(
+                                    depTime,
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.black87,
@@ -315,6 +422,7 @@ class DetailPassengerTravelScreen extends StatelessWidget {
 
                     const SizedBox(height: 32),
 
+                    // KARTU UNDUH TEMPLATE
                     Container(
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
@@ -330,7 +438,7 @@ class DetailPassengerTravelScreen extends StatelessWidget {
                       child: IntrinsicHeight(
                         child: Row(
                           children: [
-                            Container(width: 8, color: Color(0xff008706)),
+                            Container(width: 8, color: const Color(0xff008706)),
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.all(16.0),
@@ -366,7 +474,7 @@ class DetailPassengerTravelScreen extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 4),
                                           const Text(
-                                            "Unduh file excel untuk mengisi data secara\nmassal.",
+                                            "Unduh file excel untuk mengisi data secara massal.",
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.black54,
@@ -377,9 +485,11 @@ class DetailPassengerTravelScreen extends StatelessWidget {
                                           Align(
                                             alignment: Alignment.centerRight,
                                             child: ElevatedButton.icon(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                // Logika unduh file di sini
+                                              },
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: Color(
+                                                backgroundColor: const Color(
                                                   0xff008706,
                                                 ),
                                                 foregroundColor: Colors.white,
@@ -431,99 +541,105 @@ class DetailPassengerTravelScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    CustomPaint(
-                      painter: _DashedBorderPainter(
-                        color: Colors.grey.shade400,
-                      ),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 40,
-                          horizontal: 20,
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.file_upload_outlined,
-                              size: 40,
-                              color: Color(0xFF0084FF),
-                            ),
-                            const SizedBox(height: 16),
 
-                            RichText(
-                              textAlign: TextAlign.center,
-                              text: const TextSpan(
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black87,
-                                  height: 1.5,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: "Unggah file ",
-                                    style: TextStyle(
+                    _parsedPassengers.isNotEmpty
+                        ? _buildSuccessUploadBox()
+                        : _buildDefaultUploadBox(),
+
+                    const SizedBox(height: 32),
+
+                    // LIST PENUMPANG
+                    if (_parsedPassengers.isNotEmpty) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Daftar Jamaah",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              "${_parsedPassengers.length} Orang",
+                              style: const TextStyle(
+                                color: Color(0xFF0084FF),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: _parsedPassengers.length,
+                        itemBuilder: (context, index) {
+                          final passenger = _parsedPassengers[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: const Color(
+                                    0xFF0084FF,
+                                  ).withOpacity(0.1),
+                                  child: Text(
+                                    "${index + 1}",
+                                    style: const TextStyle(
+                                      color: Color(0xFF0084FF),
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  TextSpan(text: "Excel manifest jamaah yang "),
-                                  TextSpan(
-                                    text: "telah diisi.",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        passenger['full_name'] ?? 'Tanpa Nama',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Paspor: ${passenger['passport_number'] ?? '-'}",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0099FF),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                minimumSize: const Size(2, 35),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 25,
                                 ),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                              ),
-                              child: const Text(
-                                "Pilih File",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              ],
                             ),
-                            const SizedBox(height: 16),
-
-                            const Text(
-                              "Format: .xlsx",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-
-                            const Text(
-                              "Gunakan template yang sudah diunduh untuk diisi.",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                    ],
                   ],
                 ),
               ),
@@ -591,15 +707,27 @@ class DetailPassengerTravelScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
             PrimaryGradientButton(
               text: "Lanjut ke Ringkasan Tagihan",
               onPressed: () {
+                if (_isUploading || _parsedPassengers.isEmpty) {
+                  CustomSnackBar.showError(
+                    context,
+                    title: "Belum Ada Data",
+                    message:
+                        "Silakan unggah file manifest jamaah terlebih dahulu.",
+                  );
+                  return;
+                }
+
                 Navigator.of(context).push(
                   PageRouteBuilder(
                     transitionDuration: const Duration(milliseconds: 300),
                     pageBuilder: (context, animation, secondaryAnimation) =>
-                        const PaymentMethodTravelScreen(),
+                        PaymentMethodTravelScreen(
+                          flight: widget.flight,
+                          passengers: _parsedPassengers,
+                        ),
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
                           const begin = Offset(1.0, 0.0);
@@ -623,7 +751,149 @@ class DetailPassengerTravelScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildDefaultUploadBox() {
+    return CustomPaint(
+      painter: _DashedBorderPainter(color: Colors.grey.shade400),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.file_upload_outlined,
+              size: 40,
+              color: Color(0xFF0084FF),
+            ),
+            const SizedBox(height: 16),
+            RichText(
+              textAlign: TextAlign.center,
+              text: const TextSpan(
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  height: 1.5,
+                ),
+                children: [
+                  TextSpan(
+                    text: "Unggah file ",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: "Excel manifest jamaah yang "),
+                  TextSpan(
+                    text: "telah diisi.",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _isUploading ? null : _uploadAndParseManifest,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0099FF),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size(2, 35),
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              icon: _isUploading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.upload_file, size: 16),
+              label: Text(
+                _isUploading ? "Mengunggah..." : "Pilih File",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Format: .xlsx",
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessUploadBox() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4), 
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFBBF7D0)), 
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.check_circle,
+            size: 40,
+            color: Color(0xFF22C55E), 
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "File Berhasil Diunggah!",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF166534),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _uploadedFileName ?? "manifest.xlsx",
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _isUploading ? null : _uploadAndParseManifest,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF166534), 
+              elevation: 0,
+              side: const BorderSide(color: Color(0xFF22C55E)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              minimumSize: const Size(0, 36),
+            ),
+            icon: _isUploading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF166534),
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.sync, size: 16),
+            label: Text(
+              _isUploading ? "Mengunggah..." : "Ganti File",
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
 
 class _DashedBorderPainter extends CustomPainter {
   final Color color;

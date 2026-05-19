@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/features/travel/home/home_plane_travel_screen.dart';
+import 'package:yalla/features/travel/order/order_travel_screen.dart';
 import 'package:yalla/features/travel/profile/profile_screen_travel.dart';
 
 class TravelCustomBottomNavBar extends StatelessWidget {
@@ -29,7 +30,7 @@ class TravelCustomBottomNavBar extends StatelessWidget {
         );
         break;
       case 3:
-        // targetScreen = const OrderScreen();
+        targetScreen = const OrderTravelScreen();
         break;
       case 4:
         targetScreen = const ProfileScreenTravel();

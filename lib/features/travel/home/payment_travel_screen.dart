@@ -1,12 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/animated/animated_payment_bottomBar_travel.dart';
 import 'package:yalla/core/widgets/animated/countdown_timer.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
+import 'package:yalla/features/travel/home/home_plane_travel_screen.dart';
 
-class PaymentTravelScreen extends StatelessWidget {
-  const PaymentTravelScreen({super.key});
+class PaymentTravelScreen extends StatefulWidget {
+  final FlightModel flight;
+  final int paymentAmount;
+  final DateTime paymentDeadline;
+  final String orderId;
+
+  const PaymentTravelScreen({
+    super.key,
+    required this.flight,
+    required this.paymentAmount,
+    required this.paymentDeadline,
+    required this.orderId,
+  });
+
+  @override
+  State<PaymentTravelScreen> createState() => _PaymentTravelScreenState();
+}
+
+class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
+  String _formatPrice(int price) {
+    String priceStr = price.toString();
+    String result = '';
+    int count = 0;
+    for (int i = priceStr.length - 1; i >= 0; i--) {
+      result = priceStr[i] + result;
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        result = '.$result';
+      }
+    }
+    return "IDR $result";
+  }
+
+  Future<void> _openPaymentGateway() async {
+    final gatewayUrl = context.read<OrderProvider>().gatewayUrl;
+
+    if (gatewayUrl.isNotEmpty) {
+      CustomSnackBar.showSuccess(
+        context,
+        title: "Link Ditemukan",
+        message: "Mengarahkan ke halaman pembayaran...",
+      );
+    } else {
+      CustomSnackBar.showError(
+        context,
+        title: "Gagal",
+        message: "Link pembayaran tidak tersedia.",
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool isOutbound = widget.flight.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String destCode = isOutbound ? "JED" : "UPG";
+    final String originName = isOutbound ? "Makassar" : "Jeddah";
+    final String destName = isOutbound ? "Jeddah" : "Makassar";
+    final String flightNo = widget.flight.flightNo ?? "Airline";
+
+    final String deadlineText =
+        "${widget.paymentDeadline.day}/${widget.paymentDeadline.month}/${widget.paymentDeadline.year} • ${widget.paymentDeadline.hour.toString().padLeft(2, '0')}:${widget.paymentDeadline.minute.toString().padLeft(2, '0')}";
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -36,7 +99,15 @@ class PaymentTravelScreen extends StatelessWidget {
                         color: Color(0xFF0084FF),
                         size: 18,
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HomePlaneTravelScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -74,8 +145,8 @@ class PaymentTravelScreen extends StatelessWidget {
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
+                            children: [
+                              const Text(
                                 "Ringkasan Pesanan",
                                 style: TextStyle(
                                   fontSize: 14,
@@ -83,8 +154,8 @@ class PaymentTravelScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                "#TRV99281",
-                                style: TextStyle(
+                                "#${widget.orderId.substring(0, 8).toUpperCase()}",
+                                style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF0084FF),
@@ -100,7 +171,9 @@ class PaymentTravelScreen extends StatelessWidget {
                                 height: 48,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Color(0xffDADADA)),
+                                  border: Border.all(
+                                    color: const Color(0xffDADADA),
+                                  ),
                                   image: const DecorationImage(
                                     image: AssetImage(
                                       'assets/images/logo_flydeal.png',
@@ -125,7 +198,7 @@ class PaymentTravelScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      "JT 6655  •  Ekonomi",
+                                      "$flightNo  •  Ekonomi",
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: Colors.grey.shade500,
@@ -141,18 +214,18 @@ class PaymentTravelScreen extends StatelessWidget {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Column(
-                                      children: const [
+                                      children: [
                                         Text(
-                                          "UPG",
-                                          style: TextStyle(
+                                          originCode,
+                                          style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w900,
                                             color: Colors.black87,
                                           ),
                                         ),
                                         Text(
-                                          "Makassar",
-                                          style: TextStyle(
+                                          originName,
+                                          style: const TextStyle(
                                             fontSize: 10,
                                             color: Colors.black54,
                                           ),
@@ -166,29 +239,21 @@ class PaymentTravelScreen extends StatelessWidget {
                                           height: 1,
                                           color: Colors.grey.shade400,
                                         ),
-                                        const SizedBox(height: 4),
-                                        const Text(
-                                          "11j 15m",
-                                          style: TextStyle(
-                                            fontSize: 8,
-                                            color: Colors.black38,
-                                          ),
-                                        ),
                                       ],
                                     ),
                                     Column(
-                                      children: const [
+                                      children: [
                                         Text(
-                                          "JED",
-                                          style: TextStyle(
+                                          destCode,
+                                          style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w900,
                                             color: Colors.black87,
                                           ),
                                         ),
                                         Text(
-                                          "Jeddah",
-                                          style: TextStyle(
+                                          destName,
+                                          style: const TextStyle(
                                             fontSize: 10,
                                             color: Colors.black54,
                                           ),
@@ -220,7 +285,7 @@ class PaymentTravelScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Color(0xffDADADA)),
+                            border: Border.all(color: const Color(0xffDADADA)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,9 +299,9 @@ class PaymentTravelScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                "Jum, 27 Feb 2026  •  16:00",
-                                style: TextStyle(
+                              Text(
+                                deadlineText,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.black54,
                                 ),
@@ -251,81 +316,52 @@ class PaymentTravelScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                "IDR 11.000.000",
-                                style: TextStyle(
+                              Text(
+                                _formatPrice(widget.paymentAmount),
+                                style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF0084FF),
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              const Text(
-                                "NOMOR VIRTUAL ACCOUNT",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black38,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: const [
-                                  Expanded(
-                                    child: Text(
-                                      "988 3305 3013 3818 1782",
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.black87,
-                                      ),
+
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _openPaymentGateway,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0084FF),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
-                                  SizedBox(width: 8),
-                                  Icon(
-                                    Icons.copy,
-                                    color: Colors.black87,
-                                    size: 20,
+                                  icon: const Icon(
+                                    Icons.open_in_browser,
+                                    size: 18,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Image.asset(
-                                      'assets/icons/bni.png',
-                                      height: 16,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Icon(
-                                                Icons.account_balance,
-                                                size: 16,
-                                                color: Colors.orange,
-                                              ),
+                                  label: const Text(
+                                    "Buka Halaman Pembayaran",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    const SizedBox(width: 6),
-                                    const Text(
-                                      "BNI VIRTUAL ACCOUNT",
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        // const Positioned(
-                        //   top: -20,
-                        //   right: 20,
-                        //   child: CountdownTimer(),
-                        // ),
+                        Positioned(
+                          top: -20,
+                          right: 20,
+                          child: CountdownTimer(
+                            deadline: widget.paymentDeadline,
+                          ),
+                        ),
                       ],
                     ),
 
@@ -357,16 +393,11 @@ class PaymentTravelScreen extends StatelessWidget {
           iconColor: Colors.black38,
           collapsedIconColor: Colors.black38,
           title: Row(
-            children: [
-              Image.asset(
-                'assets/icons/bni.png',
-                height: 24,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.atm, color: Colors.blue, size: 24),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                "ATM BNI",
+            children: const [
+              Icon(Icons.payment, color: Colors.blue, size: 24),
+              SizedBox(width: 12),
+              Text(
+                "Panduan Pembayaran",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -379,7 +410,7 @@ class PaymentTravelScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                "1. Masukkan Kartu ATM BNI & PIN\n2. Pilih menu Lainnya > Transfer\n3. Pilih jenis rekening asal dan pilih Virtual Account Billing\n4. Masukkan nomor Virtual Account\n5. Tagihan yang harus dibayarkan akan muncul pada layar\n6. Konfirmasi pembayaran",
+                "1. Klik tombol 'Buka Halaman Pembayaran' di atas.\n2. Anda akan diarahkan ke halaman pembayaran aman.\n3. Pilih metode pembayaran yang Anda inginkan (Transfer Bank, E-Wallet, dll).\n4. Selesaikan pembayaran sebelum waktu habis.\n5. Status pesanan akan otomatis terupdate setelah pembayaran berhasil.",
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,
