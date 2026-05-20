@@ -5,6 +5,7 @@ import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/features/travel/home/payment_travel_screen.dart';
+import 'package:yalla/features/travel/order/detail_order_travel.dart';
 
 class OrderFlightTravelCard extends StatelessWidget {
   final OrderModel order;
@@ -41,7 +42,7 @@ class OrderFlightTravelCard extends StatelessWidget {
                 flight: dataFlight,
                 paymentAmount: order.price.toInt(),
                 paymentDeadline: absoluteDeadline,
-                orderId: order.id, // ← tambahkan ini
+                orderId: order.id,
               ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
@@ -88,9 +89,60 @@ class OrderFlightTravelCard extends StatelessWidget {
     }
   }
 
+  String _formatDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      const months = [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+      return "${date.day} ${months[date.month]} ${date.year}";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  String _formatDateLong(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      const months = [
+        '',
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
+      ];
+      return "${date.day} ${months[date.month]} ${date.year}";
+    } catch (e) {
+      return "-";
+    }
+  }
+
   String _calculateDuration(String? dep, String? arr, String fallback) {
-    if (dep == null || arr == null || dep.isEmpty || arr.isEmpty)
+    if (dep == null || arr == null || dep.isEmpty || arr.isEmpty) {
       return fallback;
+    }
     try {
       final d = DateTime.parse(dep);
       final a = DateTime.parse(arr);
@@ -116,51 +168,54 @@ class OrderFlightTravelCard extends StatelessWidget {
 
     final FlightModel? flightData = order.flight;
 
-    final String airline = "Flydeal Air";
+    const String airline = "Flydeal Air";
 
     final bool isOutbound = flightData?.isOutbound ?? true;
     final String originCode = isOutbound ? "UPG" : "JED";
     final String destCode = isOutbound ? "JED" : "UPG";
 
-    final String depTime = _formatTime(flightData?.departureTime, "02:00 AM");
-    final String arrTime = _formatTime(flightData?.arrivalTime, "12:15 PM");
+    final String depTime = _formatTime(flightData?.departureTime, "07:00");
+    final String arrTime = _formatTime(flightData?.arrivalTime, "14:45");
+    final String depDate = _formatDate(flightData?.departureTime);
+    final String arrDate = _formatDate(flightData?.arrivalTime);
     final String duration = _calculateDuration(
       flightData?.departureTime,
       flightData?.arrivalTime,
-      "11j 15m",
+      "7j 45m",
     );
+
+    final String createdDateLabel = _formatDateLong(order.createdAt);
 
     final bool isWaitingPayment = status == 'waiting_payment';
     final bool isOnProcess = status == 'on_process';
 
-    String badgeText;
     Color badgeColor;
-    Color badgeBg;
     String progressText;
     double progressValue;
 
     if (isWaitingPayment) {
-      badgeText = "Menunggu";
       badgeColor = Colors.orange;
-      badgeBg = Colors.orange.shade50;
       progressText = "Belum Lunas";
       progressValue = 0.0;
     } else if (isOnProcess) {
-      badgeText = "Diproses Admin";
       badgeColor = brandBlue;
-      badgeBg = Colors.blue.shade50;
       progressText = "Verifikasi";
       progressValue = 0.5;
     } else {
-      badgeText = "Sukses";
       badgeColor = Colors.green;
-      badgeBg = Colors.green.shade50;
       progressText = "Lunas";
       progressValue = 1.0;
     }
 
     return GestureDetector(
-      onTap: () => _navigateToDetail(context, status),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailOrderTravel(order: order),
+          ),
+        );
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         clipBehavior: Clip.antiAlias,
@@ -181,14 +236,11 @@ class OrderFlightTravelCard extends StatelessWidget {
               right: -30,
               top: -100,
               bottom: 0,
-              child: Opacity(
-                opacity: 1,
-                child: Image.asset(
-                  'assets/images/bg_flight_card.png',
-                  width: 250,
-                  fit: BoxFit.contain,
-                  color: Colors.black.withOpacity(0.15),
-                ),
+              child: Image.asset(
+                'assets/images/bg_flight_card.png',
+                width: 250,
+                fit: BoxFit.contain,
+                color: Colors.black.withOpacity(0.15),
               ),
             ),
 
@@ -198,7 +250,7 @@ class OrderFlightTravelCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
                         height: 50,
@@ -216,6 +268,7 @@ class OrderFlightTravelCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,25 +336,8 @@ class OrderFlightTravelCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: badgeBg,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: badgeColor),
-                        ),
-                        child: Text(
-                          badgeText,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: badgeColor,
-                          ),
-                        ),
-                      ),
+
+                      const SizedBox(width: 120),
                     ],
                   ),
 
@@ -312,14 +348,28 @@ class OrderFlightTravelCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            depTime,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: textDark,
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                depTime,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: textDark,
+                                ),
+                              ),
+                              Text(
+                                depDate,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: textGrey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
+
                           Text(
                             duration,
                             style: const TextStyle(
@@ -328,17 +378,32 @@ class OrderFlightTravelCard extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          Text(
-                            arrTime,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: textDark,
-                            ),
+
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                arrTime,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: textDark,
+                                ),
+                              ),
+                              Text(
+                                arrDate,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: textGrey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
+
                       Row(
                         children: [
                           Text(
@@ -500,6 +565,32 @@ class OrderFlightTravelCard extends StatelessWidget {
                     ],
                   ),
                 ],
+              ),
+            ),
+
+            Positioned(
+              top: 30,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: const BoxDecoration(
+                  color: brandBlue,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    bottomLeft: Radius.circular(20),
+                  ),
+                ),
+                child: Text(
+                  createdDateLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],
