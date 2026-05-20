@@ -22,7 +22,6 @@ class HomePlaneTravelScreen extends StatefulWidget {
 
 class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
   bool isOneWay = true;
-
   DateTime _selectedDate = DateTime.now();
   bool _isOutboundRoute = true;
 
@@ -31,6 +30,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TravelProvider>().fetchTravels();
+      context.read<FlightProvider>().fetchFlights();
     });
   }
 
@@ -58,7 +58,8 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final flightList = context.read<FlightProvider>().flights;
+    final flightProvider = context.watch<FlightProvider>();
+    final flightList = flightProvider.flights;
     final travelProvider = context.watch<TravelProvider>();
     final isLoadingTravels = travelProvider.isLoading;
     final travels = travelProvider.travels;
@@ -220,7 +221,6 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                           children: [
                             Column(
                               children: [
-                                // 👇 Rute Dinamis 👇
                                 _buildLocationInput(
                                   label: "Dari",
                                   code: _isOutboundRoute ? "UPG" : "JED",
@@ -286,21 +286,29 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                             Expanded(
                               child: GestureDetector(
                                 onTap: () async {
-                                  final DateTime? pickedDate =
-                                      await showModalBottomSheet<DateTime>(
+                                  // ✅ Ganti type ke Map<String, dynamic>
+                                  final result =
+                                      await showModalBottomSheet<
+                                        Map<String, dynamic>
+                                      >(
                                         context: context,
                                         isScrollControlled: true,
                                         backgroundColor: Colors.transparent,
                                         builder: (context) {
                                           return CalendarBottomSheet(
                                             flights: flightList,
+                                            isOutbound: _isOutboundRoute,
                                           );
                                         },
                                       );
 
-                                  if (pickedDate != null) {
+                                  // ✅ Ambil date dan isOutbound dari result
+                                  if (result != null) {
                                     setState(() {
-                                      _selectedDate = pickedDate;
+                                      _selectedDate =
+                                          result['date'] as DateTime;
+                                      _isOutboundRoute =
+                                          result['isOutbound'] as bool;
                                     });
                                   }
                                 },
@@ -349,14 +357,11 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                   milliseconds: 300,
                                 ),
                                 pageBuilder:
-                                    (
-                                      context,
-                                      animation,
-                                      secondaryAnimation,
-                                    ) => ListFlightTravelScreen(
-                                      selectedDate: _selectedDate,
-                                      isOutbound: _isOutboundRoute,
-                                    ),
+                                    (context, animation, secondaryAnimation) =>
+                                        ListFlightTravelScreen(
+                                          selectedDate: _selectedDate,
+                                          isOutbound: _isOutboundRoute,
+                                        ),
                                 transitionsBuilder:
                                     (
                                       context,
@@ -451,9 +456,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                           final travelName = travel.fullName.isNotEmpty
                               ? travel.fullName
                               : "Agen Travel";
-
                           final score = (travel.averageScore).toDouble();
-
                           return Padding(
                             padding: const EdgeInsets.only(right: 16),
                             child: TravelCard(
@@ -500,10 +503,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                       ? const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFD4EEFF), // 0%
-                            Colors.white, // 100% FFFFFF
-                          ],
+                          colors: [Color(0xFFD4EEFF), Colors.white],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(20),
@@ -700,7 +700,6 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
               ],
             ],
           ),
-
           if (showAction)
             GestureDetector(
               onTap: onActionTap,

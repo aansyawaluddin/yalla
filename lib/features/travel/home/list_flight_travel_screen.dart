@@ -60,14 +60,25 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
     final flightProvider = context.watch<FlightProvider>();
     final isLoading = flightProvider.isLoading;
 
-    String pad(int n) => n.toString().padLeft(2, '0');
-    String targetDateString =
-        "${widget.selectedDate.year}-${pad(widget.selectedDate.month)}-${pad(widget.selectedDate.day)}";
+    final selectedDateOnly = DateTime(
+      widget.selectedDate.year,
+      widget.selectedDate.month,
+      widget.selectedDate.day,
+    );
 
     List<FlightModel> filteredFlights = flightProvider.flights.where((flight) {
       if (flight.departureTime == null) return false;
 
-      bool isSameDate = flight.departureTime!.startsWith(targetDateString);
+      final depDateTime = DateTime.parse(
+        flight.departureTime!,
+      ).toLocal(); // ← tambah .toLocal()
+      final depDateLocal = DateTime(
+        depDateTime.year,
+        depDateTime.month,
+        depDateTime.day,
+      );
+
+      bool isSameDate = depDateLocal == selectedDateOnly;
       bool isSameRoute = flight.isOutbound == widget.isOutbound;
 
       return isSameDate && isSameRoute;
@@ -106,7 +117,6 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
       body: SingleChildScrollView(
         child: Stack(
           children: [
-            // Background Seamless
             Positioned(
               top: -90.0,
               left: 0,
@@ -163,9 +173,7 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
                       child: Row(
                         children: [
                           GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
+                            onTap: () => Navigator.pop(context),
                             behavior: HitTestBehavior.opaque,
                             child: Container(
                               padding: const EdgeInsets.all(8),
@@ -185,7 +193,6 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // 👇 4. Teks rute header dibuat dinamis 👇
                                 RichText(
                                   text: TextSpan(
                                     children: [

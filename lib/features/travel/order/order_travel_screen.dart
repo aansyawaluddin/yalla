@@ -34,7 +34,7 @@ class _OrderTravelScreenState extends State<OrderTravelScreen> {
 
     return Scaffold(
       extendBody: true,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F6F8),
       body: Stack(
         children: [
           Positioned(

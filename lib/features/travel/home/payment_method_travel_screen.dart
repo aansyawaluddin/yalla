@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; 
+import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
@@ -95,8 +95,13 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
           _cicilDefault;
     }
 
+    final bool isOutbound = widget.flight.isOutbound ?? true;
+
     final Map<String, dynamic> payload = {
-      "flight_id": widget.flight.id,
+      if (isOutbound)
+        "departure_flight_id": widget.flight.id
+      else
+        "return_flight_id": widget.flight.id,
       "payment_scheme": _selectedScheme.toLowerCase(),
       "payment_method": _selectedPaymentMethod,
       "amount_paid": amountToPay,

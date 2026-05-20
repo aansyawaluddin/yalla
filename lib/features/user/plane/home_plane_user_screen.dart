@@ -23,7 +23,6 @@ class HomePlaneUserScreen extends StatefulWidget {
 class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
   bool isOneWay = true;
   DateTime _selectedDate = DateTime.now();
-
   bool _isOutboundRoute = true;
 
   @override
@@ -284,21 +283,29 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                             Expanded(
                               child: GestureDetector(
                                 onTap: () async {
-                                  final DateTime? pickedDate =
-                                      await showModalBottomSheet<DateTime>(
+                                  // ✅ Ganti type ke Map<String, dynamic>
+                                  final result =
+                                      await showModalBottomSheet<
+                                        Map<String, dynamic>
+                                      >(
                                         context: context,
                                         isScrollControlled: true,
                                         backgroundColor: Colors.transparent,
                                         builder: (context) {
                                           return CalendarBottomSheet(
                                             flights: flightList,
+                                            isOutbound: _isOutboundRoute,
                                           );
                                         },
                                       );
 
-                                  if (pickedDate != null) {
+                                  // ✅ Update date dan isOutbound sekaligus
+                                  if (result != null) {
                                     setState(() {
-                                      _selectedDate = pickedDate;
+                                      _selectedDate =
+                                          result['date'] as DateTime;
+                                      _isOutboundRoute =
+                                          result['isOutbound'] as bool;
                                     });
                                   }
                                 },
@@ -347,14 +354,11 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                                   milliseconds: 300,
                                 ),
                                 pageBuilder:
-                                    (
-                                      context,
-                                      animation,
-                                      secondaryAnimation,
-                                    ) => ListFlightScreen(
-                                      selectedDate: _selectedDate,
-                                      isOutbound: _isOutboundRoute,
-                                    ),
+                                    (context, animation, secondaryAnimation) =>
+                                        ListFlightScreen(
+                                          selectedDate: _selectedDate,
+                                          isOutbound: _isOutboundRoute,
+                                        ),
                                 transitionsBuilder:
                                     (
                                       context,
@@ -411,6 +415,7 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+
                   Consumer<TravelProvider>(
                     builder: (context, travelProvider, child) {
                       if (travelProvider.isLoading) {

@@ -325,31 +325,62 @@ class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
                                 ),
                               ),
                               const SizedBox(height: 24),
-
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: _openPaymentGateway,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0084FF),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  icon: const Icon(
-                                    Icons.open_in_browser,
-                                    size: 18,
-                                  ),
-                                  label: const Text(
-                                    "Buka Halaman Pembayaran",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
+                              const Text(
+                                "NOMOR VIRTUAL ACCOUNT",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black38,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: const [
+                                  Expanded(
+                                    child: Text(
+                                      "988 3305 3013 3818 1782",
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black87,
+                                      ),
                                     ),
                                   ),
+                                  SizedBox(width: 8),
+                                  Icon(
+                                    Icons.copy,
+                                    color: Colors.black87,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      'assets/icons/bni.png',
+                                      height: 16,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Icon(
+                                                Icons.account_balance,
+                                                size: 16,
+                                                color: Colors.orange,
+                                              ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Text(
+                                      "BNI VIRTUAL ACCOUNT",
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -393,11 +424,16 @@ class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
           iconColor: Colors.black38,
           collapsedIconColor: Colors.black38,
           title: Row(
-            children: const [
-              Icon(Icons.payment, color: Colors.blue, size: 24),
-              SizedBox(width: 12),
-              Text(
-                "Panduan Pembayaran",
+            children: [
+              Image.asset(
+                'assets/icons/bni.png',
+                height: 24,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.atm, color: Colors.blue, size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "ATM BNI",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -410,7 +446,7 @@ class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                "1. Klik tombol 'Buka Halaman Pembayaran' di atas.\n2. Anda akan diarahkan ke halaman pembayaran aman.\n3. Pilih metode pembayaran yang Anda inginkan (Transfer Bank, E-Wallet, dll).\n4. Selesaikan pembayaran sebelum waktu habis.\n5. Status pesanan akan otomatis terupdate setelah pembayaran berhasil.",
+                "1. Masukkan Kartu ATM BNI & PIN\n2. Pilih menu Lainnya > Transfer\n3. Pilih jenis rekening asal dan pilih Virtual Account Billing\n4. Masukkan nomor Virtual Account\n5. Tagihan yang harus dibayarkan akan muncul pada layar\n6. Konfirmasi pembayaran",
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,

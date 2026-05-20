@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
-import 'package:yalla/features/user/plane/flight/payment_screen.dart';
+import 'package:yalla/features/travel/home/payment_travel_screen.dart';
 
 class OrderFlightTravelCard extends StatelessWidget {
   final OrderModel order;
@@ -37,10 +37,11 @@ class OrderFlightTravelCard extends StatelessWidget {
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 300),
           pageBuilder: (context, animation, secondaryAnimation) =>
-              PaymentScreen(
+              PaymentTravelScreen(
                 flight: dataFlight,
-                paymentAmount: order.price,
+                paymentAmount: order.price.toInt(),
                 paymentDeadline: absoluteDeadline,
+                orderId: order.id, // ← tambahkan ini
               ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);

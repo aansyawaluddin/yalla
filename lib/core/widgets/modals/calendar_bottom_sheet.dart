@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:yalla/core/models/flight_model.dart'; 
+import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 
 class CalendarBottomSheet extends StatefulWidget {
   final List<FlightModel> flights;
+  final bool isOutbound;
 
-  const CalendarBottomSheet({super.key, required this.flights});
+  const CalendarBottomSheet({
+    super.key,
+    required this.flights,
+    required this.isOutbound,
+  });
 
   @override
   State<CalendarBottomSheet> createState() => _CalendarBottomSheetState();
@@ -15,6 +20,9 @@ class CalendarBottomSheet extends StatefulWidget {
 
 class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
   DateTime? _selectedDate;
+  late bool _detectedIsOutbound;
+  final Map<String, bool> _outboundDates = {};
+  final Map<String, bool> _inboundDates = {};
 
   final List<String> _bulanIndo = [
     "",
@@ -37,11 +45,33 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
     super.initState();
     DateTime now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
+    _detectedIsOutbound = widget.isOutbound;
+
+    for (var flight in widget.flights) {
+      if (flight.departureTime != null) {
+        final dateKey = flight.departureTime!.substring(0, 10);
+        if (flight.isOutbound == true) _outboundDates[dateKey] = true;
+        if (flight.isOutbound == false) _inboundDates[dateKey] = true;
+      }
+    }
   }
 
   String _formatDateOnly(DateTime dt) {
     String pad(int n) => n.toString().padLeft(2, '0');
     return "${dt.year}-${pad(dt.month)}-${pad(dt.day)}";
+  }
+
+  /// Auto-detect isOutbound dari tanggal yang dipilih:
+  /// - Hanya ada outbound → true
+  /// - Hanya ada inbound  → false
+  /// - Keduanya ada / tidak ada → ikuti widget.isOutbound
+  bool _detectIsOutbound(String dateKey) {
+    final hasOutbound = _outboundDates.containsKey(dateKey);
+    final hasInbound = _inboundDates.containsKey(dateKey);
+
+    if (hasInbound && !hasOutbound) return false;
+    if (hasOutbound && !hasInbound) return true;
+    return widget.isOutbound;
   }
 
   @override
@@ -59,7 +89,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
       ),
       child: Stack(
         children: [
-          // Background decorations
+          // Decorative glow top-right
           Positioned(
             top: -50,
             right: -50,
@@ -80,6 +110,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
               ),
             ),
           ),
+          // Decorative glow mid-left
           Positioned(
             top: 250,
             left: -80,
@@ -103,6 +134,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
 
           Column(
             children: [
+              // Header
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: Row(
@@ -121,6 +153,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
                 ),
               ),
 
+              // Legend
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
@@ -134,6 +167,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
               ),
               const SizedBox(height: 8),
 
+              // Scrollable months
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.only(bottom: 140),
@@ -155,6 +189,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
               ),
             ],
           ),
+
           Positioned(
             bottom: 0,
             left: 0,
@@ -179,10 +214,53 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: _detectedIsOutbound
+                          ? AppColors.lightBlue.withOpacity(0.1)
+                          : Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _detectedIsOutbound
+                                ? AppColors.lightBlue
+                                : Colors.orange,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _detectedIsOutbound ? "UPG → JED" : "JED → UPG",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _detectedIsOutbound
+                                ? AppColors.lightBlue
+                                : Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   PrimaryGradientButton(
                     text: "Terapkan",
                     onPressed: () {
-                      Navigator.pop(context, _selectedDate);
+                      Navigator.pop(context, {
+                        'date': _selectedDate,
+                        'isOutbound': _detectedIsOutbound,
+                      });
                     },
                   ),
                   const SizedBox(height: 12),
@@ -229,7 +307,6 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
     String year = monthDate.year.toString();
 
     int totalDays = DateTime(monthDate.year, monthDate.month + 1, 0).day;
-
     int emptyDaysAtStart =
         DateTime(monthDate.year, monthDate.month, 1).weekday - 1;
 
@@ -300,14 +377,19 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
           _selectedDate!.month == cellDate.month &&
           _selectedDate!.day == cellDate.day;
 
-      bool hasOutbound = false;
-      bool hasInbound = false;
+      bool hasOutbound = _outboundDates.containsKey(formattedCellDate);
+      bool hasInbound = _inboundDates.containsKey(formattedCellDate);
 
-      for (var flight in widget.flights) {
-        if (flight.departureTime != null &&
-            flight.departureTime!.startsWith(formattedCellDate)) {
-          if (flight.isOutbound == true) hasOutbound = true;
-          if (flight.isOutbound == false) hasInbound = true;
+      Color selectedBgColor = const Color(0xFFEAF4FF);
+      Color selectedTextColor = AppColors.lightBlue;
+
+      if (isSelected) {
+        if (_detectedIsOutbound) {
+          selectedBgColor = AppColors.lightBlue.withOpacity(0.12);
+          selectedTextColor = AppColors.lightBlue;
+        } else {
+          selectedBgColor = Colors.orange.withOpacity(0.12);
+          selectedTextColor = Colors.orange;
         }
       }
 
@@ -318,11 +400,12 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
               : () {
                   setState(() {
                     _selectedDate = cellDate;
+                    _detectedIsOutbound = _detectIsOutbound(formattedCellDate);
                   });
                 },
           child: Container(
             height: 48,
-            color: isSelected ? const Color(0xFFEAF4FF) : Colors.transparent,
+            color: isSelected ? selectedBgColor : Colors.transparent,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -331,12 +414,9 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
                   style: AppTypography.bold14.copyWith(
                     color: isPastDate
                         ? AppColors.textGrey.withOpacity(0.5)
-                        : (isSelected
-                              ? AppColors.lightBlue
-                              : AppColors.textDark),
+                        : (isSelected ? selectedTextColor : AppColors.textDark),
                   ),
                 ),
-                // 👇 Render Titik Indikator 👇
                 if (hasOutbound || hasInbound) ...[
                   const SizedBox(height: 4),
                   Row(
