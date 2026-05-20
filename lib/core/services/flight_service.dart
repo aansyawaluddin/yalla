@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/models/flight_passenger_response_model.dart';
 
 class FlightService {
   final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
@@ -86,7 +87,11 @@ class FlightService {
     }
   }
 
-Future<bool> updateFlight(String id, Map<String, dynamic> payload, String token) async {
+  Future<bool> updateFlight(
+    String id,
+    Map<String, dynamic> payload,
+    String token,
+  ) async {
     final url = Uri.parse('$_baseUrl/flights/$id');
 
     try {
@@ -101,9 +106,9 @@ Future<bool> updateFlight(String id, Map<String, dynamic> payload, String token)
       );
       if (response.statusCode == 200 || response.statusCode == 204) {
         return true;
-      } 
-      else {
-        String errorMessage = 'Gagal memperbarui penerbangan (Error ${response.statusCode})';
+      } else {
+        String errorMessage =
+            'Gagal memperbarui penerbangan (Error ${response.statusCode})';
 
         try {
           final errorData = jsonDecode(response.body);
@@ -124,7 +129,37 @@ Future<bool> updateFlight(String id, Map<String, dynamic> payload, String token)
       }
     } catch (e) {
       print("Error koneksi saat update flight: $e");
-      throw Exception('Terjadi kesalahan: ${e.toString().replaceAll("Exception: ", "")}');
+      throw Exception(
+        'Terjadi kesalahan: ${e.toString().replaceAll("Exception: ", "")}',
+      );
+    }
+  }
+
+  Future<FlightPassengerResponseModel> getFlightPassengers(
+    String id,
+    String token,
+  ) async {
+    final url = Uri.parse('$_baseUrl/flights/$id/passengers');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return FlightPassengerResponseModel.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception(
+          'Gagal mengambil data penumpang. Status: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print("Error koneksi saat mengambil daftar penumpang: $e");
+      throw Exception('Terjadi kesalahan jaringan: $e');
     }
   }
 }

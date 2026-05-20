@@ -7,6 +7,7 @@ class FlightModel {
   final int? businessClass;
   final double? price;
   final bool? isOutbound;
+  final int? passengersCount; 
 
   FlightModel({
     this.id,
@@ -17,6 +18,7 @@ class FlightModel {
     this.businessClass,
     this.price,
     this.isOutbound,
+    this.passengersCount, 
   });
 
   factory FlightModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,9 @@ class FlightModel {
           ? ((json['Price'] ?? json['price']) as num).toDouble()
           : null,
       isOutbound: json['IsOutbound'] as bool? ?? json['isOutbound'] as bool?,
+      passengersCount:
+          json['passengers_count'] as int? ??
+          json['passengersCount'] as int?, 
     );
   }
 
@@ -48,6 +53,7 @@ class FlightModel {
       'BusinessClass': businessClass,
       'Price': price,
       'IsOutbound': isOutbound,
+      'passengers_count': passengersCount, 
     };
   }
 }

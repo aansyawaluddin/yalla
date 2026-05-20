@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yalla/core/models/flight_passenger_response_model.dart';
 import 'package:yalla/core/services/flight_service.dart';
 import 'package:yalla/core/models/flight_model.dart';
 
@@ -126,7 +127,56 @@ class FlightProvider extends ChangeNotifier {
       return dateA.compareTo(dateB);
     });
 
-    // 4. Ambil indeks pertama (yang paling dekat)
     return upcomingFlights.first;
+  }
+
+  FlightPassengerResponseModel? _passengerData;
+  FlightPassengerResponseModel? get passengerData => _passengerData;
+
+  bool _isPassengerLoading = false;
+  bool get isPassengerLoading => _isPassengerLoading;
+
+  String _passengerErrorMessage = '';
+  String get passengerErrorMessage => _passengerErrorMessage;
+
+  // Fungsi untuk Fetch Passengers
+  Future<void> fetchFlightPassengers(String flightId) async {
+    _isPassengerLoading = true;
+    _passengerErrorMessage = '';
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception("Sesi habis, silakan login ulang.");
+      }
+
+      final data = await _flightService.getFlightPassengers(flightId, token);
+
+      _passengerData = data;
+      _isPassengerLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _passengerErrorMessage = e.toString().replaceAll("Exception: ", "");
+      _isPassengerLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<int> getPassengerCountFromDetail(String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token == null || token.isEmpty) return 0;
+
+      // Memanggil fungsi service yang sudah kamu buat sebelumnya
+      final data = await _flightService.getFlightPassengers(id, token);
+      return data.passengersCount;
+    } catch (e) {
+      print("Error mengambil jumlah penumpang: $e");
+      return 0;
+    }
   }
 }
