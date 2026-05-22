@@ -67,6 +67,7 @@ class _OrderTravelScreenState extends State<OrderTravelScreen> {
             ),
           ),
           SafeArea(
+            bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 import 'package:yalla/features/travel/home/payment_travel_screen.dart';
 import 'package:yalla/features/travel/order/detail_order_travel.dart';
 
@@ -50,18 +51,17 @@ class OrderFlightTravelCard extends StatelessWidget {
         ),
       );
     } else if (currentStatus == 'on_process') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
+      CustomSnackBar.showSuccess(
+        context,
+        title: 'Sedang Diverifikasi',
+        message:
             'Pembayaran Anda sedang diverifikasi oleh Admin. Mohon tunggu.',
-          ),
-        ),
       );
     } else if (currentStatus == 'approved') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pesanan sudah lunas! Mengarahkan ke E-Ticket...'),
-        ),
+      CustomSnackBar.showSuccess(
+        context,
+        title: 'Pesanan Lunas',
+        message: 'Pesanan sudah lunas! Mengarahkan ke E-Ticket...',
       );
     }
   }
@@ -209,12 +209,16 @@ class OrderFlightTravelCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailOrderTravel(order: order),
-          ),
-        );
+        if (isWaitingPayment) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailOrderTravel(order: order),
+            ),
+          );
+        } else {
+          _navigateToDetail(context, status);
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -553,6 +557,36 @@ class OrderFlightTravelCard extends StatelessWidget {
                             ),
                             child: const Text(
                               "Bayar",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ] else if (isOnProcess || status == 'approved') ...[
+                        const SizedBox(width: 24),
+                        SizedBox(
+                          height: 34,
+                          width: 110,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DetailOrderTravel(order: order),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              "Jemaah",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,

@@ -117,7 +117,6 @@ class _DetailPassengerTravelScreenState
       body: SafeArea(
         child: Column(
           children: [
-            // HEADER NAV
             Padding(
               padding: const EdgeInsets.only(
                 top: 16,
@@ -422,7 +421,6 @@ class _DetailPassengerTravelScreenState
 
                     const SizedBox(height: 32),
 
-                    // KARTU UNDUH TEMPLATE
                     Container(
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
@@ -548,7 +546,6 @@ class _DetailPassengerTravelScreenState
 
                     const SizedBox(height: 32),
 
-                    // LIST PENUMPANG
                     if (_parsedPassengers.isNotEmpty) ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,

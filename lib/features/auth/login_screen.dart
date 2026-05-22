@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/inputan/custom_text_field.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 import 'package:yalla/features/admin/beranda/admin_dashboard_screen.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/features/auth/register_screen.dart';
@@ -36,8 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
     String password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email dan Password tidak boleh kosong!')),
+      CustomSnackBar.showError(
+        context,
+        title: "Validasi Gagal",
+        message: "Email dan Password tidak boleh kosong!",
       );
       return;
     }
@@ -50,6 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
+      CustomSnackBar.showSuccess(
+        context,
+        title: "Login Berhasil",
+        message: "Selamat datang kembali!",
+      );
+
       final role = await authProvider.checkLoginStatus();
 
       Widget targetScreen;
@@ -77,11 +86,10 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage),
-          backgroundColor: Colors.red,
-        ),
+      CustomSnackBar.showError(
+        context,
+        title: "Login Gagal",
+        message: authProvider.errorMessage,
       );
     }
   }
