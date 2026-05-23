@@ -67,6 +67,7 @@ class _OrderScreenState extends State<OrderScreen> {
             ),
           ),
           SafeArea(
+            bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
