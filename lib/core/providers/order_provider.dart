@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:yalla/core/models/order_model.dart'; 
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/services/order_service.dart';
 
 class OrderProvider extends ChangeNotifier {
@@ -100,6 +100,20 @@ class OrderProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> approveOrder(String orderId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isEmpty) throw Exception("Sesi login tidak ditemukan.");
+
+      await _orderService.approveOrder(orderId, token);
+      await fetchOrders(); 
+    } catch (e) {
+      throw Exception(e.toString().replaceAll("Exception: ", ""));
     }
   }
 }

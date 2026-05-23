@@ -87,4 +87,18 @@ class OrderService {
       throw Exception(error['message'] ?? 'Gagal mengambil data pesanan.');
     }
   }
+
+  Future<void> approveOrder(String orderId, String token) async {
+    final url = Uri.parse('$_baseUrl/orders/$orderId/approve');
+
+    final response = await http.post(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Gagal menyetujui pesanan.');
+    }
+  }
 }

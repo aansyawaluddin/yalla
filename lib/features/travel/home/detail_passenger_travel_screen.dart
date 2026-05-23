@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart'; 
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
@@ -25,7 +26,6 @@ class _DetailPassengerTravelScreenState
     extends State<DetailPassengerTravelScreen> {
   bool _isUploading = false;
   List<dynamic> _parsedPassengers = [];
-
   String? _uploadedFileName;
 
   String _formatPrice(num? price) {
@@ -37,6 +37,33 @@ class _DetailPassengerTravelScreenState
       if ((s.length - 1 - i) % 3 == 0 && i != s.length - 1) res += ".";
     }
     return "IDR $res";
+  }
+
+  Future<void> _downloadTemplate() async {
+    try {
+      String baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+      if (baseUrl.endsWith('/api')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 4);
+      } else if (baseUrl.endsWith('/api/')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 5);
+      }
+
+      final String downloadUrlStr = '$baseUrl/docs/manifest.xlsx';
+      final Uri url = Uri.parse(downloadUrlStr);
+
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        throw Exception("Tidak dapat membuka tautan unduhan.");
+      }
+    } catch (e) {
+      if (!mounted) return;
+      CustomSnackBar.showError(
+        context,
+        title: "Gagal Mengunduh",
+        message: e.toString().replaceAll("Exception: ", ""),
+      );
+    }
   }
 
   Future<void> _uploadAndParseManifest() async {
@@ -167,6 +194,7 @@ class _DetailPassengerTravelScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // KARTU PESAWAT
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -418,7 +446,6 @@ class _DetailPassengerTravelScreenState
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 32),
 
                     Container(
@@ -483,9 +510,7 @@ class _DetailPassengerTravelScreenState
                                           Align(
                                             alignment: Alignment.centerRight,
                                             child: ElevatedButton.icon(
-                                              onPressed: () {
-                                                // Logika unduh file di sini
-                                              },
+                                              onPressed: _downloadTemplate,
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: const Color(
                                                   0xff008706,
@@ -529,7 +554,6 @@ class _DetailPassengerTravelScreenState
                     ),
 
                     const SizedBox(height: 32),
-
                     const Text(
                       "Unggah File Manifest Jamaah",
                       style: TextStyle(
@@ -716,7 +740,6 @@ class _DetailPassengerTravelScreenState
                   );
                   return;
                 }
-
                 Navigator.of(context).push(
                   PageRouteBuilder(
                     transitionDuration: const Duration(milliseconds: 300),
@@ -729,11 +752,10 @@ class _DetailPassengerTravelScreenState
                         (context, animation, secondaryAnimation, child) {
                           const begin = Offset(1.0, 0.0);
                           const end = Offset.zero;
-                          const curve = Curves.easeOut;
                           var tween = Tween(
                             begin: begin,
                             end: end,
-                          ).chain(CurveTween(curve: curve));
+                          ).chain(CurveTween(curve: Curves.easeOut));
                           return SlideTransition(
                             position: animation.drive(tween),
                             child: child,
@@ -831,17 +853,13 @@ class _DetailPassengerTravelScreenState
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4), 
+        color: const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFBBF7D0)), 
+        border: Border.all(color: const Color(0xFFBBF7D0)),
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.check_circle,
-            size: 40,
-            color: Color(0xFF22C55E), 
-          ),
+          const Icon(Icons.check_circle, size: 40, color: Color(0xFF22C55E)),
           const SizedBox(height: 12),
           const Text(
             "File Berhasil Diunggah!",
@@ -861,7 +879,7 @@ class _DetailPassengerTravelScreenState
             onPressed: _isUploading ? null : _uploadAndParseManifest,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF166534), 
+              foregroundColor: const Color(0xFF166534),
               elevation: 0,
               side: const BorderSide(color: Color(0xFF22C55E)),
               shape: RoundedRectangleBorder(
@@ -891,28 +909,22 @@ class _DetailPassengerTravelScreenState
   }
 }
 
-
 class _DashedBorderPainter extends CustomPainter {
   final Color color;
-
   _DashedBorderPainter({required this.color});
-
   @override
   void paint(Canvas canvas, Size size) {
     var paint = Paint()
       ..color = color
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
-
     var path = Path();
     var rect = Rect.fromLTWH(0, 0, size.width, size.height);
     var rrect = RRect.fromRectAndRadius(rect, const Radius.circular(12));
     path.addRRect(rrect);
-
     var dashWidth = 6.0;
     var dashSpace = 4.0;
     var distance = 0.0;
-
     for (PathMetric pathMetric in path.computeMetrics()) {
       while (distance < pathMetric.length) {
         canvas.drawPath(

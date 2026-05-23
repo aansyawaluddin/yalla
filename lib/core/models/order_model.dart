@@ -63,6 +63,7 @@ class OrderModel {
   final PaymentDetailModel? payment;
   final List<PassengerModel> passengers;
   final FlightModel? flight;
+  final FlightModel? returnFlight;
 
   OrderModel({
     required this.id,
@@ -78,6 +79,7 @@ class OrderModel {
     this.payment,
     required this.passengers,
     this.flight,
+    this.returnFlight,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -106,6 +108,11 @@ class OrderModel {
           : (json['flight'] != null
                 ? FlightModel.fromJson(json['flight'])
                 : null),
+      returnFlight:
+          json['return_flight'] !=
+              null
+          ? FlightModel.fromJson(json['return_flight'])
+          : null,
     );
   }
 }
