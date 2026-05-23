@@ -4,6 +4,7 @@ import 'package:yalla/core/widgets/card/profile_card.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
+import 'package:yalla/features/admin/profile/admin_order_detail_screen.dart';
 
 class AdminOrderManagementScreen extends StatefulWidget {
   const AdminOrderManagementScreen({super.key});
@@ -156,7 +157,6 @@ class _AdminOrderManagementScreenState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Header ──
                 Row(
                   children: [
                     Container(
@@ -268,7 +268,7 @@ class _AdminOrderManagementScreenState
                               );
 
                               if (context.mounted) {
-                                Navigator.pop(context); 
+                                Navigator.pop(context);
                                 CustomSnackBar.showSuccess(
                                   context,
                                   title: "Berhasil",
@@ -277,7 +277,7 @@ class _AdminOrderManagementScreenState
                               }
                             } catch (e) {
                               if (context.mounted) {
-                                Navigator.pop(context); 
+                                Navigator.pop(context);
                                 CustomSnackBar.showError(
                                   context,
                                   title: "Gagal",
@@ -485,7 +485,7 @@ class _AdminOrderManagementScreenState
         : order.id.toUpperCase();
 
     final String bookingName = order.passengers.isNotEmpty
-        ? (order.passengers.first.fullName ?? "Pesanan Tiket")
+        ? (order.passengers.first.fullName)
         : "Pesanan Tiket";
 
     final flight = order.flight ?? order.returnFlight;
@@ -516,7 +516,6 @@ class _AdminOrderManagementScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -604,7 +603,6 @@ class _AdminOrderManagementScreenState
             Divider(color: Colors.grey.shade100, thickness: 1.5),
             const SizedBox(height: 16),
 
-            // ── Detail ──
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -693,6 +691,56 @@ class _AdminOrderManagementScreenState
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AdminOrderDetailScreen(order: order),
+                      ),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F5FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF004CB9).withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.people_outline,
+                            size: 13,
+                            color: Color(0xFF004CB9),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            "Detail Passenger",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF004CB9),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 10,
+                            color: Color(0xFF004CB9),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
