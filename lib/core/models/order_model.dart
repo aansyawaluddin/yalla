@@ -64,6 +64,7 @@ class OrderModel {
   final List<PassengerModel> passengers;
   final FlightModel? flight;
   final FlightModel? returnFlight;
+  final String? manifestUrl;
 
   OrderModel({
     required this.id,
@@ -80,6 +81,7 @@ class OrderModel {
     required this.passengers,
     this.flight,
     this.returnFlight,
+    this.manifestUrl,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -113,6 +115,7 @@ class OrderModel {
               null
           ? FlightModel.fromJson(json['return_flight'])
           : null,
+      manifestUrl: json['manifest_url'],
     );
   }
 }

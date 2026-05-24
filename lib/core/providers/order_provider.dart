@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yalla/core/models/order_model.dart';
@@ -111,7 +114,62 @@ class OrderProvider extends ChangeNotifier {
       if (token.isEmpty) throw Exception("Sesi login tidak ditemukan.");
 
       await _orderService.approveOrder(orderId, token);
-      await fetchOrders(); 
+      await fetchOrders();
+    } catch (e) {
+      throw Exception(e.toString().replaceAll("Exception: ", ""));
+    }
+  }
+
+  Future<void> uploadManifest(String orderId, File file) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isEmpty) throw Exception("Sesi login tidak ditemukan.");
+
+      await _orderService.uploadManifest(orderId, file, token);
+      await fetchOrders();
+    } catch (e) {
+      throw Exception(e.toString().replaceAll("Exception: ", ""));
+    }
+  }
+
+  Future<void> finishOrder(String orderId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isEmpty) throw Exception("Sesi login tidak ditemukan.");
+
+      await _orderService.finishOrder(orderId, token);
+      await fetchOrders();
+    } catch (e) {
+      throw Exception(e.toString().replaceAll("Exception: ", ""));
+    }
+  }
+
+  Future<void> deleteManifest(String orderId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isEmpty) throw Exception("Sesi login tidak ditemukan.");
+
+      await _orderService.deleteManifest(orderId, token);
+      await fetchOrders();
+    } catch (e) {
+      throw Exception(e.toString().replaceAll("Exception: ", ""));
+    }
+  }
+
+  Future<Uint8List> downloadManifest(String orderId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isEmpty) throw Exception("Sesi login tidak ditemukan.");
+
+      return await _orderService.downloadManifest(orderId, token);
     } catch (e) {
       throw Exception(e.toString().replaceAll("Exception: ", ""));
     }

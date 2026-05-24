@@ -39,7 +39,7 @@ class CustomSnackBar {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         elevation: 0,
-        behavior: SnackBarBehavior.floating,
+        behavior: SnackBarBehavior.fixed,
         backgroundColor: Colors.transparent,
         padding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
         duration: const Duration(seconds: 3),
@@ -76,7 +76,7 @@ class CustomSnackBar {
                     Text(
                       title,
                       style: TextStyle(
-                        color: color, 
+                        color: color,
                         fontWeight: FontWeight.bold,
                         fontSize: 10,
                       ),

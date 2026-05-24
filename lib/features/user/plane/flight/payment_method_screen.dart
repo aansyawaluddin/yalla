@@ -66,17 +66,19 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     if (_selectedScheme == 'DP') amountToPay = totalPrice * 0.3;
     if (_selectedScheme == 'Cicil') amountToPay = totalPrice * 0.4;
 
+    final bool isOutbound = widget.flight.isOutbound ?? true;
+
     Map<String, dynamic> payload = {
       "email": widget.passengerData["email"],
-      "phone_number": widget.passengerData["phone_number"], 
-      "departure_flight_id": widget.flight.id, 
-      "passengers": [
-        widget.passengerData,
-      ],
+      "phone_number": widget.passengerData["phone_number"],
+      if (isOutbound)
+        "departure_flight_id": widget.flight.id
+      else
+        "return_flight_id": widget.flight.id,
+      "passengers": [widget.passengerData],
     };
 
     final orderProvider = context.read<OrderProvider>();
-
     final success = await orderProvider.processCheckoutAndPayment(payload);
 
     if (!mounted) return;
@@ -91,7 +93,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           MaterialPageRoute(
             builder: (context) => PaymentScreen(
               flight: widget.flight,
-              paymentAmount: amountToPay, 
+              paymentAmount: amountToPay,
               paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
             ),
           ),

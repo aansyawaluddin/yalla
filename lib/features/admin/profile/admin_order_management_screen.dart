@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:yalla/core/widgets/card/profile_card.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/models/order_model.dart';
@@ -66,11 +68,16 @@ class _AdminOrderManagementScreenState
           'textColor': Colors.blue,
         };
       case 'approved':
+        return {
+          'text': 'Disetujui',
+          'bgColor': const Color(0xFFE8F5E9),
+          'textColor': const Color(0xFF4CAF50),
+        };
       case 'finished':
         return {
           'text': 'Selesai',
-          'bgColor': const Color(0xFFE8F5E9),
-          'textColor': const Color(0xFF4CAF50),
+          'bgColor': const Color(0xFFEEF2FF),
+          'textColor': const Color(0xFF3730A3),
         };
       case 'postponed':
         return {
@@ -138,7 +145,483 @@ class _AdminOrderManagementScreenState
     return grouped;
   }
 
+  void _showManifestUploadModal(BuildContext context, OrderModel order) {
+    File? selectedFile;
+    String? selectedFileName;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.fromLTRB(
+                24,
+                24,
+                24,
+                24 + MediaQuery.of(ctx).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.upload_file_outlined,
+                          color: Color(0xFF4CAF50),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Upload Manifest",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              "Unggah file manifest e-tiket untuk pesanan ini",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  GestureDetector(
+                    onTap: () async {
+                      final result = await FilePicker.platform.pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: ['pdf'],
+                      );
+                      if (result != null && result.files.single.path != null) {
+                        setModalState(() {
+                          selectedFile = File(result.files.single.path!);
+                          selectedFileName = result.files.single.name;
+                        });
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 28),
+                      decoration: BoxDecoration(
+                        color: selectedFile != null
+                            ? const Color(0xFFF0FFF4)
+                            : const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: selectedFile != null
+                              ? const Color(0xFF4CAF50)
+                              : Colors.grey.shade300,
+                          width: selectedFile != null ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            selectedFile != null
+                                ? Icons.insert_drive_file_rounded
+                                : Icons.cloud_upload_outlined,
+                            size: 36,
+                            color: selectedFile != null
+                                ? const Color(0xFF4CAF50)
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            selectedFile != null
+                                ? selectedFileName ?? "File dipilih"
+                                : "Ketuk untuk memilih file",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: selectedFile != null
+                                  ? const Color(0xFF2E7D32)
+                                  : Colors.grey.shade500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            selectedFile != null
+                                ? "Ketuk untuk mengganti file"
+                                : "PDF only",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: BorderSide(color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Batal",
+                            style: TextStyle(
+                              color: Color(0xFF374151),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: selectedFile == null
+                              ? null
+                              : () async {
+                                  Navigator.pop(ctx);
+
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (_) => const PopScope(
+                                      canPop: false,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: Color(0xFF4CAF50),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+
+                                  try {
+                                    await context
+                                        .read<OrderProvider>()
+                                        .uploadManifest(
+                                          order.id,
+                                          selectedFile!,
+                                        );
+
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      CustomSnackBar.showSuccess(
+                                        context,
+                                        title: "Berhasil",
+                                        message: "Manifest berhasil diunggah.",
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      CustomSnackBar.showError(
+                                        context,
+                                        title: "Gagal",
+                                        message: e.toString().replaceAll(
+                                          "Exception: ",
+                                          "",
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF4CAF50),
+                            disabledBackgroundColor: Colors.grey.shade200,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Upload",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showFinishOrderModal(BuildContext context, OrderModel order) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline_rounded,
+                      color: Color(0xFF4CAF50),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      "Selesaikan Pesanan",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FFF4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF4CAF50).withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.task_alt_rounded,
+                      color: Color(0xFF4CAF50),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        "Manifest e-tiket sudah tersedia untuk pesanan ini.",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF2E7D32),
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Text(
+                "Apakah Anda yakin ingin menyelesaikan pesanan ini? Status pesanan akan berubah menjadi selesai.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                  height: 1.5,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Kembali",
+                        style: TextStyle(
+                          color: Color(0xFF374151),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => const PopScope(
+                            canPop: false,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF4CAF50),
+                              ),
+                            ),
+                          ),
+                        );
+
+                        try {
+                          await context.read<OrderProvider>().finishOrder(
+                            order.id,
+                          );
+
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            CustomSnackBar.showSuccess(
+                              context,
+                              title: "Berhasil",
+                              message: "Pesanan berhasil diselesaikan.",
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            CustomSnackBar.showError(
+                              context,
+                              title: "Gagal",
+                              message: e.toString().replaceAll(
+                                "Exception: ",
+                                "",
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4CAF50),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Selesaikan",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _showOrderDetailModal(BuildContext context, OrderModel order) {
+    if (order.status == 'finished') {
+      return;
+    }
+    if (order.status == 'approved') {
+      if (order.manifestUrl != null) {
+        _showFinishOrderModal(context, order);
+      } else {
+        _showManifestUploadModal(context, order);
+      }
+      return;
+    }
+
     final bool canApprove = order.status == 'on_process';
 
     showModalBottomSheet(
@@ -328,10 +811,10 @@ class _AdminOrderManagementScreenState
     if (_selectedFilterIndex == 0) {
       displayOrders = allOrders;
     } else if (_selectedFilterIndex == 1) {
-      displayOrders = allOrders
-          .where((o) => o.status == 'approved' || o.status == 'finished')
-          .toList();
+      displayOrders = allOrders.where((o) => o.status == 'finished').toList();
     } else if (_selectedFilterIndex == 2) {
+      displayOrders = allOrders.where((o) => o.status == 'approved').toList();
+    } else if (_selectedFilterIndex == 3) {
       displayOrders = allOrders.where((o) => o.status == 'on_process').toList();
     } else {
       displayOrders = allOrders
@@ -578,23 +1061,59 @@ class _AdminOrderManagementScreenState
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusConfig['bgColor'],
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    statusConfig['text'],
-                    style: TextStyle(
-                      color: statusConfig['textColor'],
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusConfig['bgColor'],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        statusConfig['text'],
+                        style: TextStyle(
+                          color: statusConfig['textColor'],
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (order.status == 'approved' ||
+                        order.status == 'finished') ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            order.manifestUrl != null
+                                ? Icons.task_alt_rounded
+                                : Icons.upload_file_outlined,
+                            size: 11,
+                            color: order.manifestUrl != null
+                                ? const Color(0xFF4CAF50)
+                                : Colors.orange,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            order.manifestUrl != null
+                                ? "Manifest"
+                                : "Belum ada manifest",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: order.manifestUrl != null
+                                  ? const Color(0xFF4CAF50)
+                                  : Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -714,16 +1233,16 @@ class _AdminOrderManagementScreenState
                           color: const Color(0xFF004CB9).withOpacity(0.2),
                         ),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.people_outline,
                             size: 13,
                             color: Color(0xFF004CB9),
                           ),
-                          const SizedBox(width: 6),
-                          const Text(
+                          SizedBox(width: 6),
+                          Text(
                             "Detail Passenger",
                             style: TextStyle(
                               fontSize: 11,
@@ -731,8 +1250,8 @@ class _AdminOrderManagementScreenState
                               color: Color(0xFF004CB9),
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(
+                          SizedBox(width: 4),
+                          Icon(
                             Icons.arrow_forward_ios_rounded,
                             size: 10,
                             color: Color(0xFF004CB9),
@@ -834,6 +1353,18 @@ class _AdminOrderManagementScreenState
   }
 
   Widget _buildFilters() {
+    final provider = context.read<OrderProvider>();
+    final allOrders = provider.orders;
+
+    final finishedCount = allOrders.where((o) => o.status == 'finished').length;
+    final approvedCount = allOrders.where((o) => o.status == 'approved').length;
+    final processCount = allOrders
+        .where((o) => o.status == 'on_process')
+        .length;
+    final waitingCount = allOrders
+        .where((o) => o.status == 'waiting_payment')
+        .length;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -843,24 +1374,32 @@ class _AdminOrderManagementScreenState
           const SizedBox(width: 12),
           _buildStatusFilterChip(
             1,
+            "Selesai",
+            "$finishedCount",
+            const Color(0xFFEEF2FF),
+            const Color(0xFF3730A3),
+          ),
+          const SizedBox(width: 12),
+          _buildStatusFilterChip(
+            2,
             "Disetujui",
-            "82",
+            "$approvedCount",
             const Color(0xFFE8F5E9),
             const Color(0xFF4CAF50),
           ),
           const SizedBox(width: 12),
           _buildStatusFilterChip(
-            2,
+            3,
             "Proses",
-            "67",
+            "$processCount",
             const Color(0xFFF0F8FF),
             const Color(0xFF0084FF),
           ),
           const SizedBox(width: 12),
           _buildStatusFilterChip(
-            3,
+            4,
             "Menunggu",
-            "12",
+            "$waitingCount",
             const Color(0xFFFFF8E1),
             Colors.orange,
           ),

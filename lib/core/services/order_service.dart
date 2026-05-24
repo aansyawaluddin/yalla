@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:yalla/core/models/order_model.dart';
@@ -99,6 +101,86 @@ class OrderService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       final error = jsonDecode(response.body);
       throw Exception(error['message'] ?? 'Gagal menyetujui pesanan.');
+    }
+  }
+
+  Future<void> uploadManifest(String orderId, File file, String token) async {
+    final url = Uri.parse('$_baseUrl/orders/$orderId/manifest');
+
+    final request = http.MultipartRequest('POST', url)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..headers['Accept'] = 'application/json'
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+
+    print('MANIFEST STATUS: ${response.statusCode}');
+    print('MANIFEST BODY: ${response.body}');
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      try {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Gagal mengunggah manifest.');
+      } catch (_) {
+        throw Exception('Gagal mengunggah manifest. (${response.statusCode})');
+      }
+    }
+  }
+
+  Future<void> finishOrder(String orderId, String token) async {
+    final url = Uri.parse('$_baseUrl/orders/$orderId/finish');
+    final response = await http.post(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      try {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Gagal menyelesaikan pesanan.');
+      } catch (_) {
+        throw Exception(
+          'Gagal menyelesaikan pesanan. (${response.statusCode})',
+        );
+      }
+    }
+  }
+
+  Future<void> deleteManifest(String orderId, String token) async {
+    final url = Uri.parse('$_baseUrl/orders/$orderId/manifest');
+    final response = await http.delete(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 204 && response.statusCode != 200) {
+      try {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Gagal menghapus manifest.');
+      } catch (_) {
+        throw Exception('Gagal menghapus manifest. (${response.statusCode})');
+      }
+    }
+  }
+
+  Future<Uint8List> downloadManifest(String orderId, String token) async {
+    final url = Uri.parse('$_baseUrl/orders/$orderId/manifest/download');
+
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/pdf'},
+    );
+
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      try {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Gagal mengunduh manifest.');
+      } catch (_) {
+        throw Exception('Gagal mengunduh manifest. (${response.statusCode})');
+      }
     }
   }
 }
