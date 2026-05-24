@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/animated/animated_payment_bottomBar_travel.dart';
 import 'package:yalla/core/widgets/animated/countdown_timer.dart';
@@ -12,6 +13,7 @@ class PaymentTravelScreen extends StatefulWidget {
   final int paymentAmount;
   final DateTime paymentDeadline;
   final String orderId;
+  final OrderModel order;
 
   const PaymentTravelScreen({
     super.key,
@@ -19,6 +21,7 @@ class PaymentTravelScreen extends StatefulWidget {
     required this.paymentAmount,
     required this.paymentDeadline,
     required this.orderId,
+    required this.order,
   });
 
   @override
@@ -42,7 +45,6 @@ class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
 
   Future<void> _openPaymentGateway() async {
     final gatewayUrl = context.read<OrderProvider>().gatewayUrl;
-
     if (gatewayUrl.isNotEmpty) {
       CustomSnackBar.showSuccess(
         context,
@@ -122,7 +124,6 @@ class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
                 ],
               ),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -268,9 +269,7 @@ class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 40),
-
                     Stack(
                       clipBehavior: Clip.none,
                       children: [
@@ -395,9 +394,7 @@ class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 16),
-
                     _buildPaymentGuideCard(),
                   ],
                 ),
@@ -406,7 +403,6 @@ class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
           ],
         ),
       ),
-
       bottomNavigationBar: _buildBottomBar(),
     );
   }
@@ -461,6 +457,6 @@ class _PaymentTravelScreenState extends State<PaymentTravelScreen> {
   }
 
   Widget _buildBottomBar() {
-    return const AnimatedPaymentBottombarTravel();
+    return AnimatedPaymentBottombarTravel(order: widget.order);
   }
 }

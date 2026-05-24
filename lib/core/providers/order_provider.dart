@@ -28,8 +28,9 @@ class OrderProvider extends ChangeNotifier {
       .where((o) => o.status == 'waiting_payment' || o.status == 'on_process')
       .toList();
 
-  List<OrderModel> get historyOrders =>
-      _orders.where((o) => o.status == 'approved').toList();
+  List<OrderModel> get historyOrders => _orders
+      .where((o) => o.status == 'approved' || o.status == 'finished')
+      .toList();
 
   void setLastOrderId(String id) {
     _lastOrderId = id;

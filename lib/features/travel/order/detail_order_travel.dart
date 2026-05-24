@@ -96,7 +96,7 @@ class _DetailOrderTravelState extends State<DetailOrderTravel> {
     const Color textGrey = Color(0xFF6B7280);
 
     final OrderModel order = widget.order;
-    final FlightModel? flightData = order.flight;
+    final FlightModel? flightData = order.flight ?? order.returnFlight;
     final List<PassengerModel> passengers = order.passengers;
     final int paxCount = passengers.isNotEmpty ? passengers.length : 1;
 

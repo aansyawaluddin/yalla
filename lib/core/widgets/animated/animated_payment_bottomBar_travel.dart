@@ -2,12 +2,15 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
-import 'package:yalla/features/user/plane/flight/payment_succes_screen.dart';
+import 'package:yalla/features/travel/home/payment_succes_travel_screen.dart';
 
 class AnimatedPaymentBottombarTravel extends StatefulWidget {
-  const AnimatedPaymentBottombarTravel({super.key});
+  final OrderModel order;
+
+  const AnimatedPaymentBottombarTravel({super.key, required this.order});
 
   @override
   State<AnimatedPaymentBottombarTravel> createState() =>
@@ -48,7 +51,7 @@ class _AnimatedPaymentBottombarTravelState
                   context,
                   PageRouteBuilder(
                     pageBuilder: (context, animation, secondaryAnimation) =>
-                        const PaymentSuccessScreen(),
+                        PaymentSuccesTravelScreen(order: widget.order),
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
                           return FadeTransition(
@@ -63,10 +66,29 @@ class _AnimatedPaymentBottombarTravelState
           }
         });
 
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        _startPaymentAnimation();
+    Future.delayed(const Duration(milliseconds: 800), () async {
+      if (!mounted) return;
+
+      // Cek status awal — kalau sudah approved/finished, langsung ke success
+      final orderProvider = context.read<OrderProvider>();
+      final String orderId = orderProvider.lastOrderId;
+
+      if (orderId.isNotEmpty) {
+        final String currentStatus = await orderProvider.checkOrderStatus(
+          orderId,
+        );
+        if (currentStatus == 'approved' || currentStatus == 'finished') {
+          if (!mounted) return;
+          setState(() {
+            _isLoading = false;
+            _isSuccess = true;
+          });
+          _successController.forward(from: 0);
+          return;
+        }
       }
+
+      _startPaymentAnimation();
     });
   }
 
@@ -85,9 +107,7 @@ class _AnimatedPaymentBottombarTravelState
     });
 
     _successController.reset();
-
     _loadingController.repeat();
-
     _startOrderStatusPolling();
   }
 
@@ -100,7 +120,7 @@ class _AnimatedPaymentBottombarTravelState
     _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
       String currentStatus = await orderProvider.checkOrderStatus(orderId);
 
-      if (currentStatus == 'approved') {
+      if (currentStatus == 'approved' || currentStatus == 'finished') {
         _pollingTimer?.cancel();
 
         if (!mounted) return;

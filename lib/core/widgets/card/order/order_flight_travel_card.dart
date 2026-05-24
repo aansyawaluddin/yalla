@@ -13,10 +13,23 @@ class OrderFlightTravelCard extends StatelessWidget {
 
   const OrderFlightTravelCard({super.key, required this.order});
 
+  FlightModel _buildActiveFlight() {
+    final FlightModel? activeFlightData = order.flight ?? order.returnFlight;
+    return FlightModel(
+      id: order.departureFlightId.isNotEmpty
+          ? order.departureFlightId
+          : (order.returnFlight?.id ?? ''),
+      flightNo: activeFlightData?.flightNo ?? "Pesanan Lanjutan",
+      departureTime: activeFlightData?.departureTime,
+      arrivalTime: activeFlightData?.arrivalTime,
+      price: order.price.toDouble(),
+      isOutbound: activeFlightData?.isOutbound ?? true,
+    );
+  }
+
   void _navigateToDetail(BuildContext context, String currentStatus) {
     if (currentStatus == 'waiting_payment') {
       context.read<OrderProvider>().setLastOrderId(order.id);
-      final double? safePrice = order.price.toDouble();
 
       DateTime createdAt = DateTime.now();
       if (order.createdAt.isNotEmpty) {
@@ -26,24 +39,17 @@ class OrderFlightTravelCard extends StatelessWidget {
         const Duration(hours: 24),
       );
 
-      final dataFlight = FlightModel(
-        id: order.departureFlightId,
-        flightNo: order.flight?.flightNo ?? "Pesanan Lanjutan",
-        departureTime: order.flight?.departureTime,
-        arrivalTime: order.flight?.arrivalTime,
-        price: safePrice,
-      );
-
       Navigator.push(
         context,
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 300),
           pageBuilder: (context, animation, secondaryAnimation) =>
               PaymentTravelScreen(
-                flight: dataFlight,
+                flight: _buildActiveFlight(),
                 paymentAmount: order.price.toInt(),
                 paymentDeadline: absoluteDeadline,
                 orderId: order.id,
+                order: order,
               ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
@@ -58,10 +64,22 @@ class OrderFlightTravelCard extends StatelessWidget {
             'Pembayaran Anda sedang diverifikasi oleh Admin. Mohon tunggu.',
       );
     } else if (currentStatus == 'approved') {
-      CustomSnackBar.showSuccess(
+      context.read<OrderProvider>().setLastOrderId(order.id);
+      DateTime createdAt = DateTime.now();
+      if (order.createdAt.isNotEmpty) {
+        createdAt = DateTime.parse(order.createdAt).toLocal();
+      }
+      Navigator.push(
         context,
-        title: 'Pesanan Lunas',
-        message: 'Pesanan sudah lunas! Mengarahkan ke E-Ticket...',
+        MaterialPageRoute(
+          builder: (context) => PaymentTravelScreen(
+            flight: _buildActiveFlight(),
+            paymentAmount: order.price.toInt(),
+            paymentDeadline: createdAt.add(const Duration(hours: 24)),
+            orderId: order.id,
+            order: order,
+          ),
+        ),
       );
     }
   }
@@ -166,7 +184,7 @@ class OrderFlightTravelCard extends StatelessWidget {
     final List<PassengerModel> passengers = order.passengers;
     final int paxCount = passengers.isNotEmpty ? passengers.length : 1;
 
-    final FlightModel? flightData = order.flight;
+    final FlightModel? flightData = order.flight ?? order.returnFlight;
 
     const String airline = "Flydeal Air";
 
@@ -188,6 +206,7 @@ class OrderFlightTravelCard extends StatelessWidget {
 
     final bool isWaitingPayment = status == 'waiting_payment';
     final bool isOnProcess = status == 'on_process';
+    final bool isFinished = status == 'finished';
 
     Color badgeColor;
     String progressText;
@@ -214,6 +233,24 @@ class OrderFlightTravelCard extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => DetailOrderTravel(order: order),
+            ),
+          );
+        } else if (isFinished || status == 'approved') {
+          context.read<OrderProvider>().setLastOrderId(order.id);
+          DateTime createdAt = DateTime.now();
+          if (order.createdAt.isNotEmpty) {
+            createdAt = DateTime.parse(order.createdAt).toLocal();
+          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentTravelScreen(
+                flight: _buildActiveFlight(),
+                paymentAmount: order.price.toInt(),
+                paymentDeadline: createdAt.add(const Duration(hours: 24)),
+                orderId: order.id,
+                order: order,
+              ),
             ),
           );
         } else {
@@ -373,7 +410,6 @@ class OrderFlightTravelCard extends StatelessWidget {
                               ),
                             ],
                           ),
-
                           Text(
                             duration,
                             style: const TextStyle(
@@ -382,7 +418,6 @@ class OrderFlightTravelCard extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
@@ -565,7 +600,9 @@ class OrderFlightTravelCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ] else if (isOnProcess || status == 'approved') ...[
+                      ] else if (isOnProcess ||
+                          status == 'approved' ||
+                          isFinished) ...[
                         const SizedBox(width: 24),
                         SizedBox(
                           height: 34,
@@ -579,7 +616,9 @@ class OrderFlightTravelCard extends StatelessWidget {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
+                              backgroundColor: isFinished
+                                  ? const Color(0xFF3730A3)
+                                  : Colors.green,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),

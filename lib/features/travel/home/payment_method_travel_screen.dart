@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/core/widgets/button/payment_button.dart';
@@ -11,11 +12,13 @@ import 'package:yalla/features/travel/home/payment_travel_screen.dart';
 class PaymentMethodTravelScreen extends StatefulWidget {
   final FlightModel flight;
   final List<dynamic> passengers;
+  final OrderModel order;
 
   const PaymentMethodTravelScreen({
     super.key,
     required this.flight,
     required this.passengers,
+    required this.order,
   });
 
   @override
@@ -127,6 +130,7 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                 paymentAmount: amountToPay,
                 paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
                 orderId: newOrderId,
+                order: widget.order,
               ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(

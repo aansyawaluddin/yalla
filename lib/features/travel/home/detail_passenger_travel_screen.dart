@@ -5,8 +5,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart'; 
+import 'package:url_launcher/url_launcher.dart';
 import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
@@ -747,6 +748,7 @@ class _DetailPassengerTravelScreenState
                         PaymentMethodTravelScreen(
                           flight: widget.flight,
                           passengers: _parsedPassengers,
+                          order: OrderModel.empty(),
                         ),
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
@@ -912,6 +914,7 @@ class _DetailPassengerTravelScreenState
 class _DashedBorderPainter extends CustomPainter {
   final Color color;
   _DashedBorderPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     var paint = Paint()

@@ -1,18 +1,125 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/models/order_model.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 
 class TicketDetailTravelPage extends StatelessWidget {
   final Animation<double> barcodeOpacity;
   final Animation<double> barcodeSlide;
+  final OrderModel order;
 
   const TicketDetailTravelPage({
     super.key,
     required this.barcodeOpacity,
     required this.barcodeSlide,
+    required this.order,
   });
+
+  String _formatDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      const months = [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      return "${months[date.month]} ${date.day.toString().padLeft(2, '0')}, ${date.year}";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  String _formatTime(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      return "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  String _formatIssuedDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      return "${date.year} - ${date.month.toString().padLeft(2, '0')} - ${date.day.toString().padLeft(2, '0')}";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  Future<void> _downloadTicket(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFF0084FF)),
+        ),
+      ),
+    );
+
+    try {
+      final bytes = await context.read<OrderProvider>().downloadManifest(
+        order.id,
+      );
+
+      final file = File('${Directory.systemTemp.path}/tiket_${order.id}.pdf');
+      await file.writeAsBytes(bytes);
+
+      if (context.mounted) Navigator.pop(context);
+
+      final result = await OpenFilex.open(file.path);
+
+      if (result.type != ResultType.done) {
+        if (context.mounted) {
+          CustomSnackBar.showError(
+            context,
+            title: "Gagal",
+            message: "Tidak ada aplikasi PDF di perangkat ini.",
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        CustomSnackBar.showError(
+          context,
+          title: "Gagal Mengunduh",
+          message: e.toString().replaceAll("Exception: ", ""),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final FlightModel? departureFlight = order.flight;
+    final FlightModel? returnFlight = order.returnFlight;
+    final List<PassengerModel> passengers = order.passengers;
+    final String bookingRef = order.id.length >= 8
+        ? order.id.substring(0, 8).toUpperCase()
+        : order.id.toUpperCase();
+    final String issueDate = _formatIssuedDate(order.createdAt);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -102,9 +209,9 @@ class TicketDetailTravelPage extends StatelessWidget {
                       style: TextStyle(fontSize: 12, color: Colors.black54),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      "ABC123XYZ",
-                      style: TextStyle(
+                    Text(
+                      bookingRef,
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
                         color: Colors.black87,
@@ -117,9 +224,9 @@ class TicketDetailTravelPage extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
                               "Issuing Airline",
                               style: TextStyle(
@@ -140,18 +247,18 @@ class TicketDetailTravelPage extends StatelessWidget {
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
-                          children: const [
-                            Text(
+                          children: [
+                            const Text(
                               "Issue Date",
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.black54,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
-                              "2025 - 10 - 23",
-                              style: TextStyle(
+                              issueDate,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
@@ -167,49 +274,51 @@ class TicketDetailTravelPage extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              const Text(
-                "Detail Penerbangan - Keberangkatan",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              if (departureFlight != null) ...[
+                const Text(
+                  "Detail Penerbangan - Keberangkatan",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildFlightCard(
-                flightNo: "F3 9103",
-                date: "Mar 02, 2026",
-                originCode: "UPG",
-                originCity: "Makassar",
-                originTime: "11:00",
-                destCode: "JED",
-                destCity: "Jeddah",
-                destTime: "22:15",
-              ),
-
-              const SizedBox(height: 24),
-
-              const Text(
-                "Detail Penerbangan - Kepulangan",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                const SizedBox(height: 12),
+                _buildFlightCard(
+                  flightNo: departureFlight.flightNo ?? "-",
+                  date: _formatDate(departureFlight.departureTime),
+                  originCode: "UPG",
+                  originCity: "Makassar",
+                  originTime: _formatTime(departureFlight.departureTime),
+                  destCode: "JED",
+                  destCity: "Jeddah",
+                  destTime: _formatTime(departureFlight.arrivalTime),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildFlightCard(
-                flightNo: "F3 9103",
-                date: "Mar 02, 2026",
-                originCode: "JED",
-                originCity: "Jeddah",
-                originTime: "22:15",
-                destCode: "UPG",
-                destCity: "Makassar",
-                destTime: "11:00",
-              ),
+                const SizedBox(height: 24),
+              ],
 
-              const SizedBox(height: 32),
+              if (returnFlight != null) ...[
+                const Text(
+                  "Detail Penerbangan - Kepulangan",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildFlightCard(
+                  flightNo: returnFlight.flightNo ?? "-",
+                  date: _formatDate(returnFlight.departureTime),
+                  originCode: "JED",
+                  originCity: "Jeddah",
+                  originTime: _formatTime(returnFlight.departureTime),
+                  destCode: "UPG",
+                  destCity: "Makassar",
+                  destTime: _formatTime(returnFlight.arrivalTime),
+                ),
+                const SizedBox(height: 24),
+              ],
 
               const Text(
                 "List Penumpang",
@@ -220,35 +329,19 @@ class TicketDetailTravelPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Container(
-                height: 220,
-                decoration: BoxDecoration(),
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _buildPassengerItem(
-                      "Muhammad Rafli Dahlan",
-                      "123-12491245",
-                    ),
-                    _buildPassengerItem(
-                      "Muhammad Rafli Dahlan",
-                      "123-12491245",
-                    ),
-                    _buildPassengerItem(
-                      "Muhammad Rafli Dahlan",
-                      "193-19491945",
-                    ),
-                    _buildPassengerItem(
-                      "Muhammad Rafli Dahlan",
-                      "193-19491946",
-                    ),
-                    _buildPassengerItem(
-                      "Muhammad Rafli Dahlan",
-                      "193-19491947",
-                    ),
-                  ],
-                ),
+              ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: passengers.length,
+                itemBuilder: (context, index) {
+                  final pax = passengers[index];
+                  return _buildPassengerItem(
+                    pax.fullName,
+                    pax.passportNumber ??
+                        "#J-${pax.id.substring(0, 4).toUpperCase()}",
+                  );
+                },
               ),
 
               const SizedBox(height: 32),
@@ -311,10 +404,22 @@ class TicketDetailTravelPage extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: PrimaryGradientButton(
-            text: 'Unduh Tiket Digital',
-            onPressed: () {},
-          ),
+          child: order.manifestUrl != null
+              ? PrimaryGradientButton(
+                  text: 'Unduh Tiket Digital',
+                  onPressed: () => _downloadTicket(context),
+                )
+              : PrimaryGradientButton(
+                  text: 'Tiket Belum Tersedia',
+                  onPressed: () {
+                    CustomSnackBar.showError(
+                      context,
+                      title: "Belum Tersedia",
+                      message:
+                          "Tiket digital belum diterbitkan. Silakan cek kembali nanti.",
+                    );
+                  },
+                ),
         ),
       ),
     );
@@ -535,7 +640,7 @@ class TicketDetailTravelPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Ticket: $ticketNo",
+                  "Passport: $ticketNo",
                   style: const TextStyle(color: Colors.black45, fontSize: 12),
                 ),
               ],

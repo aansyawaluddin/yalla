@@ -84,6 +84,27 @@ class OrderModel {
     this.manifestUrl,
   });
 
+
+  factory OrderModel.empty() {
+    return OrderModel(
+      id: '',
+      buyerId: '',
+      status: '',
+      email: null,
+      phoneNumber: null,
+      departureFlightId: '',
+      returnFlightId: null,
+      price: 0,
+      createdAt: '',
+      updatedAt: '',
+      payment: null,
+      passengers: [],
+      flight: null,
+      returnFlight: null,
+      manifestUrl: null,
+    );
+  }
+
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     var passengersList = json['passengers'] as List? ?? [];
     List<PassengerModel> mappedPassengers = passengersList
@@ -110,9 +131,7 @@ class OrderModel {
           : (json['flight'] != null
                 ? FlightModel.fromJson(json['flight'])
                 : null),
-      returnFlight:
-          json['return_flight'] !=
-              null
+      returnFlight: json['return_flight'] != null
           ? FlightModel.fromJson(json['return_flight'])
           : null,
       manifestUrl: json['manifest_url'],
