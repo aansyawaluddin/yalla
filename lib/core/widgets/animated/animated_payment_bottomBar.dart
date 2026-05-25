@@ -1,13 +1,16 @@
-import 'dart:async'; 
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; 
+import 'package:provider/provider.dart';
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/features/user/plane/flight/payment_succes_screen.dart';
 
 class AnimatedPaymentBottomBar extends StatefulWidget {
-  const AnimatedPaymentBottomBar({super.key});
+  final OrderModel order;
+
+  const AnimatedPaymentBottomBar({super.key, required this.order});
 
   @override
   State<AnimatedPaymentBottomBar> createState() =>
@@ -19,7 +22,7 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
   late final AnimationController _loadingController;
   late final AnimationController _successController;
 
-  Timer? _pollingTimer; 
+  Timer? _pollingTimer;
 
   bool _isLoading = false;
   bool _isSuccess = false;
@@ -47,7 +50,7 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
                   context,
                   PageRouteBuilder(
                     pageBuilder: (context, animation, secondaryAnimation) =>
-                        const PaymentSuccessScreen(),
+                        PaymentSuccessScreen(order: widget.order),
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
                           return FadeTransition(
@@ -64,17 +67,43 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
 
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
-        _startPaymentAnimation();
+        // Gunakan widget.order.id langsung, lebih reliable dari provider
+        _checkInitialStatus(widget.order.id);
       }
     });
   }
 
   @override
   void dispose() {
-    _pollingTimer?.cancel(); 
+    _pollingTimer?.cancel();
     _loadingController.dispose();
     _successController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkInitialStatus(String orderId) async {
+    if (orderId.isEmpty) {
+      _startPaymentAnimation();
+      return;
+    }
+
+    final String currentStatus = await context
+        .read<OrderProvider>()
+        .checkOrderStatus(orderId);
+
+    if (!mounted) return;
+
+    if (currentStatus == 'approved' || currentStatus == 'finished') {
+      // Sudah approved/finished — langsung trigger sukses tanpa animasi loading
+      setState(() {
+        _isLoading = false;
+        _isSuccess = true;
+      });
+      _successController.forward(from: 0);
+    } else {
+      // Belum approved — jalankan animasi loading + polling seperti biasa
+      _startPaymentAnimation();
+    }
   }
 
   void _startPaymentAnimation() {
@@ -82,38 +111,29 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
       _isLoading = true;
       _isSuccess = false;
     });
-
     _successController.reset();
-
     _loadingController.repeat();
-
     _startOrderStatusPolling();
   }
 
   void _startOrderStatusPolling() {
     final orderProvider = context.read<OrderProvider>();
-    final String orderId = orderProvider.lastOrderId;
+    final String orderId = widget.order.id;
 
     if (orderId.isEmpty) return;
 
     _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
       String currentStatus = await orderProvider.checkOrderStatus(orderId);
 
-      if (currentStatus == 'approved') {
-        _pollingTimer?.cancel(); 
-
+      if (currentStatus == 'approved' || currentStatus == 'finished') {
+        _pollingTimer?.cancel();
         if (!mounted) return;
-
-        _loadingController.stop(); 
-
+        _loadingController.stop();
         setState(() {
           _isLoading = false;
           _isSuccess = true;
         });
-
-        _successController.forward(
-          from: 0,
-        );
+        _successController.forward(from: 0);
       }
     });
   }
@@ -188,10 +208,8 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
               final double progress = Curves.easeInOutCubic.transform(
                 _loadingController.value,
               );
-
               final double trackWidth = math.max(0, maxWidth - _planeSize);
               final double planeLeft = progress * trackWidth;
-
               final double bobbing =
                   math.sin(progress * math.pi * 8) * 4.0 * (1.0 - progress);
               final double rotation = math.sin(progress * math.pi * 2) * 0.025;
@@ -199,12 +217,10 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
               final double opacity = progress > 0.9
                   ? ((1.0 - progress) / 0.1).clamp(0.0, 1.0)
                   : 1.0;
-
               final double textOpacity = (1.0 - (progress * 1.8)).clamp(
                 0.0,
                 1.0,
               );
-
               final double delayedProgress = ((progress - 0.08) / 0.92).clamp(
                 0.0,
                 1.0,
@@ -224,7 +240,7 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
                           child: const Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              "Menunggu Pembayaran...", 
+                              "Menunggu Pembayaran...",
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.black54,
@@ -328,7 +344,6 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
         final double successProgress = Curves.easeOutCubic.transform(
           _successController.value,
         );
-
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

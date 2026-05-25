@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/animated/animated_payment_bottomBar.dart';
 import 'package:yalla/core/widgets/animated/countdown_timer.dart';
@@ -10,12 +11,14 @@ class PaymentScreen extends StatelessWidget {
   final FlightModel flight;
   final num paymentAmount;
   final DateTime paymentDeadline;
+  final OrderModel order;
 
   const PaymentScreen({
     super.key,
     required this.flight,
     required this.paymentAmount,
     required this.paymentDeadline,
+    required this.order,
   });
 
   String _formatPrice(num? price) {
@@ -45,7 +48,6 @@ class PaymentScreen extends StatelessWidget {
 
   String _formatPaymentDeadline() {
     final date = paymentDeadline;
-
     const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     const months = [
       'Jan',
@@ -61,14 +63,12 @@ class PaymentScreen extends StatelessWidget {
       'Nov',
       'Des',
     ];
-
     String dayName = days[date.weekday - 1];
     String day = date.day.toString().padLeft(2, '0');
     String monthName = months[date.month - 1];
     String year = date.year.toString();
     String hour = date.hour.toString().padLeft(2, '0');
     String minute = date.minute.toString().padLeft(2, '0');
-
     return "$dayName, $day $monthName $year  •  $hour:$minute";
   }
 
@@ -85,7 +85,6 @@ class PaymentScreen extends StatelessWidget {
       flight.arrivalTime,
     );
     final String priceText = _formatPrice(paymentAmount);
-
     final String deadlineText = _formatPaymentDeadline();
 
     final orderProvider = context.read<OrderProvider>();
@@ -146,7 +145,6 @@ class PaymentScreen extends StatelessWidget {
               ),
             ),
 
-            // --- KONTEN HALAMAN ---
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -418,7 +416,6 @@ class PaymentScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Timer Countdown
                         Positioned(
                           top: -20,
                           right: 20,
@@ -428,8 +425,6 @@ class PaymentScreen extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 16),
-
-                    // 3. CARA PEMBAYARAN (EXPANSION TILE)
                     _buildPaymentGuideCard(),
                   ],
                 ),
@@ -438,8 +433,7 @@ class PaymentScreen extends StatelessWidget {
           ],
         ),
       ),
-
-      bottomNavigationBar: const AnimatedPaymentBottomBar(),
+      bottomNavigationBar: AnimatedPaymentBottomBar(order: order),
     );
   }
 

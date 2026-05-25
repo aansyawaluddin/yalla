@@ -95,6 +95,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               flight: widget.flight,
               paymentAmount: amountToPay,
               paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
+              // TAMBAHAN: kirim order dari provider
+              order: orderProvider.lastOrder,
             ),
           ),
         );
@@ -543,9 +545,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              _formatPrice(
-                currentPaymentAmount,
-              ), // Dinamis sesuai skema yang dipilih
+              _formatPrice(currentPaymentAmount),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -553,8 +553,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // TOMBOL BAYAR DENGAN LOADING STATE
             isLoading
                 ? const Center(
                     child: CircularProgressIndicator(color: Color(0xFF0084FF)),

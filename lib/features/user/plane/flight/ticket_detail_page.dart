@@ -1,33 +1,126 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/models/order_model.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
-
-class TicketData {
-  final String origin = "UPG";
-  final String originCity = "Makassar";
-  final String destination = "JED";
-  final String destinationCity = "Jeddah";
-  final String passengerName = "Muhammad Fauzan";
-  final String flightNumber = "SV - 817";
-  final String departureTime = "24 Okt 2026,\n08:30 WITA";
-  final String seatClass = "Ekonomi";
-  final String barcodeNumber = "080819928277";
-}
-
-final ticketData = TicketData();
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 
 class TicketDetailPage extends StatelessWidget {
   final Animation<double> barcodeOpacity;
   final Animation<double> barcodeSlide;
+  final OrderModel order;
 
   const TicketDetailPage({
     super.key,
     required this.barcodeOpacity,
     required this.barcodeSlide,
+    required this.order,
   });
+
+  String _formatDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      const months = [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      return "${months[date.month]} ${date.day.toString().padLeft(2, '0')}, ${date.year}";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  String _formatTime(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      return "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  Future<void> _downloadTicket(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFF0084FF)),
+        ),
+      ),
+    );
+
+    try {
+      final bytes = await context.read<OrderProvider>().downloadManifest(
+        order.id,
+      );
+
+      final file = File('${Directory.systemTemp.path}/tiket_${order.id}.pdf');
+      await file.writeAsBytes(bytes);
+
+      if (context.mounted) Navigator.pop(context);
+
+      final result = await OpenFilex.open(file.path);
+
+      if (result.type != ResultType.done) {
+        if (context.mounted) {
+          CustomSnackBar.showError(
+            context,
+            title: "Gagal",
+            message: "Tidak ada aplikasi PDF di perangkat ini.",
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        CustomSnackBar.showError(
+          context,
+          title: "Gagal Mengunduh",
+          message: e.toString().replaceAll("Exception: ", ""),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final FlightModel? flight = order.flight ?? order.returnFlight;
+    final bool isOutbound = flight?.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String originCity = isOutbound ? "Makassar" : "Jeddah";
+    final String destCode = isOutbound ? "JED" : "UPG";
+    final String destCity = isOutbound ? "Jeddah" : "Makassar";
+
+    final String flightNo = flight?.flightNo ?? "-";
+    final String depTime = _formatTime(flight?.departureTime);
+    final String depDate = _formatDate(flight?.departureTime);
+
+    final String passengerName = order.passengers.isNotEmpty
+        ? order.passengers.first.fullName
+        : "-";
+    final String bookingRef = order.id.length >= 8
+        ? order.id.substring(0, 8).toUpperCase()
+        : order.id.toUpperCase();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -100,6 +193,7 @@ class TicketDetailPage extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
+                          // Route
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
@@ -108,12 +202,11 @@ class TicketDetailPage extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // Origin Label
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      ticketData.origin,
+                                      originCode,
                                       style: const TextStyle(
                                         fontSize: 40,
                                         fontWeight: FontWeight.w900,
@@ -122,7 +215,7 @@ class TicketDetailPage extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      ticketData.originCity,
+                                      originCity,
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey.shade500,
@@ -130,7 +223,6 @@ class TicketDetailPage extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                // Flight Line
                                 Expanded(
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
@@ -189,12 +281,11 @@ class TicketDetailPage extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                // Destination Label
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      ticketData.destination,
+                                      destCode,
                                       style: const TextStyle(
                                         fontSize: 40,
                                         fontWeight: FontWeight.w900,
@@ -203,7 +294,7 @@ class TicketDetailPage extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      ticketData.destinationCity,
+                                      destCity,
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey.shade500,
@@ -217,6 +308,7 @@ class TicketDetailPage extends StatelessWidget {
 
                           const TicketDivider(),
 
+                          // Detail
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
@@ -227,16 +319,13 @@ class TicketDetailPage extends StatelessWidget {
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Passenger Name Cell
                                     Expanded(
-                                      flex: 1,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'Nama Penumpang',
-                                            textAlign: TextAlign.left,
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey.shade500,
@@ -244,8 +333,7 @@ class TicketDetailPage extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 6),
                                           Text(
-                                            ticketData.passengerName,
-                                            textAlign: TextAlign.left,
+                                            passengerName,
                                             style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -256,16 +344,13 @@ class TicketDetailPage extends StatelessWidget {
                                         ],
                                       ),
                                     ),
-                                    // Flight Number Cell
                                     Expanded(
-                                      flex: 1,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.end,
                                         children: [
                                           Text(
                                             'Nomor Penerbangan',
-                                            textAlign: TextAlign.right,
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey.shade500,
@@ -273,7 +358,7 @@ class TicketDetailPage extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 6),
                                           Text(
-                                            ticketData.flightNumber,
+                                            flightNo,
                                             textAlign: TextAlign.right,
                                             style: const TextStyle(
                                               fontSize: 16,
@@ -291,16 +376,13 @@ class TicketDetailPage extends StatelessWidget {
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Departure Time Cell
                                     Expanded(
-                                      flex: 1,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'Waktu Keberangkatan',
-                                            textAlign: TextAlign.left,
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey.shade500,
@@ -308,8 +390,7 @@ class TicketDetailPage extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 6),
                                           Text(
-                                            ticketData.departureTime,
-                                            textAlign: TextAlign.left,
+                                            "$depDate\n$depTime WITA",
                                             style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -320,26 +401,23 @@ class TicketDetailPage extends StatelessWidget {
                                         ],
                                       ),
                                     ),
-                                    // Seat Class Cell
                                     Expanded(
-                                      flex: 1,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.end,
                                         children: [
                                           Text(
                                             'Kelas Kursi',
-                                            textAlign: TextAlign.right,
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey.shade500,
                                             ),
                                           ),
                                           const SizedBox(height: 6),
-                                          Text(
-                                            ticketData.seatClass,
+                                          const Text(
+                                            "Ekonomi",
                                             textAlign: TextAlign.right,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                               color: Color(0xFF1A1A1A),
@@ -357,6 +435,7 @@ class TicketDetailPage extends StatelessWidget {
 
                           const TicketDivider(),
 
+                          // Barcode
                           AnimatedBuilder(
                             animation: Listenable.merge([
                               barcodeOpacity,
@@ -385,7 +464,7 @@ class TicketDetailPage extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 12),
                                         Text(
-                                          ticketData.barcodeNumber,
+                                          bookingRef,
                                           style: const TextStyle(
                                             fontSize: 16,
                                             color: Colors.black87,
@@ -403,11 +482,24 @@ class TicketDetailPage extends StatelessWidget {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 32),
-                    PrimaryGradientButton(
-                      text: 'Unduh Tiket Digital',
-                      onPressed: () {},
-                    ),
+                    order.manifestUrl != null
+                        ? PrimaryGradientButton(
+                            text: 'Unduh Tiket Digital',
+                            onPressed: () => _downloadTicket(context),
+                          )
+                        : PrimaryGradientButton(
+                            text: 'Tiket Belum Tersedia',
+                            onPressed: () {
+                              CustomSnackBar.showError(
+                                context,
+                                title: "Belum Tersedia",
+                                message:
+                                    "Tiket digital belum diterbitkan. Silakan cek kembali nanti.",
+                              );
+                            },
+                          ),
                   ],
                 ),
               ),
@@ -427,7 +519,6 @@ class TicketDivider extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // --- Left Cutout ---
         Positioned(
           left: -1.5,
           top: -20,
@@ -458,8 +549,6 @@ class TicketDivider extends StatelessWidget {
             ),
           ),
         ),
-
-        // --- Right Cutout ---
         Positioned(
           right: -1.5,
           top: -20,
@@ -490,7 +579,6 @@ class TicketDivider extends StatelessWidget {
             ),
           ),
         ),
-
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: CustomPaint(

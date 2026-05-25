@@ -21,6 +21,9 @@ class OrderProvider extends ChangeNotifier {
   String _lastOrderId = '';
   String get lastOrderId => _lastOrderId;
 
+  OrderModel _lastOrder = OrderModel.empty();
+  OrderModel get lastOrder => _lastOrder;
+
   List<OrderModel> _orders = [];
   List<OrderModel> get orders => _orders;
 
@@ -54,6 +57,8 @@ class OrderProvider extends ChangeNotifier {
 
       final orderResponse = await _orderService.createOrder(payload, token);
       _lastOrderId = orderResponse['id'] ?? '';
+
+      _lastOrder = OrderModel.fromJson(orderResponse);
 
       final paymentResponse = await _orderService.initiatePayment(
         _lastOrderId,

@@ -107,9 +107,11 @@ class _OrderScreenState extends State<OrderScreen> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                            vertical: 2.0,
+                            padding: const EdgeInsets.only(
+                            left: 20.0,
+                            right: 20.0,
+                            top: 2.0,
+                            bottom: 100.0,
                           ),
                           physics: const BouncingScrollPhysics(),
                           itemCount: currentOrders.length,

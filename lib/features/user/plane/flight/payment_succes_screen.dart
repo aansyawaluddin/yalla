@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/features/user/plane/flight/ticket_detail_page.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
-  const PaymentSuccessScreen({super.key});
+  final OrderModel order;
+
+  const PaymentSuccessScreen({super.key, required this.order});
 
   @override
   State<PaymentSuccessScreen> createState() => _PaymentSuccessScreenState();
@@ -10,27 +13,18 @@ class PaymentSuccessScreen extends StatefulWidget {
 
 class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     with TickerProviderStateMixin {
-  // Controller utama untuk mengatur fase 1 dan 2 (Pesawat & Background)
   late AnimationController _phaseController;
-
-  // Animasi Background Glow
   late Animation<double> _bgGlowScale;
-
-  // Animasi Pesawat
   late Animation<double> _imageScale;
-
   late AnimationController _textController;
   late Animation<double> _textOpacity;
   late Animation<Offset> _textSlide;
-
   late AnimationController _transitionController;
   late Animation<double> _heroFade;
   late Animation<double> _ticketSlide;
-
   late AnimationController _barcodeController;
   late Animation<double> _barcodeOpacity;
   late Animation<double> _barcodeSlide;
-
   late AnimationController _pulseController;
   late Animation<double> _pulseScale;
 
@@ -40,53 +34,44 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
   void initState() {
     super.initState();
 
-    // Durasi total dari kemunculan awal hingga membesar adalah 2000ms
     _phaseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     );
 
-    // 1. Animasi Background (Sesi 1 kecil -> Sesi 2 besar)
     _bgGlowScale = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween<double>(
-          begin: 0.2, // Mulai dari sangat kecil
-          end: 0.5, // Membesar sedikit di Sesi 1 (hanya terlihat di sudut)
+          begin: 0.2,
+          end: 0.5,
         ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
-      TweenSequenceItem(
-        tween: ConstantTween<double>(0.5), // Tahan ukuran
-        weight: 40,
-      ),
+      TweenSequenceItem(tween: ConstantTween<double>(0.5), weight: 40),
       TweenSequenceItem(
         tween: Tween<double>(
           begin: 0.5,
-          end: 1.5, // Menyebar luas di Sesi 2
+          end: 1.5,
         ).chain(CurveTween(curve: Curves.easeInOutCubic)),
         weight: 30,
       ),
     ]).animate(_phaseController);
 
-    // 2. Animasi Pesawat (Sesi 1 kecil -> Sesi 2 besar)
     _imageScale = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween<double>(
           begin: 0.0,
           end: 0.25,
         ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 30, // Fase awal pesawat kecil
+        weight: 30,
       ),
-      TweenSequenceItem(
-        tween: ConstantTween<double>(0.25),
-        weight: 40, // Diam sejenak
-      ),
+      TweenSequenceItem(tween: ConstantTween<double>(0.25), weight: 40),
       TweenSequenceItem(
         tween: Tween<double>(
           begin: 0.25,
           end: 1.0,
         ).chain(CurveTween(curve: Curves.elasticOut)),
-        weight: 30, // Fase pesawat membesar ke arah user
+        weight: 30,
       ),
     ]).animate(_phaseController);
 
@@ -145,24 +130,14 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
 
   Future<void> _runSequence() async {
     await Future.delayed(const Duration(milliseconds: 300));
-
-    // Jalankan animasi pesawat dan background glow bersamaan
     _phaseController.forward();
-
-    // Tunggu persis 1400ms (Durasi dari pesawat & glow muncul kecil + diam)
     await Future.delayed(const Duration(milliseconds: 1400));
-
-    // Langsung jalankan animasi teks BERSAMAAN dengan pesawat dan glow masuk ke Sesi 2 (membesar)
     _textController.forward();
-
-    // Beri waktu membaca sebelum pindah ke tiket
     await Future.delayed(const Duration(milliseconds: 2200));
-
     _pulseController.stop();
     setState(() => _showTicket = true);
     _transitionController.forward();
     await Future.delayed(const Duration(milliseconds: 500));
-
     _barcodeController.forward();
   }
 
@@ -182,14 +157,12 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Background Glow Menggunakan RadialGradient (Soft Blur Effect)
           AnimatedBuilder(
             animation: _bgGlowScale,
             builder: (context, child) {
               final glowSize = MediaQuery.of(context).size.width * 0.6;
               return Stack(
                 children: [
-                  // Glow Kanan Atas
                   Positioned(
                     top: -glowSize * 0.45,
                     right: -glowSize * 0.45,
@@ -211,8 +184,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                       ),
                     ),
                   ),
-
-                  // Glow Kiri Bawah
                   Positioned(
                     bottom: -glowSize * 0.45,
                     left: -glowSize * 0.45,
@@ -238,8 +209,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
               );
             },
           ),
-
-          // Area Tengah (Pesawat dan Teks)
           AnimatedBuilder(
             animation: Listenable.merge([_heroFade, _transitionController]),
             builder: (context, _) {
@@ -251,7 +220,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Animasi Pesawat
                       AnimatedBuilder(
                         animation: Listenable.merge([_imageScale, _pulseScale]),
                         builder: (context, _) {
@@ -267,8 +235,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                           );
                         },
                       ),
-
-                      // Animasi Teks (Muncul FadeIn & SlideUp)
                       SlideTransition(
                         position: _textSlide,
                         child: FadeTransition(
@@ -312,8 +278,6 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
               );
             },
           ),
-
-          // Halaman Tiket
           if (_showTicket)
             AnimatedBuilder(
               animation: _transitionController,
@@ -325,6 +289,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                   child: TicketDetailPage(
                     barcodeOpacity: _barcodeOpacity,
                     barcodeSlide: _barcodeSlide,
+                    order: widget.order,
                   ),
                 );
               },

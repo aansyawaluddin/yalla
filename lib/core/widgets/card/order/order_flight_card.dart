@@ -11,10 +11,23 @@ class OrderFlightCard extends StatelessWidget {
 
   const OrderFlightCard({super.key, required this.order});
 
+  FlightModel _buildActiveFlight() {
+    final FlightModel? activeFlightData = order.flight ?? order.returnFlight;
+    return FlightModel(
+      id: order.departureFlightId.isNotEmpty
+          ? order.departureFlightId
+          : (order.returnFlight?.id ?? ''),
+      flightNo: activeFlightData?.flightNo ?? "Pesanan Lanjutan",
+      departureTime: activeFlightData?.departureTime,
+      arrivalTime: activeFlightData?.arrivalTime,
+      price: order.price.toDouble(),
+      isOutbound: activeFlightData?.isOutbound ?? true,
+    );
+  }
+
   void _navigateToDetail(BuildContext context, String currentStatus) {
     if (currentStatus == 'waiting_payment') {
       context.read<OrderProvider>().setLastOrderId(order.id);
-      final double? safePrice = order.price.toDouble();
 
       DateTime createdAt = DateTime.now();
       if (order.createdAt.isNotEmpty) {
@@ -24,23 +37,16 @@ class OrderFlightCard extends StatelessWidget {
         const Duration(hours: 24),
       );
 
-      final dataFlight = FlightModel(
-        id: order.departureFlightId,
-        flightNo: order.flight?.flightNo ?? "Pesanan Lanjutan",
-        departureTime: order.flight?.departureTime,
-        arrivalTime: order.flight?.arrivalTime,
-        price: safePrice,
-      );
-
       Navigator.push(
         context,
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 300),
           pageBuilder: (context, animation, secondaryAnimation) =>
               PaymentScreen(
-                flight: dataFlight,
+                flight: _buildActiveFlight(),
                 paymentAmount: order.price,
                 paymentDeadline: absoluteDeadline,
+                order: order,
               ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
@@ -55,11 +61,36 @@ class OrderFlightCard extends StatelessWidget {
           ),
         ),
       );
-    } else if (currentStatus == 'approved') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pesanan sudah lunas! Mengarahkan ke E-Ticket...'),
+    } else if (currentStatus == 'approved' || currentStatus == 'finished') {
+      context.read<OrderProvider>().setLastOrderId(order.id);
+
+      DateTime createdAt = DateTime.now();
+      if (order.createdAt.isNotEmpty) {
+        createdAt = DateTime.parse(order.createdAt).toLocal();
+      }
+      final DateTime absoluteDeadline = createdAt.add(
+        const Duration(hours: 24),
+      );
+
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              PaymentScreen(
+                flight: _buildActiveFlight(),
+                paymentAmount: order.price,
+                paymentDeadline: absoluteDeadline,
+                order: order,
+              ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
         ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Status tidak dikenal: $currentStatus')),
       );
     }
   }
@@ -87,9 +118,35 @@ class OrderFlightCard extends StatelessWidget {
     }
   }
 
+  String _formatDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return "";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      const months = [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+      return "${date.day} ${months[date.month]}";
+    } catch (e) {
+      return "";
+    }
+  }
+
   String _calculateDuration(String? dep, String? arr, String fallback) {
-    if (dep == null || arr == null || dep.isEmpty || arr.isEmpty)
+    if (dep == null || arr == null || dep.isEmpty || arr.isEmpty) {
       return fallback;
+    }
     try {
       final d = DateTime.parse(dep);
       final a = DateTime.parse(arr);
@@ -99,6 +156,31 @@ class OrderFlightCard extends StatelessWidget {
       return "${hours}j ${mins}m";
     } catch (e) {
       return fallback;
+    }
+  }
+
+  String _formatDateLong(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      const months = [
+        '',
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
+      ];
+      return "${date.day} ${months[date.month]} ${date.year}";
+    } catch (e) {
+      return "-";
     }
   }
 
@@ -113,47 +195,42 @@ class OrderFlightCard extends StatelessWidget {
     final List<PassengerModel> passengers = order.passengers;
     final int paxCount = passengers.isNotEmpty ? passengers.length : 1;
 
-    final FlightModel? flightData = order.flight;
+    // FIX: ambil dari flight ?? returnFlight
+    final FlightModel? flightData = order.flight ?? order.returnFlight;
 
-    final String airline = "Flydeal Air";
+    const String airline = "Flydeal Air";
 
     final bool isOutbound = flightData?.isOutbound ?? true;
     final String originCode = isOutbound ? "UPG" : "JED";
     final String destCode = isOutbound ? "JED" : "UPG";
 
-    final String depTime = _formatTime(flightData?.departureTime, "02:00 AM");
-    final String arrTime = _formatTime(flightData?.arrivalTime, "12:15 PM");
+    final String depTime = _formatTime(flightData?.departureTime, "02:00");
+    final String arrTime = _formatTime(flightData?.arrivalTime, "12:15");
     final String duration = _calculateDuration(
       flightData?.departureTime,
       flightData?.arrivalTime,
       "11j 15m",
     );
 
+    final String createdDateLabel = _formatDateLong(order.createdAt);
+
     final bool isWaitingPayment = status == 'waiting_payment';
     final bool isOnProcess = status == 'on_process';
 
-    String badgeText;
     Color badgeColor;
-    Color badgeBg;
     String progressText;
     double progressValue;
 
     if (isWaitingPayment) {
-      badgeText = "Menunggu";
       badgeColor = Colors.orange;
-      badgeBg = Colors.orange.shade50;
       progressText = "Belum Lunas";
       progressValue = 0.0;
     } else if (isOnProcess) {
-      badgeText = "Diproses Admin";
       badgeColor = brandBlue;
-      badgeBg = Colors.blue.shade50;
       progressText = "Verifikasi";
       progressValue = 0.5;
     } else {
-      badgeText = "Sukses";
       badgeColor = Colors.green;
-      badgeBg = Colors.green.shade50;
       progressText = "Lunas";
       progressValue = 1.0;
     }
@@ -282,25 +359,7 @@ class OrderFlightCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: badgeBg,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: badgeColor),
-                        ),
-                        child: Text(
-                          badgeText,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: badgeColor,
-                          ),
-                        ),
-                      ),
+                      const SizedBox(width: 100),
                     ],
                   ),
 
@@ -311,13 +370,26 @@ class OrderFlightCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            depTime,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: textDark,
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                depTime,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: textDark,
+                                ),
+                              ),
+                              Text(
+                                _formatDate(flightData?.departureTime),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: textGrey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                           Text(
                             duration,
@@ -327,13 +399,26 @@ class OrderFlightCard extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          Text(
-                            arrTime,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: textDark,
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                arrTime,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: textDark,
+                                ),
+                              ),
+                              Text(
+                                _formatDate(flightData?.arrivalTime),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: textGrey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -499,6 +584,32 @@ class OrderFlightCard extends StatelessWidget {
                     ],
                   ),
                 ],
+              ),
+            ),
+
+            Positioned(
+              top: 30,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: const BoxDecoration(
+                  color: brandBlue,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    bottomLeft: Radius.circular(20),
+                  ),
+                ),
+                child: Text(
+                  createdDateLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],
