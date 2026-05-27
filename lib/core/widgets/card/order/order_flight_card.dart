@@ -4,12 +4,15 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
-import 'package:yalla/features/user/plane/flight/payment_screen.dart';
+import 'package:yalla/features/user/plane/flight/oneWay/payment_screen.dart';
+import 'package:yalla/features/user/plane/flight/package/payment_package_screen.dart';
 
 class OrderFlightCard extends StatelessWidget {
   final OrderModel order;
 
   const OrderFlightCard({super.key, required this.order});
+
+  bool get _isPackageOrder => order.package != null;
 
   FlightModel _buildActiveFlight() {
     final FlightModel? activeFlightData = order.flight ?? order.returnFlight;
@@ -26,34 +29,7 @@ class OrderFlightCard extends StatelessWidget {
   }
 
   void _navigateToDetail(BuildContext context, String currentStatus) {
-    if (currentStatus == 'waiting_payment') {
-      context.read<OrderProvider>().setLastOrderId(order.id);
-
-      DateTime createdAt = DateTime.now();
-      if (order.createdAt.isNotEmpty) {
-        createdAt = DateTime.parse(order.createdAt).toLocal();
-      }
-      final DateTime absoluteDeadline = createdAt.add(
-        const Duration(hours: 24),
-      );
-
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              PaymentScreen(
-                flight: _buildActiveFlight(),
-                paymentAmount: order.price,
-                paymentDeadline: absoluteDeadline,
-                order: order,
-              ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        ),
-      );
-    } else if (currentStatus == 'on_process') {
+    if (currentStatus == 'on_process') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -61,26 +37,37 @@ class OrderFlightCard extends StatelessWidget {
           ),
         ),
       );
-    } else if (currentStatus == 'approved' || currentStatus == 'finished') {
-      context.read<OrderProvider>().setLastOrderId(order.id);
+      return;
+    }
 
-      DateTime createdAt = DateTime.now();
-      if (order.createdAt.isNotEmpty) {
-        createdAt = DateTime.parse(order.createdAt).toLocal();
-      }
-      final DateTime absoluteDeadline = createdAt.add(
-        const Duration(hours: 24),
+    if (currentStatus != 'waiting_payment' &&
+        currentStatus != 'approved' &&
+        currentStatus != 'finished') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Status tidak dikenal: $currentStatus')),
       );
+      return;
+    }
 
+    context.read<OrderProvider>().setLastOrderId(order.id);
+
+    DateTime createdAt = DateTime.now();
+    if (order.createdAt.isNotEmpty) {
+      createdAt = DateTime.parse(order.createdAt).toLocal();
+    }
+    final DateTime absoluteDeadline = createdAt.add(const Duration(hours: 24));
+
+    if (_isPackageOrder) {
       Navigator.push(
         context,
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 300),
           pageBuilder: (context, animation, secondaryAnimation) =>
-              PaymentScreen(
-                flight: _buildActiveFlight(),
-                paymentAmount: order.price,
+              PaymentPackageScreen(
+                packageName: order.package!.packageName,
+                paymentAmount: order.price.toInt(),
                 paymentDeadline: absoluteDeadline,
+                orderId: order.id,
                 order: order,
               ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -89,8 +76,21 @@ class OrderFlightCard extends StatelessWidget {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Status tidak dikenal: $currentStatus')),
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              PaymentScreen(
+                flight: _buildActiveFlight(),
+                paymentAmount: order.price,
+                paymentDeadline: absoluteDeadline,
+                order: order,
+              ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       );
     }
   }
@@ -151,9 +151,7 @@ class OrderFlightCard extends StatelessWidget {
       final d = DateTime.parse(dep);
       final a = DateTime.parse(arr);
       final diff = a.difference(d);
-      final hours = diff.inHours;
-      final mins = diff.inMinutes.remainder(60);
-      return "${hours}j ${mins}m";
+      return "${diff.inHours}j ${diff.inMinutes.remainder(60)}m";
     } catch (e) {
       return fallback;
     }
@@ -184,6 +182,162 @@ class OrderFlightCard extends StatelessWidget {
     }
   }
 
+  // ── Flight segment builder ──────────────────────────────────────────────────
+  Widget _buildFlightSegment({
+    required FlightModel? flight,
+    required String originCode,
+    required String destCode,
+    required String defaultDep,
+    required String defaultArr,
+    required String defaultDur,
+    required Color accentColor,
+    required String label,
+    required Color labelBg,
+    required Color labelText,
+  }) {
+    const Color textDark = Color(0xFF111827);
+    const Color textGrey = Color(0xFF6B7280);
+
+    final String depTime = _formatTime(flight?.departureTime, defaultDep);
+    final String arrTime = _formatTime(flight?.arrivalTime, defaultArr);
+    final String duration = _calculateDuration(
+      flight?.departureTime,
+      flight?.arrivalTime,
+      defaultDur,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Label pill
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          decoration: BoxDecoration(
+            color: labelBg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: labelText,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Times row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  depTime,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: textDark,
+                  ),
+                ),
+                Text(
+                  _formatDate(flight?.departureTime),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: textGrey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              duration,
+              style: const TextStyle(
+                fontSize: 11,
+                color: textGrey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  arrTime,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: textDark,
+                  ),
+                ),
+                Text(
+                  _formatDate(flight?.arrivalTime),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: textGrey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // Route row
+        Row(
+          children: [
+            Text(
+              originCode,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: textGrey,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: accentColor, width: 2),
+                color: Colors.white,
+              ),
+            ),
+            Expanded(child: _buildDashedLine(Colors.grey.shade300)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Transform.rotate(
+                angle: math.pi / 4,
+                child: Icon(Icons.flight, color: accentColor, size: 24),
+              ),
+            ),
+            Expanded(child: _buildDashedLine(Colors.grey.shade300)),
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: accentColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              destCode,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: textGrey,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color brandBlue = Color(0xFF0084FF);
@@ -195,22 +349,49 @@ class OrderFlightCard extends StatelessWidget {
     final List<PassengerModel> passengers = order.passengers;
     final int paxCount = passengers.isNotEmpty ? passengers.length : 1;
 
-    // FIX: ambil dari flight ?? returnFlight
-    final FlightModel? flightData = order.flight ?? order.returnFlight;
+    final FlightModel? flightData = _isPackageOrder
+        ? (order.package!.departureFlight ?? order.flight ?? order.returnFlight)
+        : (order.flight ?? order.returnFlight);
 
-    const String airline = "Flydeal Air";
+    final String cardTitle = _isPackageOrder
+        ? (order.package!.packageName)
+        : "Flydeal Air";
 
+    final String cardSubtitle = _isPackageOrder
+        ? (order.package!.batchName)
+        : "${flightData?.flightNo ?? '-'}  •  Ekonomi";
+
+    final Widget logoWidget = _isPackageOrder
+        ? Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFF0F8FF),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: const Icon(Icons.mosque, color: Color(0xFF0084FF), size: 24),
+          )
+        : Container(
+            height: 50,
+            width: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/logo_flydeal.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+          );
+
+    // For non-package single flight
     final bool isOutbound = flightData?.isOutbound ?? true;
     final String originCode = isOutbound ? "UPG" : "JED";
     final String destCode = isOutbound ? "JED" : "UPG";
-
-    final String depTime = _formatTime(flightData?.departureTime, "02:00");
-    final String arrTime = _formatTime(flightData?.arrivalTime, "12:15");
-    final String duration = _calculateDuration(
-      flightData?.departureTime,
-      flightData?.arrivalTime,
-      "11j 15m",
-    );
 
     final String createdDateLabel = _formatDateLong(order.createdAt);
 
@@ -253,6 +434,7 @@ class OrderFlightCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
+            // Background decoration
             Positioned(
               right: -30,
               top: -100,
@@ -273,61 +455,32 @@ class OrderFlightCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── Header ──────────────────────────────────────────────
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        height: 50,
-                        width: 50,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/logo_flydeal.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
+                      logoWidget,
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              airline,
+                              cardTitle,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
                                 color: textDark,
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: const [
-                                Icon(
-                                  Icons.work_outline,
-                                  size: 14,
-                                  color: textGrey,
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  "25 Kg",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: textGrey,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                SizedBox(width: 12),
-                                Icon(
-                                  Icons.restaurant_menu,
-                                  size: 14,
-                                  color: textGrey,
-                                ),
-                              ],
+                            const SizedBox(height: 4),
+                            Text(
+                              cardSubtitle,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: textGrey,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Row(
@@ -339,21 +492,39 @@ class OrderFlightCard extends StatelessWidget {
                                     color: textGrey,
                                   ),
                                 ),
-                                Container(
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 8,
+                                if (_isPackageOrder) ...[
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    width: 1,
+                                    height: 10,
+                                    color: Colors.grey.shade400,
                                   ),
-                                  width: 1,
-                                  height: 10,
-                                  color: Colors.grey.shade400,
-                                ),
-                                const Text(
-                                  "Ekonomi",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: textGrey,
+                                  Text(
+                                    "${order.package!.durationDays} Hari",
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: textGrey,
+                                    ),
                                   ),
-                                ),
+                                ] else ...[
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    width: 1,
+                                    height: 10,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const Text(
+                                    "Ekonomi",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: textGrey,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ],
@@ -365,125 +536,57 @@ class OrderFlightCard extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                depTime,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: textDark,
-                                ),
-                              ),
-                              Text(
-                                _formatDate(flightData?.departureTime),
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: textGrey,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            duration,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: textGrey,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                arrTime,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: textDark,
-                                ),
-                              ),
-                              Text(
-                                _formatDate(flightData?.arrivalTime),
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: textGrey,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                  // ── Flight segment(s) ────────────────────────────────────
+                  if (_isPackageOrder) ...[
+                    _buildFlightSegment(
+                      flight: order.package!.departureFlight,
+                      originCode: 'UPG',
+                      destCode: 'JED',
+                      defaultDep: '07:00',
+                      defaultArr: '14:45',
+                      defaultDur: '7j 45m',
+                      accentColor: brandBlue,
+                      label: '✈  Keberangkatan',
+                      labelBg: const Color(0xFFEFF6FF),
+                      labelText: const Color(0xFF1D4ED8),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      child: Divider(
+                        height: 1,
+                        color: Color(0xFFE5E7EB),
+                        thickness: 1,
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Text(
-                            originCode,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: textGrey,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: brandBlue, width: 2),
-                              color: Colors.white,
-                            ),
-                          ),
-                          Expanded(
-                            child: _buildDashedLine(Colors.grey.shade300),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Transform.rotate(
-                              angle: math.pi / 4,
-                              child: const Icon(
-                                Icons.flight,
-                                color: brandBlue,
-                                size: 24,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: _buildDashedLine(Colors.grey.shade300),
-                          ),
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: brandBlue,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            destCode,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: textGrey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    ),
+                    _buildFlightSegment(
+                      flight: order.package!.returnFlight,
+                      originCode: 'JED',
+                      destCode: 'UPG',
+                      defaultDep: '18:00',
+                      defaultArr: '12:00',
+                      defaultDur: '18j 0m',
+                      accentColor: const Color(0xFFBE185D),
+                      label: '↩  Kepulangan',
+                      labelBg: const Color(0xFFFFF0F6),
+                      labelText: const Color(0xFFBE185D),
+                    ),
+                  ] else
+                    _buildFlightSegment(
+                      flight: flightData,
+                      originCode: originCode,
+                      destCode: destCode,
+                      defaultDep: '02:00',
+                      defaultArr: '12:15',
+                      defaultDur: '11j 15m',
+                      accentColor: brandBlue,
+                      label: isOutbound ? '✈  Keberangkatan' : '↩  Kepulangan',
+                      labelBg: const Color(0xFFEFF6FF),
+                      labelText: const Color(0xFF1D4ED8),
+                    ),
 
                   const SizedBox(height: 32),
 
+                  // ── Price & payment progress ─────────────────────────────
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -587,6 +690,7 @@ class OrderFlightCard extends StatelessWidget {
               ),
             ),
 
+            // ── Date badge ───────────────────────────────────────────────
             Positioned(
               top: 30,
               right: 0,

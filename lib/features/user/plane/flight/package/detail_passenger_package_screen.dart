@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:yalla/core/models/package_model.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
-import 'package:yalla/features/user/plane/flight/payment_method_screen.dart';
+import 'package:yalla/features/user/plane/flight/package/payment_method__package_screen.dart';
 
-class DetailPassengerScreen extends StatefulWidget {
-  final FlightModel flight;
+class DetailPassengerPackageScreen extends StatefulWidget {
+  final PackageModel package;
 
-  const DetailPassengerScreen({super.key, required this.flight});
+  const DetailPassengerPackageScreen({super.key, required this.package});
 
   @override
-  State<DetailPassengerScreen> createState() => _DetailPassengerScreenState();
+  State<DetailPassengerPackageScreen> createState() =>
+      _DetailPassengerPackageScreenState();
 }
 
-class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
+class _DetailPassengerPackageScreenState
+    extends State<DetailPassengerPackageScreen> {
   final TextEditingController nameC = TextEditingController();
   final TextEditingController emailC = TextEditingController();
   final TextEditingController phoneC = TextEditingController();
@@ -133,9 +136,15 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
       return;
     }
 
+    String genderVal = "male";
+    if (_selectedTitle == "Nyonya" || _selectedTitle == "Nona") {
+      genderVal = "female";
+    }
+
     Map<String, dynamic> passengerData = {
       "full_name": nameC.text.trim(),
       "email": emailC.text.trim(),
+      "gender": genderVal,
       "phone_number": phoneC.text.trim(),
       "date_of_birth": dobC.text.trim(),
       "passport_number": passportNumC.text.trim(),
@@ -146,8 +155,10 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => PaymentMethodScreen(
-          flight: widget.flight,
+        builder: (context) => PaymentMethodPackageScreen(
+          packageId: widget.package.id ?? "",
+          packageName: widget.package.packageName,
+          packagePrice: widget.package.price,
           passengerData: passengerData,
         ),
       ),
@@ -156,24 +167,12 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isOutbound = widget.flight.isOutbound ?? true;
-    final String originCode = isOutbound ? "UPG" : "JED";
-    final String destCode = isOutbound ? "JED" : "UPG";
-    final String originCity = isOutbound ? "Makassar" : "Jeddah";
-    final String destCity = isOutbound ? "Jeddah" : "Makassar";
-    final String flightNo = widget.flight.flightNo ?? "Airline";
-
-    final String depTime = DateFormatter.formatTime(
-      widget.flight.departureTime,
-    );
-    final String depDateFull = _formatFullDate(widget.flight.departureTime);
-    final String priceText = _formatPrice(widget.flight.price);
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
+            // --- HEADER NAV ---
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Row(
@@ -198,7 +197,7 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                   ),
                   const SizedBox(width: 16),
                   const Text(
-                    "Rincian Penumpang",
+                    "Data Jamaah Paket",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -219,233 +218,22 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.shade200),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                    if (widget.package.departureFlight != null) ...[
+                      _buildFlightCard(
+                        widget.package.departureFlight!,
+                        "Penerbangan Keberangkatan",
                       ),
-                      child: Column(
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                    image: AssetImage(
-                                      'assets/images/logo_flydeal.png',
-                                    ),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Flydeal Air $flightNo",
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: const [
-                                        Icon(
-                                          Icons.work_outline,
-                                          size: 12,
-                                          color: Colors.black45,
-                                        ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          "25 Kg",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.black45,
-                                          ),
-                                        ),
-                                        SizedBox(width: 10),
-                                        Icon(
-                                          Icons.restaurant_menu,
-                                          size: 12,
-                                          color: Colors.black45,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: const Color(0xFF007BFF),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Ekonomi",
-                                  style: TextStyle(
-                                    color: Color(0xFF007BFF),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
+                      const SizedBox(height: 24),
+                    ],
 
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    originCode,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  Text(
-                                    originCity,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black45,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.grey.shade300,
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                      const Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                        ),
-                                        child: Icon(
-                                          Icons.flight_takeoff,
-                                          color: Color(0xFF0084FF),
-                                          size: 16,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.grey.shade300,
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    destCode,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  Text(
-                                    destCity,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black45,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Divider(color: Colors.grey.shade100, thickness: 1),
-                          const SizedBox(height: 12),
-
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 14,
-                                    color: Color(0xFF0084FF),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    DateFormatter.formatDate(
-                                      widget.flight.departureTime ?? '',
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.access_time_filled,
-                                    size: 14,
-                                    color: Color(0xFF0084FF),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    "$depTime WITA",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
+                    if (widget.package.returnFlight != null) ...[
+                      _buildFlightCard(
+                        widget.package.returnFlight!,
+                        "Penerbangan Kepulangan",
                       ),
-                    ),
+                      const SizedBox(height: 24),
+                    ],
 
-                    const SizedBox(height: 28),
                     const Text(
                       "Data Diri",
                       style: TextStyle(
@@ -554,7 +342,6 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
           ],
         ),
       ),
-
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         decoration: BoxDecoration(
@@ -594,7 +381,7 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              priceText,
+              _formatPrice(widget.package.price),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -609,6 +396,247 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFlightCard(FlightModel flight, String sectionTitle) {
+    final bool isOutbound = flight.isOutbound ?? true;
+    final String originCode = isOutbound ? "UPG" : "JED";
+    final String destCode = isOutbound ? "JED" : "UPG";
+    final String originCity = isOutbound ? "Makassar" : "Jeddah";
+    final String destCity = isOutbound ? "Jeddah" : "Makassar";
+    final String flightNo = flight.flightNo ?? "-";
+
+    final String depTime = DateFormatter.formatTime(flight.departureTime ?? '');
+    final String depDate = _formatFullDate(flight.departureTime);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          sectionTitle,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/logo_flydeal.png'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Flydeal Air $flightNo",
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: const [
+                            Icon(
+                              Icons.work_outline,
+                              size: 12,
+                              color: Colors.black45,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              "25 Kg",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.black45,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Icon(
+                              Icons.restaurant_menu,
+                              size: 12,
+                              color: Colors.black45,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF007BFF)),
+                      color: const Color(0xFF007BFF).withOpacity(0.05),
+                    ),
+                    child: const Text(
+                      "Ekonomi",
+                      style: TextStyle(
+                        color: Color(0xFF007BFF),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        originCode,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        originCity,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              color: Colors.grey.shade300,
+                              thickness: 1,
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4),
+                            child: Icon(
+                              Icons.flight_takeoff,
+                              color: Color(0xFF0084FF),
+                              size: 16,
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              color: Colors.grey.shade300,
+                              thickness: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        destCode,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        destCity,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Divider(color: Colors.grey.shade100, thickness: 1),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 14,
+                        color: Color(0xFF0084FF),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        depDate,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time_filled,
+                        size: 14,
+                        color: Color(0xFF0084FF),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "$depTime WITA",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

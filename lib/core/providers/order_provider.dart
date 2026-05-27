@@ -180,4 +180,40 @@ class OrderProvider extends ChangeNotifier {
       throw Exception(e.toString().replaceAll("Exception: ", ""));
     }
   }
+
+  Future<bool> processPackageCheckout(Map<String, dynamic> payload) async {
+    _isLoading = true;
+    _errorMessage = '';
+    _gatewayUrl = '';
+    _lastOrderId = '';
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isEmpty) throw Exception("Sesi login tidak ditemukan.");
+
+      final orderResponse = await _orderService.createPackageOrder(
+        payload,
+        token,
+      );
+      _lastOrderId = orderResponse['id'] ?? '';
+      _lastOrder = OrderModel.fromJson(orderResponse);
+
+      final paymentResponse = await _orderService.initiatePayment(
+        _lastOrderId,
+        token,
+      );
+      _gatewayUrl = paymentResponse['gateway_url'] ?? '';
+
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll("Exception: ", "");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

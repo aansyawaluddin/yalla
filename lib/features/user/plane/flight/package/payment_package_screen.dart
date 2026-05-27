@@ -1,29 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:yalla/core/models/flight_model.dart';
+import 'package:flutter/services.dart';
 import 'package:yalla/core/models/order_model.dart';
-import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/animated/animated_payment_bottomBar.dart';
 import 'package:yalla/core/widgets/animated/countdown_timer.dart';
-import 'package:yalla/features/user/home/home_screen.dart';
+import 'package:yalla/features/user/plane/flight/package/payment_succes_screen.dart';
 
-class PaymentScreen extends StatelessWidget {
-  final FlightModel flight;
-  final num paymentAmount;
+class PaymentPackageScreen extends StatefulWidget {
+  final String packageName;
+  final int paymentAmount;
   final DateTime paymentDeadline;
+  final String orderId;
   final OrderModel order;
 
-  const PaymentScreen({
+  const PaymentPackageScreen({
     super.key,
-    required this.flight,
+    required this.packageName,
     required this.paymentAmount,
     required this.paymentDeadline,
+    required this.orderId,
     required this.order,
   });
 
-  String _formatPrice(num? price) {
-    if (price == null || price == 0) return "IDR 0";
-    String s = price.toInt().toString();
+  @override
+  State<PaymentPackageScreen> createState() => _PaymentPackageScreenState();
+}
+
+class _PaymentPackageScreenState extends State<PaymentPackageScreen> {
+  String _formatPrice(int price) {
+    String s = price.toString();
     String res = "";
     for (int i = 0; i < s.length; i++) {
       res += s[i];
@@ -32,22 +36,8 @@ class PaymentScreen extends StatelessWidget {
     return "IDR $res";
   }
 
-  String _calculateDuration(String? dep, String? arr) {
-    if (dep == null || arr == null) return "-";
-    try {
-      final d = DateTime.parse(dep);
-      final a = DateTime.parse(arr);
-      final diff = a.difference(d);
-      final hours = diff.inHours;
-      final mins = diff.inMinutes.remainder(60);
-      return "${hours}j ${mins}m";
-    } catch (e) {
-      return "-";
-    }
-  }
-
   String _formatPaymentDeadline() {
-    final date = paymentDeadline;
+    final date = widget.paymentDeadline;
     const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     const months = [
       'Jan',
@@ -74,29 +64,21 @@ class PaymentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isOutbound = flight.isOutbound ?? true;
-    final String originCode = isOutbound ? "UPG" : "JED";
-    final String destCode = isOutbound ? "JED" : "UPG";
-    final String originCity = isOutbound ? "Makassar" : "Jeddah";
-    final String destCity = isOutbound ? "Jeddah" : "Makassar";
-    final String flightNo = flight.flightNo ?? "-";
-    final String duration = _calculateDuration(
-      flight.departureTime,
-      flight.arrivalTime,
-    );
-    final String priceText = _formatPrice(paymentAmount);
-    final String deadlineText = _formatPaymentDeadline();
+    final String orderIdShort = widget.orderId.length > 8
+        ? widget.orderId.substring(0, 8).toUpperCase()
+        : widget.orderId.toUpperCase();
 
-    final orderProvider = context.read<OrderProvider>();
-    final String orderIdShort = orderProvider.lastOrderId.isNotEmpty
-        ? orderProvider.lastOrderId.substring(0, 8).toUpperCase()
-        : "TRV99281";
+    final String deadlineText = _formatPaymentDeadline();
+    final String priceText = _formatPrice(widget.paymentAmount);
+
+    const String virtualAccountNumber = "988 3305 3013 3818 1782";
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
+            // Header — ikuti PaymentScreen
             Padding(
               padding: const EdgeInsets.only(
                 top: 16,
@@ -121,20 +103,12 @@ class PaymentScreen extends StatelessWidget {
                         color: Color(0xFF0084FF),
                         size: 18,
                       ),
-                      onPressed: () {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
-                          ),
-                          (route) => false,
-                        );
-                      },
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ),
                   const SizedBox(width: 16),
                   const Text(
-                    "Pembayaran",
+                    "Pembayaran Paket",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -192,27 +166,26 @@ class PaymentScreen extends StatelessWidget {
                                 width: 48,
                                 height: 48,
                                 decoration: BoxDecoration(
+                                  color: const Color(0xFFF0F8FF),
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: const Color(0xffDADADA),
                                   ),
-                                  image: const DecorationImage(
-                                    image: AssetImage(
-                                      'assets/images/logo_flydeal.png',
-                                    ),
-                                    fit: BoxFit.cover,
-                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.mosque,
+                                  color: Color(0xFF0084FF),
+                                  size: 24,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                flex: 3,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      "Flydeal Air",
-                                      style: TextStyle(
+                                    Text(
+                                      widget.packageName,
+                                      style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black87,
@@ -220,75 +193,11 @@ class PaymentScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      "$flightNo  •  Ekonomi",
+                                      "Paket Perjalanan Umrah",
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: Colors.grey.shade500,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                flex: 4,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      children: [
-                                        Text(
-                                          originCode,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        Text(
-                                          originCity,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [
-                                        Container(
-                                          width: 30,
-                                          height: 1,
-                                          color: Colors.grey.shade400,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          duration,
-                                          style: const TextStyle(
-                                            fontSize: 8,
-                                            color: Colors.black38,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [
-                                        Text(
-                                          destCode,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        Text(
-                                          destCity,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      ],
                                     ),
                                   ],
                                 ),
@@ -365,10 +274,10 @@ class PaymentScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               Row(
-                                children: const [
-                                  Expanded(
+                                children: [
+                                  const Expanded(
                                     child: Text(
-                                      "988 3305 3013 3818 1782",
+                                      virtualAccountNumber,
                                       style: TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w900,
@@ -376,15 +285,25 @@ class PaymentScreen extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: 8),
-                                  Icon(
-                                    Icons.copy,
-                                    color: Colors.black87,
-                                    size: 20,
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Clipboard.setData(
+                                        const ClipboardData(
+                                          text: virtualAccountNumber,
+                                        ),
+                                      );
+                                    },
+                                    child: const Icon(
+                                      Icons.copy,
+                                      color: Colors.black87,
+                                      size: 20,
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 20),
+                              // BNI badge — ikuti PaymentScreen
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: Row(
@@ -419,7 +338,9 @@ class PaymentScreen extends StatelessWidget {
                         Positioned(
                           top: -20,
                           right: 20,
-                          child: CountdownTimer(deadline: paymentDeadline),
+                          child: CountdownTimer(
+                            deadline: widget.paymentDeadline,
+                          ),
                         ),
                       ],
                     ),
@@ -433,7 +354,20 @@ class PaymentScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: AnimatedPaymentBottomBar(order: order),
+      bottomNavigationBar: AnimatedPaymentBottomBar(
+        orderId: widget.orderId,
+        loadingText: "Menunggu Pembayaran Paket Umrah...",
+        successText: "Transaksi Paket Berhasil! 🥳",
+        onSuccess: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  PaymentSuccessPackageScreen(order: widget.order),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -472,7 +406,12 @@ class PaymentScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                "1. Masukkan Kartu ATM BNI & PIN\n2. Pilih menu Lainnya > Transfer\n3. Pilih jenis rekening asal dan pilih Virtual Account Billing\n4. Masukkan nomor Virtual Account\n5. Tagihan yang harus dibayarkan akan muncul pada layar\n6. Konfirmasi pembayaran",
+                "1. Masukkan Kartu ATM BNI & PIN\n"
+                "2. Pilih menu Lainnya > Transfer\n"
+                "3. Pilih jenis rekening asal dan pilih Virtual Account Billing\n"
+                "4. Masukkan nomor Virtual Account\n"
+                "5. Tagihan yang harus dibayarkan akan muncul pada layar\n"
+                "6. Konfirmasi pembayaran",
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,

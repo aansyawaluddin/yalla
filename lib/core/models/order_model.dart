@@ -1,4 +1,5 @@
 import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/models/package_model.dart';
 
 class PaymentDetailModel {
   final String? gatewayOrderId;
@@ -65,6 +66,7 @@ class OrderModel {
   final FlightModel? flight;
   final FlightModel? returnFlight;
   final String? manifestUrl;
+  final PackageModel? package;
 
   OrderModel({
     required this.id,
@@ -82,6 +84,7 @@ class OrderModel {
     this.flight,
     this.returnFlight,
     this.manifestUrl,
+    this.package,
   });
 
 
@@ -102,6 +105,7 @@ class OrderModel {
       flight: null,
       returnFlight: null,
       manifestUrl: null,
+      package: null,
     );
   }
 
@@ -135,6 +139,9 @@ class OrderModel {
           ? FlightModel.fromJson(json['return_flight'])
           : null,
       manifestUrl: json['manifest_url'],
+      package: json['package'] != null
+          ? PackageModel.fromJson(json['package'])
+          : null,
     );
   }
 }

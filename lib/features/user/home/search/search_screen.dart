@@ -7,7 +7,7 @@ import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/features/user/home/travel/travel_profile_screen.dart';
-import 'package:yalla/features/user/plane/flight/detail_flight_screen.dart';
+import 'package:yalla/features/user/plane/flight/oneWay/detail_flight_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});

@@ -183,4 +183,30 @@ class OrderService {
       }
     }
   }
+
+  Future<Map<String, dynamic>> createPackageOrder(
+    Map<String, dynamic> payload,
+    String token,
+  ) async {
+    final url = Uri.parse('$_baseUrl/orders');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(
+        error['message'] ?? error['error'] ?? 'Gagal membuat pesanan paket.',
+      );
+    }
+  }
 }

@@ -6,7 +6,7 @@ import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/payment_button.dart';
 import 'package:yalla/core/widgets/modals/payment_method.dart';
 import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
-import 'package:yalla/features/user/plane/flight/payment_screen.dart';
+import 'package:yalla/features/user/plane/flight/oneWay/payment_screen.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   final FlightModel flight;

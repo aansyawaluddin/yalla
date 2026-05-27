@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
-import 'package:yalla/features/user/plane/flight/detail_passenger_screen.dart';
+import 'package:yalla/features/user/plane/flight/oneWay/detail_passenger_screen.dart';
 
 class DetailFlightScreen extends StatelessWidget {
   final FlightModel flight;

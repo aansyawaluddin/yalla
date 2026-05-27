@@ -5,6 +5,7 @@ import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/core/widgets/paket/facility_item.dart';
+import 'package:yalla/features/user/plane/flight/package/detail_passenger_package_screen.dart';
 
 class DetailPaketScreen extends StatefulWidget {
   final String packageId;
@@ -185,10 +186,7 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withOpacity(1), 
-                        Colors.transparent,
-                      ],
+                      colors: [Colors.black.withOpacity(1), Colors.transparent],
                       stops: const [0.0, 1.0],
                     ),
                   ),
@@ -491,7 +489,18 @@ class _DetailPaketScreenState extends State<DetailPaketScreen> {
         child: SafeArea(
           child: PrimaryGradientButton(
             text: "Lanjutkan Pemesanan",
-            onPressed: () {},
+            onPressed: () {
+              if (packageData != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DetailPassengerPackageScreen(
+                      package: packageData, 
+                    ),
+                  ),
+                );
+              }
+            },
           ),
         ),
       ),

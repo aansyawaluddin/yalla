@@ -11,7 +11,7 @@ import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/core/widgets/modals/calendar_bottom_sheet.dart';
 import 'package:yalla/core/widgets/modals/passenger_class_bottom_sheet.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
-import 'package:yalla/features/user/plane/flight/list_flight_screen.dart';
+import 'package:yalla/features/user/plane/flight/oneWay/list_flight_screen.dart';
 
 class HomePlaneUserScreen extends StatefulWidget {
   const HomePlaneUserScreen({super.key});

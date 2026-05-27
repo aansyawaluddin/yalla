@@ -2,15 +2,22 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
-import 'package:yalla/features/user/plane/flight/payment_succes_screen.dart';
 
 class AnimatedPaymentBottomBar extends StatefulWidget {
-  final OrderModel order;
+  final String orderId;
+  final String loadingText;
+  final String successText;
+  final VoidCallback onSuccess;
 
-  const AnimatedPaymentBottomBar({super.key, required this.order});
+  const AnimatedPaymentBottomBar({
+    super.key,
+    required this.orderId,
+    required this.loadingText,
+    required this.successText,
+    required this.onSuccess,
+  });
 
   @override
   State<AnimatedPaymentBottomBar> createState() =>
@@ -46,20 +53,7 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
           if (status == AnimationStatus.completed) {
             Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) =>
-                        PaymentSuccessScreen(order: widget.order),
-                    transitionsBuilder:
-                        (context, animation, secondaryAnimation, child) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          );
-                        },
-                  ),
-                );
+                widget.onSuccess(); 
               }
             });
           }
@@ -67,8 +61,7 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
 
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
-        // Gunakan widget.order.id langsung, lebih reliable dari provider
-        _checkInitialStatus(widget.order.id);
+        _checkInitialStatus(widget.orderId);
       }
     });
   }
@@ -94,14 +87,12 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
     if (!mounted) return;
 
     if (currentStatus == 'approved' || currentStatus == 'finished') {
-      // Sudah approved/finished — langsung trigger sukses tanpa animasi loading
       setState(() {
         _isLoading = false;
         _isSuccess = true;
       });
       _successController.forward(from: 0);
     } else {
-      // Belum approved — jalankan animasi loading + polling seperti biasa
       _startPaymentAnimation();
     }
   }
@@ -118,7 +109,7 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
 
   void _startOrderStatusPolling() {
     final orderProvider = context.read<OrderProvider>();
-    final String orderId = widget.order.id;
+    final String orderId = widget.orderId;
 
     if (orderId.isEmpty) return;
 
@@ -237,11 +228,11 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
                       children: [
                         Opacity(
                           opacity: textOpacity,
-                          child: const Align(
+                          child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              "Menunggu Pembayaran...",
-                              style: TextStyle(
+                              widget.loadingText, 
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.black54,
                                 fontWeight: FontWeight.w400,
@@ -360,10 +351,10 @@ class _AnimatedPaymentBottomBarState extends State<AnimatedPaymentBottomBar>
                   child: const Icon(Icons.check, size: 14, color: Colors.white),
                 ),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    "Transaksi Berhasil! 🥳",
-                    style: TextStyle(
+                    widget.successText, 
+                    style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF4CAF50),
                       fontWeight: FontWeight.bold,
