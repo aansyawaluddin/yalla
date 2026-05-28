@@ -92,7 +92,7 @@ class ProfileScreen extends StatelessWidget {
                       // Icon Logout sebagai pengganti logo G
                       CircleAvatar(
                         radius: 16,
-                        backgroundColor: Color(0xFFFEE2E2), 
+                        backgroundColor: Color(0xFFFEE2E2),
                         child: Icon(
                           Icons.logout_rounded,
                           color: Color(0xFFEF4444),
@@ -154,9 +154,7 @@ class ProfileScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(context, true),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(
-                            0xFFEF4444,
-                          ), 
+                          backgroundColor: const Color(0xFFEF4444),
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -218,6 +216,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           SafeArea(
+            bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

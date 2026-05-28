@@ -14,6 +14,7 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   int _selectedTabIndex = 0;
+  String _selectedCategory = "Semua";
 
   @override
   void initState() {
@@ -23,14 +24,32 @@ class _OrderScreenState extends State<OrderScreen> {
     });
   }
 
+  List<OrderModel> _applyFilter(List<OrderModel> orders) {
+    switch (_selectedCategory) {
+      case "Pesawat":
+        return orders.where((o) => o.package == null).toList();
+      case "Paket":
+        return orders.where((o) => o.package != null).toList();
+      case "Hotel":
+        return [];
+      case "Visa":
+        return [];
+      case "Semua":
+      default:
+        return orders;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<OrderProvider>();
     final isLoading = provider.isLoading;
 
-    final List<OrderModel> currentOrders = _selectedTabIndex == 0
+    final List<OrderModel> baseOrders = _selectedTabIndex == 0
         ? provider.activeOrders
         : provider.historyOrders;
+
+    final List<OrderModel> currentOrders = _applyFilter(baseOrders);
 
     return Scaffold(
       extendBody: true,
@@ -100,14 +119,16 @@ class _OrderScreenState extends State<OrderScreen> {
                       : currentOrders.isEmpty
                       ? Center(
                           child: Text(
-                            _selectedTabIndex == 0
-                                ? "Belum ada pesanan aktif."
-                                : "Belum ada riwayat pesanan.",
+                            _selectedCategory == "Semua"
+                                ? (_selectedTabIndex == 0
+                                      ? "Belum ada pesanan aktif."
+                                      : "Belum ada riwayat pesanan.")
+                                : "Tidak ada pesanan untuk kategori ini.",
                             style: const TextStyle(color: Colors.grey),
                           ),
                         )
                       : ListView.builder(
-                            padding: const EdgeInsets.only(
+                          padding: const EdgeInsets.only(
                             left: 20.0,
                             right: 20.0,
                             top: 2.0,
@@ -116,8 +137,7 @@ class _OrderScreenState extends State<OrderScreen> {
                           physics: const BouncingScrollPhysics(),
                           itemCount: currentOrders.length,
                           itemBuilder: (context, index) {
-                            final orderData = currentOrders[index];
-                            return OrderFlightCard(order: orderData);
+                            return OrderFlightCard(order: currentOrders[index]);
                           },
                         ),
                 ),
@@ -210,7 +230,7 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   Widget _buildCategoryChips() {
-    List<String> categories = ["Semua", "Pesawat", "Hotel", "Visa"];
+    List<String> categories = ["Semua", "Pesawat", "Paket", "Hotel", "Visa"];
     return Padding(
       padding: const EdgeInsets.only(left: 24.0, right: 10.0),
       child: Row(
@@ -220,19 +240,22 @@ class _OrderScreenState extends State<OrderScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: categories.map((cat) {
-                  bool isActive = cat == "Semua";
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 20.0),
-                    child: Text(
-                      cat,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isActive
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        color: isActive
-                            ? const Color(0xFF004CBF)
-                            : Colors.grey.shade500,
+                  bool isActive = _selectedCategory == cat;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedCategory = cat),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 20.0),
+                      child: Text(
+                        cat,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isActive
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          color: isActive
+                              ? const Color(0xFF004CBF)
+                              : Colors.grey.shade500,
+                        ),
                       ),
                     ),
                   );

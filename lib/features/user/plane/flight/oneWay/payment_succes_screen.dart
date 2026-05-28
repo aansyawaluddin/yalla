@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/models/order_model.dart';
-import 'package:yalla/features/user/plane/flight/oneWay/ticket_detail_page.dart';
+import 'package:yalla/features/user/plane/flight/oneWay/ticket_detail_screen.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   final OrderModel order;
@@ -286,7 +286,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                 final screenH = MediaQuery.of(context).size.height;
                 return Transform.translate(
                   offset: Offset(0, slide * screenH * 0.6),
-                  child: TicketDetailPage(
+                  child: TicketDetailScreen(
                     barcodeOpacity: _barcodeOpacity,
                     barcodeSlide: _barcodeSlide,
                     order: widget.order,

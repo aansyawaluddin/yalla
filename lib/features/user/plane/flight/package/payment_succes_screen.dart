@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/models/order_model.dart';
+import 'package:yalla/features/user/plane/flight/package/package_ticket_detail_screen.dart';
 // TODO: Sesuaikan import ini dengan halaman E-Ticket khusus Paket Anda
 // import 'package:yalla/features/user/paket/package_ticket_detail_page.dart';
 
@@ -290,21 +291,11 @@ class _PaymentSuccessPackageScreenState
                 final screenH = MediaQuery.of(context).size.height;
                 return Transform.translate(
                   offset: Offset(0, slide * screenH * 0.6),
-
-                  // ---> GANTI WIDGET INI DENGAN TIKET PAKET ANDA NANTINYA <---
-                  child: Container(
-                    color: Colors.white,
-                    child: Center(
-                      child: Text("Halaman E-Ticket Paket Akan Tampil Di Sini"),
-                    ),
+                  child: PackageTicketDetailScreen(
+                    barcodeOpacity: _barcodeOpacity,
+                    barcodeSlide: _barcodeSlide,
+                    order: widget.order,
                   ),
-
-                  // Contoh jika Anda sudah membuat PackageTicketDetailPage:
-                  // child: PackageTicketDetailPage(
-                  //   barcodeOpacity: _barcodeOpacity,
-                  //   barcodeSlide: _barcodeSlide,
-                  //   order: widget.order,
-                  // ),
                 );
               },
             ),

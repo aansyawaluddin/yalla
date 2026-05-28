@@ -9,12 +9,12 @@ import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 
-class TicketDetailPage extends StatelessWidget {
+class TicketDetailScreen extends StatelessWidget {
   final Animation<double> barcodeOpacity;
   final Animation<double> barcodeSlide;
   final OrderModel order;
 
-  const TicketDetailPage({
+  const TicketDetailScreen({
     super.key,
     required this.barcodeOpacity,
     required this.barcodeSlide,

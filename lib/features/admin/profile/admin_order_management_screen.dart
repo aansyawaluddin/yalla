@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/widgets/card/profile_card.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/models/order_model.dart';
@@ -968,26 +969,43 @@ class _AdminOrderManagementScreenState
         : order.id.toUpperCase();
 
     final String bookingName = order.passengers.isNotEmpty
-        ? (order.passengers.first.fullName)
+        ? order.passengers.first.fullName
         : "Pesanan Tiket";
 
-    final flight = order.flight ?? order.returnFlight;
+    final bool isPackageOrder = order.package != null;
+    final bool isActive = order.status != 'postponed';
+
+    final flight =
+        order.package?.departureFlight ??
+        order.package?.returnFlight ??
+        order.flight ??
+        order.returnFlight;
+    final FlightModel? returnFlight = order.package?.returnFlight;
+
     final bool isOutbound = flight?.isOutbound ?? true;
-    final String routeText = isOutbound
+    final String routeText = isPackageOrder
+        ? "Makassar (UPG) - Jeddah (JED)"
+        : isOutbound
         ? "Makassar (UPG) - Jeddah (JED)"
         : "Jeddah (JED) - Makassar (UPG)";
     final String depDate = _formatDateShort(flight?.departureTime);
-    final bool isActive = order.status != 'postponed';
+    final String retDate = isPackageOrder
+        ? _formatDateShort(returnFlight?.departureTime)
+        : "-";
 
     return GestureDetector(
       onTap: () => _showOrderDetailModal(context, order),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(
+            color: isPackageOrder
+                ? const Color(0xFF0084FF).withOpacity(0.25)
+                : Colors.grey.shade200,
+            width: isPackageOrder ? 1.5 : 1.0,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.02),
@@ -999,272 +1017,420 @@ class _AdminOrderManagementScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Stack(
-                  children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey.shade100,
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        color: Colors.grey,
-                        size: 24,
-                      ),
-                    ),
-                    if (isActive)
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1CB002),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                        ),
-                      ),
-                  ],
+            if (isPackageOrder)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        bookingName,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF0F8FF),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.mosque,
+                      size: 13,
+                      color: Color(0xFF0084FF),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        order.package?.packageName ?? "Paket Umrah",
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: Color(0xFF0084FF),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        "Booking ID: #BK - $shortBookingId",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
+                    ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 8,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: statusConfig['bgColor'],
+                        color: const Color(0xFF0084FF).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        statusConfig['text'],
-                        style: TextStyle(
-                          color: statusConfig['textColor'],
-                          fontSize: 11,
+                        "${order.package?.durationDays ?? 0} Hari",
+                        style: const TextStyle(
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
+                          color: Color(0xFF0084FF),
                         ),
                       ),
                     ),
-                    if (order.status == 'approved' ||
-                        order.status == 'finished') ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                  ],
+                ),
+              ),
+
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Stack(
                         children: [
-                          Icon(
-                            order.manifestUrl != null
-                                ? Icons.task_alt_rounded
-                                : Icons.upload_file_outlined,
-                            size: 11,
-                            color: order.manifestUrl != null
-                                ? const Color(0xFF4CAF50)
-                                : Colors.orange,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            order.manifestUrl != null
-                                ? "Manifest"
-                                : "Belum ada manifest",
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: order.manifestUrl != null
-                                  ? const Color(0xFF4CAF50)
-                                  : Colors.orange,
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.grey.shade100,
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: const Icon(
+                              Icons.person,
+                              color: Colors.grey,
+                              size: 24,
                             ),
                           ),
+                          if (isActive)
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1CB002),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              bookingName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Booking ID: #BK - $shortBookingId",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusConfig['bgColor'],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              statusConfig['text'],
+                              style: TextStyle(
+                                color: statusConfig['textColor'],
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          if (order.status == 'approved' ||
+                              order.status == 'finished') ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  order.manifestUrl != null
+                                      ? Icons.task_alt_rounded
+                                      : Icons.upload_file_outlined,
+                                  size: 11,
+                                  color: order.manifestUrl != null
+                                      ? const Color(0xFF4CAF50)
+                                      : Colors.orange,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  order.manifestUrl != null
+                                      ? "Manifest"
+                                      : "Belum ada manifest",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: order.manifestUrl != null
+                                        ? const Color(0xFF4CAF50)
+                                        : Colors.orange,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ],
-                  ],
-                ),
-              ],
-            ),
+                  ),
 
-            const SizedBox(height: 16),
-            Divider(color: Colors.grey.shade100, thickness: 1.5),
-            const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                  Divider(color: Colors.grey.shade100, thickness: 1.5),
+                  const SizedBox(height: 12),
 
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.flight_takeoff,
-                      size: 16,
-                      color: Colors.grey.shade400,
+                  if (isPackageOrder) ...[
+                    _buildFlightRow(
+                      icon: Icons.flight_takeoff,
+                      label: "Berangkat",
+                      route: "Makassar (UPG) → Jeddah (JED)",
+                      date: depDate,
+                      flightNo: flight?.flightNo,
+                      color: const Color(0xFF0084FF),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        routeText,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                    const SizedBox(height: 10),
+                    _buildFlightRow(
+                      icon: Icons.flight_land,
+                      label: "Pulang",
+                      route: "Jeddah (JED) → Makassar (UPG)",
+                      date: retDate,
+                      flightNo: returnFlight?.flightNo,
+                      color: const Color(0xFF7C3AED),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 16,
-                          color: Colors.grey.shade400,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          depDate,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      "Total",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade400,
-                      ),
+                  ] else ...[
+                    // Tiket biasa: satu baris dengan style yang sama
+                    _buildFlightRow(
+                      icon: isOutbound
+                          ? Icons.flight_takeoff
+                          : Icons.flight_land,
+                      label: isOutbound ? "Berangkat" : "Pulang",
+                      route: routeText,
+                      date: depDate,
+                      flightNo: flight?.flightNo,
+                      color: isOutbound
+                          ? const Color(0xFF0084FF)
+                          : const Color(0xFF7C3AED),
                     ),
                   ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.people_outline,
-                          size: 16,
-                          color: Colors.grey.shade400,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "${order.passengers.length} Orang",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      _formatPrice(order.price),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF007BFF),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AdminOrderDetailScreen(order: order),
-                      ),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F5FF),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: const Color(0xFF004CB9).withOpacity(0.2),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
+
+                  const SizedBox(height: 10),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Row(
                         children: [
                           Icon(
                             Icons.people_outline,
-                            size: 13,
-                            color: Color(0xFF004CB9),
+                            size: 16,
+                            color: Colors.grey.shade400,
                           ),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Text(
-                            "Detail Passenger",
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF004CB9),
+                            "${order.passengers.length} Orang",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
                             ),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 10,
-                            color: Color(0xFF004CB9),
                           ),
                         ],
                       ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "Total",
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey.shade400,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            _formatPrice(order.price),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF007BFF),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AdminOrderDetailScreen(order: order),
+                        ),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F5FF),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFF004CB9).withOpacity(0.2),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: 13,
+                              color: Color(0xFF004CB9),
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              "Detail Passenger",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF004CB9),
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 10,
+                              color: Color(0xFF004CB9),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFlightRow({
+    required IconData icon,
+    required String label,
+    required String route,
+    required String date,
+    required Color color,
+    String? flightNo,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.12)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 15, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  route,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      date,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    if (flightNo != null) ...[
+                      Text(
+                        "  •  ",
+                        style: TextStyle(color: Colors.grey.shade400),
+                      ),
+                      Text(
+                        flightNo,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
