@@ -1204,37 +1204,156 @@ class _AdminOrderManagementScreenState
                   Divider(color: Colors.grey.shade100, thickness: 1.5),
                   const SizedBox(height: 12),
 
+                  // ── Flight Info ──
                   if (isPackageOrder) ...[
-                    _buildFlightRow(
-                      icon: Icons.flight_takeoff,
-                      label: "Berangkat",
-                      route: "Makassar (UPG) → Jeddah (JED)",
-                      date: depDate,
-                      flightNo: flight?.flightNo,
-                      color: const Color(0xFF0084FF),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.flight_takeoff,
+                          size: 16,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            "Makassar (UPG) → Jeddah (JED)",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 24),
+                      child: Row(
+                        children: [
+                          Text(
+                            depDate,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                          if (flight?.flightNo != null) ...[
+                            Text(
+                              "  •  ",
+                              style: TextStyle(color: Colors.grey.shade400),
+                            ),
+                            Text(
+                              flight!.flightNo!,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF0084FF),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 10),
-                    _buildFlightRow(
-                      icon: Icons.flight_land,
-                      label: "Pulang",
-                      route: "Jeddah (JED) → Makassar (UPG)",
-                      date: retDate,
-                      flightNo: returnFlight?.flightNo,
-                      color: const Color(0xFF7C3AED),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.flight_land,
+                          size: 16,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            "Jeddah (JED) → Makassar (UPG)",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 24),
+                      child: Row(
+                        children: [
+                          Text(
+                            retDate,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                          if (returnFlight?.flightNo != null) ...[
+                            Text(
+                              "  •  ",
+                              style: TextStyle(color: Colors.grey.shade400),
+                            ),
+                            Text(
+                              returnFlight!.flightNo!,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF7C3AED),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ] else ...[
-                    // Tiket biasa: satu baris dengan style yang sama
-                    _buildFlightRow(
-                      icon: isOutbound
-                          ? Icons.flight_takeoff
-                          : Icons.flight_land,
-                      label: isOutbound ? "Berangkat" : "Pulang",
-                      route: routeText,
-                      date: depDate,
-                      flightNo: flight?.flightNo,
-                      color: isOutbound
-                          ? const Color(0xFF0084FF)
-                          : const Color(0xFF7C3AED),
+                    Row(
+                      children: [
+                        Icon(
+                          isOutbound ? Icons.flight_takeoff : Icons.flight_land,
+                          size: 16,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            routeText,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 24),
+                      child: Row(
+                        children: [
+                          Text(
+                            depDate,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                          if (flight?.flightNo != null) ...[
+                            Text(
+                              "  •  ",
+                              style: TextStyle(color: Colors.grey.shade400),
+                            ),
+                            Text(
+                              flight!.flightNo!,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF0084FF),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
 
@@ -1343,94 +1462,6 @@ class _AdminOrderManagementScreenState
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildFlightRow({
-    required IconData icon,
-    required String label,
-    required String route,
-    required String date,
-    required Color color,
-    String? flightNo,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.12)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 15, color: color),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  route,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Text(
-                      date,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                    if (flightNo != null) ...[
-                      Text(
-                        "  •  ",
-                        style: TextStyle(color: Colors.grey.shade400),
-                      ),
-                      Text(
-                        flightNo,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: color,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
