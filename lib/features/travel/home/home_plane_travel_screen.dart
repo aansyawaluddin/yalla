@@ -10,6 +10,7 @@ import 'package:yalla/core/widgets/card/travel_card.dart';
 import 'package:yalla/core/widgets/modals/calendar_bottom_sheet.dart';
 import 'package:yalla/core/widgets/modals/passenger_class_bottom_sheet.dart';
 import 'package:yalla/core/widgets/eror/error_state_widget.dart';
+import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 import 'package:yalla/features/travel/home/list_flight_travel_screen.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
 
@@ -23,6 +24,7 @@ class HomePlaneTravelScreen extends StatefulWidget {
 class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
   bool isOneWay = true;
   DateTime _selectedDate = DateTime.now();
+  DateTime? _returnDate;
   bool _isOutboundRoute = true;
 
   @override
@@ -54,6 +56,26 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
     String day = date.day.toString().padLeft(2, '0');
     String monthName = months[date.month - 1];
     return "$dayName, $day $monthName ${date.year}";
+  }
+
+  String _formatDateNullable(DateTime? date) {
+    if (date == null) return "Pilih";
+    const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    return "${days[date.weekday - 1]}, ${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]}";
   }
 
   @override
@@ -136,9 +158,9 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Column(
+                            const Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
                                   "Selamat Datang,",
                                   style: TextStyle(
@@ -264,9 +286,12 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                 ),
                                 child: IconButton(
                                   onPressed: () {
-                                    setState(() {
-                                      _isOutboundRoute = !_isOutboundRoute;
-                                    });
+                                    // Hanya bisa swap jika sekali jalan
+                                    if (isOneWay) {
+                                      setState(() {
+                                        _isOutboundRoute = !_isOutboundRoute;
+                                      });
+                                    }
                                   },
                                   icon: const Icon(
                                     Icons.swap_vert,
@@ -281,40 +306,71 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
 
                         const SizedBox(height: 16),
 
+                        // Date & passenger input
                         Row(
                           children: [
                             Expanded(
                               child: GestureDetector(
                                 onTap: () async {
-                                  // ✅ Ganti type ke Map<String, dynamic>
-                                  final result =
-                                      await showModalBottomSheet<
-                                        Map<String, dynamic>
-                                      >(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context) {
-                                          return CalendarBottomSheet(
-                                            flights: flightList,
-                                            isOutbound: _isOutboundRoute,
-                                          );
-                                        },
-                                      );
-
-                                  // ✅ Ambil date dan isOutbound dari result
-                                  if (result != null) {
-                                    setState(() {
-                                      _selectedDate =
-                                          result['date'] as DateTime;
-                                      _isOutboundRoute =
-                                          result['isOutbound'] as bool;
-                                    });
+                                  if (isOneWay) {
+                                    final result =
+                                        await showModalBottomSheet<
+                                          Map<String, dynamic>
+                                        >(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) {
+                                            return CalendarBottomSheet(
+                                              flights: flightList,
+                                              isOutbound: _isOutboundRoute,
+                                              isRangeMode: false,
+                                            );
+                                          },
+                                        );
+                                    if (result != null) {
+                                      setState(() {
+                                        _selectedDate =
+                                            result['date'] as DateTime;
+                                        _isOutboundRoute =
+                                            result['isOutbound'] as bool;
+                                        _returnDate = null;
+                                      });
+                                    }
+                                  } else {
+                                    final result =
+                                        await showModalBottomSheet<
+                                          Map<String, dynamic>
+                                        >(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) {
+                                            return CalendarBottomSheet(
+                                              flights: flightList,
+                                              isOutbound: true,
+                                              isRangeMode: true,
+                                            );
+                                          },
+                                        );
+                                    if (result != null) {
+                                      setState(() {
+                                        _selectedDate =
+                                            result['departureDate'] as DateTime;
+                                        _returnDate =
+                                            result['returnDate'] as DateTime?;
+                                        _isOutboundRoute = true;
+                                      });
+                                    }
                                   }
                                 },
                                 child: _buildSmallInputCard(
-                                  label: "Tanggal Keberangkatan",
-                                  value: _formatDate(_selectedDate),
+                                  label: isOneWay
+                                      ? "Tanggal Keberangkatan"
+                                      : "Berangkat → Pulang",
+                                  value: isOneWay
+                                      ? _formatDate(_selectedDate)
+                                      : "${_formatDateNullable(_selectedDate)} → ${_formatDateNullable(_returnDate)}",
                                   icon: Icons.calendar_today_outlined,
                                 ),
                               ),
@@ -343,10 +399,20 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                         ),
 
                         const SizedBox(height: 24),
+
                         PrimaryGradientButton(
                           text: "Cari Penerbangan",
                           icon: Icons.search,
                           onPressed: () {
+                            if (!isOneWay && _returnDate == null) {
+                              CustomSnackBar.showError(
+                                context,
+                                title: "Tanggal Belum Lengkap",
+                                message:
+                                    "Pilih tanggal pulang terlebih dahulu.",
+                              );
+                              return;
+                            }
                             Navigator.push(
                               context,
                               PageRouteBuilder(
@@ -361,6 +427,8 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                         ListFlightTravelScreen(
                                           selectedDate: _selectedDate,
                                           isOutbound: _isOutboundRoute,
+                                          isRoundTrip: !isOneWay,
+                                          returnDate: _returnDate,
                                         ),
                                 transitionsBuilder:
                                     (
@@ -369,12 +437,11 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                       secondaryAnimation,
                                       child,
                                     ) {
-                                      var curvedAnimation = CurvedAnimation(
-                                        parent: animation,
-                                        curve: Curves.easeOut,
-                                      );
                                       return FadeTransition(
-                                        opacity: curvedAnimation,
+                                        opacity: CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeOut,
+                                        ),
                                         child: child,
                                       );
                                     },
@@ -404,12 +471,11 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                   const TravelListScreen(),
                           transitionsBuilder:
                               (context, animation, secondaryAnimation, child) {
-                                var curvedAnimation = CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOut,
-                                );
                                 return FadeTransition(
-                                  opacity: curvedAnimation,
+                                  opacity: CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOut,
+                                  ),
                                   child: child,
                                 );
                               },
@@ -456,7 +522,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                           final travelName = travel.fullName.isNotEmpty
                               ? travel.fullName
                               : "Agen Travel";
-                          final score = (travel.averageScore).toDouble();
+                          final score = travel.averageScore.toDouble();
                           return Padding(
                             padding: const EdgeInsets.only(right: 16),
                             child: TravelCard(
@@ -495,7 +561,10 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => isOneWay = true),
+              onTap: () => setState(() {
+                isOneWay = true;
+                _returnDate = null;
+              }),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
@@ -532,7 +601,10 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => isOneWay = false),
+              onTap: () => setState(() {
+                isOneWay = false;
+                _isOutboundRoute = true;
+              }),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(

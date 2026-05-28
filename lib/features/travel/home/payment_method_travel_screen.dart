@@ -11,12 +11,14 @@ import 'package:yalla/features/travel/home/payment_travel_screen.dart';
 
 class PaymentMethodTravelScreen extends StatefulWidget {
   final FlightModel flight;
+  final FlightModel? returnFlight;
   final List<dynamic> passengers;
   final OrderModel order;
 
   const PaymentMethodTravelScreen({
     super.key,
     required this.flight,
+    this.returnFlight,
     required this.passengers,
     required this.order,
   });
@@ -31,11 +33,19 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
   String? _selectedPaymentMethod;
   late TextEditingController _nominalController;
 
-  int get _passengerCount => widget.passengers.length;
-  int get _ticketPriceTotal =>
-      (widget.flight.price ?? 0).toInt() * _passengerCount;
-  int get _totalBill => _ticketPriceTotal;
+  bool get _isRoundTrip => widget.returnFlight != null;
 
+  int get _passengerCount => widget.passengers.length;
+
+  int get _ticketPriceTotal {
+    final depPrice = (widget.flight.price ?? 0).toInt();
+    final retPrice = _isRoundTrip
+        ? (widget.returnFlight!.price ?? 0).toInt()
+        : 0;
+    return (depPrice + retPrice) * _passengerCount;
+  }
+
+  int get _totalBill => _ticketPriceTotal;
   int get _dpMinimum => 2000000 * _passengerCount;
   int get _cicilDefault => (_totalBill / 3).toInt();
 
@@ -98,13 +108,9 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
           _cicilDefault;
     }
 
-    final bool isOutbound = widget.flight.isOutbound ?? true;
-
     final Map<String, dynamic> payload = {
-      if (isOutbound)
-        "departure_flight_id": widget.flight.id
-      else
-        "return_flight_id": widget.flight.id,
+      "departure_flight_id": widget.flight.id,
+      if (_isRoundTrip) "return_flight_id": widget.returnFlight!.id,
       "payment_scheme": _selectedScheme.toLowerCase(),
       "payment_method": _selectedPaymentMethod,
       "amount_paid": amountToPay,
@@ -127,6 +133,7 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
           pageBuilder: (context, animation, secondaryAnimation) =>
               PaymentTravelScreen(
                 flight: widget.flight,
+                returnFlight: widget.returnFlight,
                 paymentAmount: amountToPay,
                 paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
                 orderId: newOrderId,
@@ -163,6 +170,9 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
     final String flightDate = DateFormatter.formatDate(
       widget.flight.departureTime ?? '',
     );
+    final String retFlightDate = _isRoundTrip
+        ? DateFormatter.formatDate(widget.returnFlight!.departureTime ?? '')
+        : '';
 
     final String invoiceNumber =
         "INV-${DateTime.now().year}${DateTime.now().month.toString().padLeft(2, '0')}${DateTime.now().day.toString().padLeft(2, '0')}";
@@ -211,12 +221,16 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      const Text(
-                        "Ringkasan Pembayaran",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                      Expanded(
+                        child: Text(
+                          _isRoundTrip
+                              ? "Ringkasan Pembayaran (PP)"
+                              : "Ringkasan Pembayaran",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ],
@@ -230,6 +244,7 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // --- STATUS & INVOICE ---
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -262,6 +277,7 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                           ],
                         ),
                         const SizedBox(height: 20),
+
                         _buildInvoiceDetailRow(
                           "No. Invoice",
                           "BOM/WAVE-1/${DateTime.now().year}",
@@ -286,12 +302,24 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
+
                         _buildFlightItem(
                           routeTitle,
                           "$flightDate • ${widget.flight.flightNo ?? 'Flydeal'}",
                           "EC",
                           true,
                         ),
+
+                        if (_isRoundTrip) ...[
+                          const SizedBox(height: 8),
+                          _buildFlightItem(
+                            "JED - UPG (Pulang)",
+                            "$retFlightDate • ${widget.returnFlight!.flightNo ?? 'Flydeal'}",
+                            "EC",
+                            false,
+                          ),
+                        ],
+
                         const SizedBox(height: 24),
 
                         const Text(
@@ -303,10 +331,28 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _buildInvoiceDetailRow(
-                          "Tiket Pesawat ($_passengerCount pax)",
-                          _formatPrice(_ticketPriceTotal),
-                        ),
+
+                        if (_isRoundTrip) ...[
+                          _buildInvoiceDetailRow(
+                            "Tiket Berangkat ($_passengerCount pax)",
+                            _formatPrice(
+                              (widget.flight.price ?? 0).toInt() *
+                                  _passengerCount,
+                            ),
+                          ),
+                          _buildInvoiceDetailRow(
+                            "Tiket Pulang ($_passengerCount pax)",
+                            _formatPrice(
+                              (widget.returnFlight!.price ?? 0).toInt() *
+                                  _passengerCount,
+                            ),
+                          ),
+                        ] else
+                          _buildInvoiceDetailRow(
+                            "Tiket Pesawat ($_passengerCount pax)",
+                            _formatPrice(_ticketPriceTotal),
+                          ),
+
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 8),
                           child: Divider(color: Colors.black12),
@@ -318,6 +364,7 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                         ),
                         const SizedBox(height: 32),
 
+                        // --- SKEMA PEMBAYARAN ---
                         const Text(
                           "Skema Pembayaran",
                           style: TextStyle(
@@ -391,7 +438,6 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                                   backgroundColor: Colors.transparent,
                                   builder: (context) => const PaymentMethod(),
                                 );
-
                             if (selectedMethod != null) {
                               setState(() {
                                 _selectedPaymentMethod = selectedMethod;
@@ -406,7 +452,14 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade300),
+                              border: Border.all(
+                                color: _selectedPaymentMethod == null
+                                    ? Colors.grey.shade300
+                                    : const Color(0xFF0084FF),
+                                width: _selectedPaymentMethod == null
+                                    ? 1.0
+                                    : 1.5,
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -415,16 +468,24 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                                   width: 40,
                                   height: 40,
                                   fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(
+                                        Icons.account_balance_wallet,
+                                        color: Color(0xFF005C99),
+                                        size: 32,
+                                      ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Text(
                                     _selectedPaymentMethod ??
                                         "Pilih Metode Pembayaran",
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
+                                      color: _selectedPaymentMethod == null
+                                          ? Colors.black54
+                                          : Colors.black87,
                                     ),
                                   ),
                                 ),
@@ -444,6 +505,7 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
               ],
             ),
           ),
+
           bottomNavigationBar: Container(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
             decoration: BoxDecoration(
@@ -468,7 +530,9 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                       style: TextStyle(fontSize: 12, color: Colors.black54),
                     ),
                     Text(
-                      "$_passengerCount Penumpang",
+                      _isRoundTrip
+                          ? "PP • $_passengerCount Penumpang"
+                          : "$_passengerCount Penumpang",
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black54,
@@ -495,6 +559,8 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
             ),
           ),
         ),
+
+        // --- LOADING OVERLAY ---
         if (isLoading)
           Container(
             color: Colors.black.withOpacity(0.3),
@@ -551,20 +617,29 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F9FF),
+        color: isBlueBadge
+            ? const Color(0xFFF4F9FF)
+            : Colors.orange.withOpacity(0.05),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isBlueBadge
+              ? Colors.transparent
+              : Colors.orange.withOpacity(0.2),
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFE1F0FF),
+              color: isBlueBadge
+                  ? const Color(0xFFE1F0FF)
+                  : Colors.orange.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.flight_takeoff,
-              color: Color(0xFF005C99),
+            child: Icon(
+              isBlueBadge ? Icons.flight_takeoff : Icons.flight_land,
+              color: isBlueBadge ? const Color(0xFF005C99) : Colors.orange,
               size: 20,
             ),
           ),
@@ -592,21 +667,83 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isBlueBadge
-                  ? const Color(0xFF0084FF)
-                  : Colors.grey.shade300,
+              color: isBlueBadge ? const Color(0xFF0084FF) : Colors.orange,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               badgeText,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: isBlueBadge ? Colors.white : Colors.black54,
+                color: Colors.white,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSchemeCard({
+    required String title,
+    required String price,
+    required String subtitle,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF6FBFF) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0084FF) : Colors.grey.shade300,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected
+                        ? const Color(0xFF0084FF)
+                        : const Color(0xFF005C99),
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(
+                    Icons.check_circle_outline,
+                    size: 14,
+                    color: Color(0xFF0084FF),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              price,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 10, color: Colors.black54),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -666,8 +803,8 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: const [
+                      const Row(
+                        children: [
                           Icon(
                             Icons.payments_outlined,
                             size: 16,
@@ -703,7 +840,7 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            "Total Paket",
+                            "Total Tagihan",
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -909,70 +1046,6 @@ class _PaymentMethodTravelScreenState extends State<PaymentMethodTravelScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSchemeCard({
-    required String title,
-    required String price,
-    required String subtitle,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF6FBFF) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF0084FF) : Colors.grey.shade300,
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected
-                        ? const Color(0xFF0084FF)
-                        : const Color(0xFF005C99),
-                  ),
-                ),
-                if (isSelected)
-                  const Icon(
-                    Icons.check_circle_outline,
-                    size: 14,
-                    color: Color(0xFF0084FF),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              price,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 10, color: Colors.black54),
-            ),
-          ],
-        ),
       ),
     );
   }

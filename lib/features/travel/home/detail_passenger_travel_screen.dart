@@ -15,8 +15,13 @@ import 'package:yalla/features/travel/home/payment_method_travel_screen.dart';
 
 class DetailPassengerTravelScreen extends StatefulWidget {
   final FlightModel flight;
+  final FlightModel? returnFlight;
 
-  const DetailPassengerTravelScreen({super.key, required this.flight});
+  const DetailPassengerTravelScreen({
+    super.key,
+    required this.flight,
+    this.returnFlight,
+  });
 
   @override
   State<DetailPassengerTravelScreen> createState() =>
@@ -28,6 +33,8 @@ class _DetailPassengerTravelScreenState
   bool _isUploading = false;
   List<dynamic> _parsedPassengers = [];
   String? _uploadedFileName;
+
+  bool get _isRoundTrip => widget.returnFlight != null;
 
   String _formatPrice(num? price) {
     if (price == null || price == 0) return "IDR -";
@@ -173,9 +180,11 @@ class _DetailPassengerTravelScreenState
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Rincian Penumpang",
-                    style: TextStyle(
+                  Text(
+                    _isRoundTrip
+                        ? "Rincian Penumpang (PP)"
+                        : "Rincian Penumpang",
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
@@ -195,7 +204,32 @@ class _DetailPassengerTravelScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // KARTU PESAWAT
+                    if (_isRoundTrip)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF0084FF),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "Keberangkatan",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0084FF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -243,8 +277,8 @@ class _DetailPassengerTravelScreenState
                                       ),
                                     ),
                                     const SizedBox(height: 4),
-                                    Row(
-                                      children: const [
+                                    const Row(
+                                      children: [
                                         Icon(
                                           Icons.work_outline,
                                           size: 12,
@@ -447,6 +481,36 @@ class _DetailPassengerTravelScreenState
                         ],
                       ),
                     ),
+
+                    if (_isRoundTrip) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Colors.orange,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "Kepulangan",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildReturnFlightCard(widget.returnFlight!),
+                    ],
+
                     const SizedBox(height: 32),
 
                     Container(
@@ -555,6 +619,7 @@ class _DetailPassengerTravelScreenState
                     ),
 
                     const SizedBox(height: 32),
+
                     const Text(
                       "Unggah File Manifest Jamaah",
                       style: TextStyle(
@@ -747,6 +812,7 @@ class _DetailPassengerTravelScreenState
                     pageBuilder: (context, animation, secondaryAnimation) =>
                         PaymentMethodTravelScreen(
                           flight: widget.flight,
+                          returnFlight: widget.returnFlight,
                           passengers: _parsedPassengers,
                           order: OrderModel.empty(),
                         ),
@@ -769,6 +835,233 @@ class _DetailPassengerTravelScreenState
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildReturnFlightCard(FlightModel flight) {
+    final String flightNo = flight.flightNo ?? "-";
+    final String depTime = DateFormatter.formatTime(flight.departureTime);
+    final String depDate = DateFormatter.formatDate(flight.departureTime ?? '');
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/logo_flydeal.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Flydeal Air $flightNo",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.work_outline,
+                          size: 12,
+                          color: Colors.black54,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          "25 Kg",
+                          style: TextStyle(fontSize: 10, color: Colors.black54),
+                        ),
+                        SizedBox(width: 12),
+                        Icon(
+                          Icons.restaurant_menu,
+                          size: 12,
+                          color: Colors.black54,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orange),
+                  color: Colors.orange.withOpacity(0.05),
+                ),
+                child: const Text(
+                  "Ekonomi",
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "JED",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    "Jeddah",
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 2,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.orange.withOpacity(0.5),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Transform.rotate(
+                          angle: 1.5708,
+                          child: const Icon(
+                            Icons.flight,
+                            color: Colors.orange,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 2,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.orange.withOpacity(0.5),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "UPG",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    "Makassar",
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(height: 1, color: Colors.orange.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 16,
+                    color: Colors.orange,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    depDate,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  const Icon(Icons.access_time, size: 16, color: Colors.orange),
+                  const SizedBox(width: 8),
+                  Text(
+                    depTime,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -3,37 +3,97 @@ import 'package:flutter/material.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/features/travel/home/detail_flight_travel_screen.dart';
+import 'package:yalla/features/travel/home/detail_passenger_travel_screen.dart';
+import 'package:yalla/features/travel/home/list_flight_travel_screen.dart';
 
 class FlightOptionCardTravel extends StatelessWidget {
   final FlightModel? flight;
   final bool isLoading;
   final bool isHighlighted;
+  final bool isRoundTripMode;
+  final FlightModel? departureFlight;
+  final DateTime? returnDate;
 
   const FlightOptionCardTravel({
     super.key,
     this.flight,
     this.isLoading = false,
     this.isHighlighted = false,
+    this.isRoundTripMode = false,
+    this.departureFlight,
+    this.returnDate,
   });
 
   void _navigateToDetail(BuildContext context) {
     if (flight == null) return;
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 300),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            DetailFlightTravelScreen(flight: flight!),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          var curvedAnimation = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOut,
-          );
-          return FadeTransition(opacity: curvedAnimation, child: child);
-        },
-      ),
-    );
+
+    if (isRoundTripMode && departureFlight == null) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              ListFlightTravelScreen(
+                selectedDate: returnDate!,
+                isOutbound: false,
+                isRoundTrip: true,
+                returnDate: returnDate,
+                selectedDepartureFlight: flight,
+              ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            );
+          },
+        ),
+      );
+    } else if (isRoundTripMode && departureFlight != null) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              DetailPassengerTravelScreen(
+                flight: departureFlight!,
+                returnFlight: flight,
+              ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            );
+          },
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              DetailFlightTravelScreen(flight: flight!),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            );
+          },
+        ),
+      );
+    }
   }
 
   String _calculateDuration(String? dep, String? arr) {
@@ -122,10 +182,8 @@ class FlightOptionCardTravel extends StatelessWidget {
     final String destCode = isOutbound ? "JED" : "UPG";
     final String depTime = DateFormatter.formatTime(flight!.departureTime);
     final String arrTime = DateFormatter.formatTime(flight!.arrivalTime);
-
     final String depDate = _formatShortDate(flight!.departureTime);
     final String arrDate = _formatShortDate(flight!.arrivalTime);
-
     final String flightNo = flight!.flightNo ?? "Unknown";
     final String duration = _calculateDuration(
       flight!.departureTime,
@@ -248,22 +306,50 @@ class FlightOptionCardTravel extends StatelessWidget {
                               ],
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF97316),
-                              shape: BoxShape.circle,
+
+                          if (isRoundTripMode)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: departureFlight == null
+                                    ? const Color(0xFF0084FF).withOpacity(0.1)
+                                    : Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                departureFlight == null
+                                    ? "Berangkat"
+                                    : "Pulang",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: departureFlight == null
+                                      ? const Color(0xFF0084FF)
+                                      : Colors.orange,
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFF97316),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.priority_high,
+                                color: Colors.white,
+                                size: 14,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.priority_high,
-                              color: Colors.white,
-                              size: 14,
-                              weight: 900,
-                            ),
-                          ),
                         ],
                       ),
+
                       const SizedBox(height: 24),
+
                       Row(
                         children: [
                           Expanded(

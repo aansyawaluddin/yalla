@@ -8,11 +8,17 @@ import 'package:yalla/core/widgets/card/flight_card_travel.dart';
 class ListFlightTravelScreen extends StatefulWidget {
   final DateTime selectedDate;
   final bool isOutbound;
+  final bool isRoundTrip;
+  final DateTime? returnDate;
+  final FlightModel? selectedDepartureFlight;
 
   const ListFlightTravelScreen({
     super.key,
     required this.selectedDate,
     required this.isOutbound,
+    this.isRoundTrip = false,
+    this.returnDate,
+    this.selectedDepartureFlight,
   });
 
   @override
@@ -69,9 +75,7 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
     List<FlightModel> filteredFlights = flightProvider.flights.where((flight) {
       if (flight.departureTime == null) return false;
 
-      final depDateTime = DateTime.parse(
-        flight.departureTime!,
-      ).toLocal(); // ← tambah .toLocal()
+      final depDateTime = DateTime.parse(flight.departureTime!).toLocal();
       final depDateLocal = DateTime(
         depDateTime.year,
         depDateTime.month,
@@ -93,7 +97,6 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
         final dateB = DateTime.parse(b.departureTime!);
         final diffA = dateA.difference(now).inSeconds;
         final diffB = dateB.difference(now).inSeconds;
-
         if (diffA >= 0 && diffB >= 0) return diffA.compareTo(diffB);
         if (diffA < 0 && diffB < 0) return diffB.compareTo(diffA);
         if (diffA >= 0) return -1;
@@ -111,6 +114,8 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
         : [];
 
     String displayDate = _formatIndonesianDate(widget.selectedDate);
+
+    final bool isReturnPhase = widget.selectedDepartureFlight != null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFE8F1F8),
@@ -152,6 +157,8 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
+
+                  // --- HEADER NAV ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Container(
@@ -347,8 +354,85 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
+                  // --- BANNER ROUND TRIP FASE ---
+                  if (widget.isRoundTrip)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isReturnPhase
+                              ? Colors.orange.withOpacity(0.08)
+                              : const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isReturnPhase
+                                ? Colors.orange.withOpacity(0.3)
+                                : const Color(0xFF0084FF).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isReturnPhase
+                                  ? Icons.flight_land
+                                  : Icons.flight_takeoff,
+                              size: 16,
+                              color: isReturnPhase
+                                  ? Colors.orange
+                                  : const Color(0xFF0084FF),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                isReturnPhase
+                                    ? "Langkah 2: Pilih penerbangan kepulangan"
+                                    : "Langkah 1: Pilih penerbangan keberangkatan",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isReturnPhase
+                                      ? Colors.orange
+                                      : const Color(0xFF0084FF),
+                                ),
+                              ),
+                            ),
+                            if (isReturnPhase)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  widget.selectedDepartureFlight?.flightNo ??
+                                      "",
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 8),
+
+                  // --- FILTER BUTTONS ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: SingleChildScrollView(
@@ -445,8 +529,8 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
                   child: Column(
                     children: [
                       if (isLoading)
-                        Column(
-                          children: const [
+                        const Column(
+                          children: [
                             FlightOptionCardTravel(
                               isLoading: true,
                               isHighlighted: true,
@@ -466,18 +550,23 @@ class _ListFlightTravelScreenState extends State<ListFlightTravelScreen> {
                             FlightOptionCardTravel(
                               flight: highlightedFlight,
                               isHighlighted: true,
+                              isRoundTripMode: widget.isRoundTrip,
+                              departureFlight: widget.selectedDepartureFlight,
+                              returnDate: widget.returnDate,
                             ),
-                            ...otherFlights
-                                .map(
-                                  (f) => Padding(
-                                    padding: const EdgeInsets.only(top: 16.0),
-                                    child: FlightOptionCardTravel(
-                                      flight: f,
-                                      isHighlighted: false,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
+                            ...otherFlights.map(
+                              (f) => Padding(
+                                padding: const EdgeInsets.only(top: 16.0),
+                                child: FlightOptionCardTravel(
+                                  flight: f,
+                                  isHighlighted: false,
+                                  isRoundTripMode: widget.isRoundTrip,
+                                  departureFlight:
+                                      widget.selectedDepartureFlight,
+                                  returnDate: widget.returnDate,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                     ],

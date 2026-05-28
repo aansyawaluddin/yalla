@@ -5,8 +5,13 @@ import 'package:yalla/features/travel/home/detail_passenger_travel_screen.dart';
 
 class DetailFlightTravelScreen extends StatelessWidget {
   final FlightModel flight;
+  final FlightModel? returnFlight;
 
-  const DetailFlightTravelScreen({super.key, required this.flight});
+  const DetailFlightTravelScreen({
+    super.key,
+    required this.flight,
+    this.returnFlight,
+  });
 
   String _formatPrice(num? price) {
     if (price == null || price == 0) return "IDR -";
@@ -37,11 +42,28 @@ class DetailFlightTravelScreen extends StatelessWidget {
         'Nov',
         'Des',
       ];
-      String monthName = months[dt.month - 1];
-      return "${dt.day} $monthName";
+      return "${dt.day} ${months[dt.month - 1]}";
     } catch (e) {
       return isoDate.split('T').first;
     }
+  }
+
+  num get _totalPrice {
+    num dep = flight.price ?? 0;
+    num ret = returnFlight?.price ?? 0;
+    return dep + ret;
+  }
+
+  String _formatTotalPrice() {
+    final price = _totalPrice;
+    if (price == 0) return "IDR -";
+    String s = price.toInt().toString();
+    String res = "";
+    for (int i = 0; i < s.length; i++) {
+      res += s[i];
+      if ((s.length - 1 - i) % 3 == 0 && i != s.length - 1) res += ".";
+    }
+    return "IDR $res";
   }
 
   @override
@@ -50,14 +72,16 @@ class DetailFlightTravelScreen extends StatelessWidget {
     final String originCode = isOutbound ? "UPG" : "JED";
     final String destCode = isOutbound ? "JED" : "UPG";
     final String destName = isOutbound ? "Jeddah" : "Makassar";
+    final bool isRoundTrip = returnFlight != null;
 
     final String depTime = DateFormatter.formatTime(flight.departureTime);
     final String arrTime = DateFormatter.formatTime(flight.arrivalTime);
-
     final String depDate = _formatShortDate(flight.departureTime);
     final String arrDate = _formatShortDate(flight.arrivalTime);
 
-    final String priceText = _formatPrice(flight.price);
+    final String priceLabel = isRoundTrip
+        ? "${_formatTotalPrice()} (PP)"
+        : _formatPrice(flight.price);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -91,6 +115,31 @@ class DetailFlightTravelScreen extends StatelessWidget {
             fontSize: 18,
           ),
         ),
+        actions: isRoundTrip
+            ? [
+                Padding(
+                  padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      "Pulang-Pergi",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+            : null,
       ),
       body: Stack(
         children: [
@@ -247,7 +296,80 @@ class DetailFlightTravelScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+
+                    if (isRoundTrip) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.orange.withOpacity(0.4),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.flight_land,
+                              color: Colors.orange,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Kepulangan",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  "JED → UPG  •  ${returnFlight!.flightNo ?? '-'}",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  _formatShortDate(returnFlight!.departureTime),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                                Text(
+                                  DateFormatter.formatTime(
+                                    returnFlight!.departureTime,
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: 24),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -293,6 +415,7 @@ class DetailFlightTravelScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 16),
                     const Divider(
                       color: Colors.white24,
@@ -300,10 +423,11 @@ class DetailFlightTravelScreen extends StatelessWidget {
                       height: 1,
                     ),
                     const SizedBox(height: 24),
+
                     Align(
                       alignment: Alignment.centerRight,
                       child: Container(
-                        width: 250,
+                        width: 280,
                         height: 50,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(30),
@@ -321,11 +445,11 @@ class DetailFlightTravelScreen extends StatelessWidget {
                                 color: Colors.white.withOpacity(0.2),
                                 child: Center(
                                   child: Text(
-                                    priceText,
+                                    priceLabel,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ),
@@ -349,10 +473,10 @@ class DetailFlightTravelScreen extends StatelessWidget {
                                             context,
                                             animation,
                                             secondaryAnimation,
-                                          ) =>
-                                              DetailPassengerTravelScreen(
-                                                flight: flight ,
-                                              ),
+                                          ) => DetailPassengerTravelScreen(
+                                            flight: flight,
+                                            returnFlight: returnFlight,
+                                          ),
                                       transitionsBuilder:
                                           (
                                             context,
@@ -360,13 +484,11 @@ class DetailFlightTravelScreen extends StatelessWidget {
                                             secondaryAnimation,
                                             child,
                                           ) {
-                                            var curvedAnimation =
-                                                CurvedAnimation(
-                                                  parent: animation,
-                                                  curve: Curves.easeOut,
-                                                );
                                             return FadeTransition(
-                                              opacity: curvedAnimation,
+                                              opacity: CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.easeOut,
+                                              ),
                                               child: child,
                                             );
                                           },
