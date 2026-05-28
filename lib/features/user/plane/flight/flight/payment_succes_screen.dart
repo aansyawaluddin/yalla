@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yalla/core/models/order_model.dart';
-import 'package:yalla/features/user/plane/flight/oneWay/ticket_detail_screen.dart';
+import 'package:yalla/features/user/plane/flight/flight/ticket_detail_screen.dart';
 
 class PaymentSuccessScreen extends StatefulWidget {
   final OrderModel order;

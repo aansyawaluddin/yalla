@@ -6,15 +6,17 @@ import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/button/payment_button.dart';
 import 'package:yalla/core/widgets/modals/payment_method.dart';
 import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
-import 'package:yalla/features/user/plane/flight/oneWay/payment_screen.dart';
+import 'package:yalla/features/user/plane/flight/flight/payment_screen.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   final FlightModel flight;
+  final FlightModel? returnFlight;
   final Map<String, dynamic> passengerData;
 
   const PaymentMethodScreen({
     super.key,
     required this.flight,
+    this.returnFlight,
     required this.passengerData,
   });
 
@@ -25,6 +27,14 @@ class PaymentMethodScreen extends StatefulWidget {
 class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   String _selectedScheme = 'Lunas';
   String? _selectedPaymentMethod;
+
+  bool get _isRoundTrip => widget.returnFlight != null;
+
+  num get _totalPrice {
+    num dep = widget.flight.price ?? 0;
+    num ret = widget.returnFlight?.price ?? 0;
+    return dep + ret;
+  }
 
   String _formatPrice(num? price) {
     if (price == null || price == 0) return "IDR 0";
@@ -61,20 +71,16 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       return;
     }
 
-    final num totalPrice = widget.flight.price ?? 0;
+    final num totalPrice = _totalPrice;
     num amountToPay = totalPrice;
     if (_selectedScheme == 'DP') amountToPay = totalPrice * 0.3;
     if (_selectedScheme == 'Cicil') amountToPay = totalPrice * 0.4;
 
-    final bool isOutbound = widget.flight.isOutbound ?? true;
-
     Map<String, dynamic> payload = {
       "email": widget.passengerData["email"],
       "phone_number": widget.passengerData["phone_number"],
-      if (isOutbound)
-        "departure_flight_id": widget.flight.id
-      else
-        "return_flight_id": widget.flight.id,
+      "departure_flight_id": widget.flight.id,
+      if (_isRoundTrip) "return_flight_id": widget.returnFlight!.id,
       "passengers": [widget.passengerData],
     };
 
@@ -93,9 +99,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           MaterialPageRoute(
             builder: (context) => PaymentScreen(
               flight: widget.flight,
+              returnFlight: widget.returnFlight, 
               paymentAmount: amountToPay,
               paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
-              // TAMBAHAN: kirim order dari provider
               order: orderProvider.lastOrder,
             ),
           ),
@@ -118,7 +124,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final num totalPrice = widget.flight.price ?? 0;
+    final num totalPrice = _totalPrice;
     final num dpPrice = totalPrice * 0.3;
     final num cicilPrice = totalPrice * 0.4;
 
@@ -139,6 +145,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     final String duration = _calculateDuration(
       widget.flight.departureTime,
       widget.flight.arrivalTime,
+    );
+
+    final String retFlightNo = widget.returnFlight?.flightNo ?? "-";
+    final String retDuration = _calculateDuration(
+      widget.returnFlight?.departureTime,
+      widget.returnFlight?.arrivalTime,
     );
 
     return Scaffold(
@@ -175,9 +187,11 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Metode Pembayaran",
-                    style: TextStyle(
+                  Text(
+                    _isRoundTrip
+                        ? "Metode Pembayaran (PP)"
+                        : "Metode Pembayaran",
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
@@ -234,9 +248,11 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                                       ),
                                     ),
                                     Text(
-                                      "#$flightNo",
+                                      _isRoundTrip
+                                          ? "#$flightNo • #$retFlightNo"
+                                          : "#$flightNo",
                                       style: const TextStyle(
-                                        fontSize: 14,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFF0084FF),
                                       ),
@@ -244,9 +260,44 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 20),
-                                Row(
-                                  children: [
-                                    Container(
+
+                                _buildFlightSummaryRow(
+                                  logo: Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: const Color(0xffDADADA),
+                                      ),
+                                      image: const DecorationImage(
+                                        image: AssetImage(
+                                          'assets/images/logo_flydeal.png',
+                                        ),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                  airlineName: "Flydeal Air",
+                                  flightNo: flightNo,
+                                  originCode: originCode,
+                                  originCity: originCity,
+                                  destCode: destCode,
+                                  destCity: destCity,
+                                  duration: duration,
+                                  accentColor: const Color(0xFF0084FF),
+                                  label: _isRoundTrip ? "Berangkat" : null,
+                                ),
+
+                                if (_isRoundTrip) ...[
+                                  const SizedBox(height: 12),
+                                  Divider(
+                                    color: Colors.grey.shade100,
+                                    thickness: 1,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildFlightSummaryRow(
+                                    logo: Container(
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
@@ -262,99 +313,20 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      flex: 3,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            "Flydeal Air",
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            "$flightNo  •  Ekonomi",
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.grey.shade500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 4,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Column(
-                                            children: [
-                                              Text(
-                                                originCode,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: Colors.black87,
-                                                ),
-                                              ),
-                                              Text(
-                                                originCity,
-                                                style: const TextStyle(
-                                                  fontSize: 10,
-                                                  color: Colors.black54,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Column(
-                                            children: [
-                                              Container(
-                                                width: 30,
-                                                height: 1,
-                                                color: Colors.grey.shade400,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                duration,
-                                                style: const TextStyle(
-                                                  fontSize: 8,
-                                                  color: Colors.black38,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Column(
-                                            children: [
-                                              Text(
-                                                destCode,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: Colors.black87,
-                                                ),
-                                              ),
-                                              Text(
-                                                destCity,
-                                                style: const TextStyle(
-                                                  fontSize: 10,
-                                                  color: Colors.black54,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                    airlineName: "Flydeal Air",
+                                    flightNo: retFlightNo,
+                                    originCode: "JED",
+                                    originCity: "Jeddah",
+                                    destCode: "UPG",
+                                    destCity: "Makassar",
+                                    duration: retDuration,
+                                    accentColor: Colors.orange,
+                                    label: "Pulang",
+                                  ),
+                                ],
+
                                 const SizedBox(height: 24),
+
                                 const Text(
                                   "Skema Pembayaran",
                                   style: TextStyle(
@@ -444,7 +416,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                               backgroundColor: Colors.transparent,
                               builder: (context) => const PaymentMethod(),
                             );
-
                         if (selectedMethod != null) {
                           setState(() {
                             _selectedPaymentMethod = selectedMethod;
@@ -510,6 +481,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           ],
         ),
       ),
+
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         decoration: BoxDecoration(
@@ -528,14 +500,14 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
+              children: [
+                const Text(
                   "Total Dibayar Sekarang",
                   style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
                 Text(
-                  "1 Penumpang",
-                  style: TextStyle(
+                  _isRoundTrip ? "Pulang-Pergi • 1 Penumpang" : "1 Penumpang",
+                  style: const TextStyle(
                     fontSize: 12,
                     color: Colors.black54,
                     fontWeight: FontWeight.w600,
@@ -564,6 +536,160 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFlightSummaryRow({
+    required Widget logo,
+    required String airlineName,
+    required String flightNo,
+    required String originCode,
+    required String originCity,
+    required String destCode,
+    required String destCity,
+    required String duration,
+    required Color accentColor,
+    String? label,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            logo,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    airlineName,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          "$flightNo  •  Ekonomi",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey.shade500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (label != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accentColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: accentColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  originCode,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  originCity,
+                  style: const TextStyle(fontSize: 9, color: Colors.black54),
+                ),
+              ],
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: Colors.grey.shade300,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Transform.rotate(
+                          angle: 1.5708,
+                          child: Icon(
+                            Icons.flight,
+                            size: 14,
+                            color: accentColor,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: Colors.grey.shade300,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    duration,
+                    style: const TextStyle(fontSize: 8, color: Colors.black38),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  destCode,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  destCity,
+                  style: const TextStyle(fontSize: 9, color: Colors.black54),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -667,8 +793,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       Icon(
                         Icons.payments_outlined,
                         size: 16,

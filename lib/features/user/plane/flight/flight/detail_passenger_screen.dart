@@ -3,12 +3,17 @@ import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
 import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
-import 'package:yalla/features/user/plane/flight/oneWay/payment_method_screen.dart';
+import 'package:yalla/features/user/plane/flight/flight/payment_method_screen.dart';
 
 class DetailPassengerScreen extends StatefulWidget {
   final FlightModel flight;
+  final FlightModel? returnFlight;
 
-  const DetailPassengerScreen({super.key, required this.flight});
+  const DetailPassengerScreen({
+    super.key,
+    required this.flight,
+    this.returnFlight,
+  });
 
   @override
   State<DetailPassengerScreen> createState() => _DetailPassengerScreenState();
@@ -91,29 +96,6 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
     return "IDR $res";
   }
 
-  String _formatFullDate(String? isoDate) {
-    if (isoDate == null) return "-";
-    try {
-      final date = DateTime.parse(isoDate).toLocal();
-      const months = [
-        'Januari',
-        'Februari',
-        'Maret',
-        'April',
-        'Mei',
-        'Juni',
-        'Juli',
-        'Agustus',
-        'September',
-        'Oktober',
-        'November',
-        'Desember',
-      ];
-      return "${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}";
-    } catch (e) {
-      return "-";
-    }
-  }
 
   void _handleNextStep() {
     if (nameC.text.isEmpty ||
@@ -154,10 +136,17 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
       MaterialPageRoute(
         builder: (context) => PaymentMethodScreen(
           flight: widget.flight,
+          returnFlight: widget.returnFlight,
           passengerData: passengerData,
         ),
       ),
     );
+  }
+
+  num get _totalPrice {
+    num dep = widget.flight.price ?? 0;
+    num ret = widget.returnFlight?.price ?? 0;
+    return dep + ret;
   }
 
   @override
@@ -168,12 +157,10 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
     final String originCity = isOutbound ? "Makassar" : "Jeddah";
     final String destCity = isOutbound ? "Jeddah" : "Makassar";
     final String flightNo = widget.flight.flightNo ?? "Airline";
-
     final String depTime = DateFormatter.formatTime(
       widget.flight.departureTime,
     );
-    _formatFullDate(widget.flight.departureTime);
-    final String priceText = _formatPrice(widget.flight.price);
+    final bool isRoundTrip = widget.returnFlight != null;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -203,9 +190,11 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Rincian Penumpang",
-                    style: TextStyle(
+                  Text(
+                    isRoundTrip
+                        ? "Rincian Penumpang (PP)"
+                        : "Rincian Penumpang",
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
@@ -225,6 +214,32 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (isRoundTrip)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF0084FF),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "Keberangkatan",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0084FF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -272,8 +287,8 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 4),
-                                    Row(
-                                      children: const [
+                                    const Row(
+                                      children: [
                                         Icon(
                                           Icons.work_outline,
                                           size: 12,
@@ -321,7 +336,6 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                             ],
                           ),
                           const SizedBox(height: 20),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -403,7 +417,6 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                           const SizedBox(height: 16),
                           Divider(color: Colors.grey.shade100, thickness: 1),
                           const SizedBox(height: 12),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -451,7 +464,37 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
                       ),
                     ),
 
+                    if (isRoundTrip) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Colors.orange,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "Kepulangan",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildReturnFlightCard(widget.returnFlight!),
+                    ],
+
                     const SizedBox(height: 28),
+
                     const Text(
                       "Data Diri",
                       style: TextStyle(
@@ -583,14 +626,14 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
+              children: [
+                const Text(
                   "Total Harga",
                   style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
                 Text(
-                  "1 Penumpang",
-                  style: TextStyle(
+                  isRoundTrip ? "Pulang-Pergi • 1 Penumpang" : "1 Penumpang",
+                  style: const TextStyle(
                     fontSize: 12,
                     color: Colors.black54,
                     fontWeight: FontWeight.w600,
@@ -600,7 +643,7 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              priceText,
+              _formatPrice(_totalPrice),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -617,6 +660,219 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
       ),
     );
   }
+
+  Widget _buildReturnFlightCard(FlightModel flight) {
+    final String flightNo = flight.flightNo ?? "-";
+    final String depTime = DateFormatter.formatTime(flight.departureTime);
+    final String depDate = DateFormatter.formatDate(flight.departureTime ?? '');
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/logo_flydeal.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Flydeal Air $flightNo",
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.work_outline,
+                          size: 12,
+                          color: Colors.black45,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          "25 Kg",
+                          style: TextStyle(fontSize: 11, color: Colors.black45),
+                        ),
+                        SizedBox(width: 10),
+                        Icon(
+                          Icons.restaurant_menu,
+                          size: 12,
+                          color: Colors.black45,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orange),
+                  color: Colors.orange.withOpacity(0.05),
+                ),
+                child: const Text(
+                  "Ekonomi",
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "JED",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    "Jeddah",
+                    style: TextStyle(fontSize: 11, color: Colors.black45),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: Colors.grey.shade300,
+                          thickness: 1,
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(
+                          Icons.flight_land,
+                          color: Colors.orange,
+                          size: 16,
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.grey.shade300,
+                          thickness: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "UPG",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    "Makassar",
+                    style: TextStyle(fontSize: 11, color: Colors.black45),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(color: Colors.grey.shade100, thickness: 1),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 14,
+                    color: Colors.orange,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    depDate,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.access_time_filled,
+                    size: 14,
+                    color: Colors.orange,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "$depTime WITA",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildCustomTextField(
     String hint, {
@@ -704,8 +960,8 @@ class _DetailPassengerScreenState extends State<DetailPassengerScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Row(
-        children: const [
+      child: const Row(
+        children: [
           Icon(Icons.flag, size: 16, color: Colors.red),
           SizedBox(width: 12),
           Expanded(

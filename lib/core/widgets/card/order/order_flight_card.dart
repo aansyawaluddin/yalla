@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/models/order_model.dart';
 import 'package:yalla/core/providers/order_provider.dart';
-import 'package:yalla/features/user/plane/flight/oneWay/payment_screen.dart';
+import 'package:yalla/features/user/plane/flight/flight/payment_screen.dart';
 import 'package:yalla/features/user/plane/flight/package/payment_package_screen.dart';
 
 class OrderFlightCard extends StatelessWidget {
@@ -13,6 +13,9 @@ class OrderFlightCard extends StatelessWidget {
   const OrderFlightCard({super.key, required this.order});
 
   bool get _isPackageOrder => order.package != null;
+
+  bool get _isRoundTrip =>
+      !_isPackageOrder && order.flight != null && order.returnFlight != null;
 
   FlightModel _buildActiveFlight() {
     final FlightModel? activeFlightData = order.flight ?? order.returnFlight;
@@ -83,6 +86,7 @@ class OrderFlightCard extends StatelessWidget {
           pageBuilder: (context, animation, secondaryAnimation) =>
               PaymentScreen(
                 flight: _buildActiveFlight(),
+                returnFlight: order.returnFlight,
                 paymentAmount: order.price,
                 paymentDeadline: absoluteDeadline,
                 order: order,
@@ -182,7 +186,6 @@ class OrderFlightCard extends StatelessWidget {
     }
   }
 
-  // ── Flight segment builder ──────────────────────────────────────────────────
   Widget _buildFlightSegment({
     required FlightModel? flight,
     required String originCode,
@@ -354,11 +357,13 @@ class OrderFlightCard extends StatelessWidget {
         : (order.flight ?? order.returnFlight);
 
     final String cardTitle = _isPackageOrder
-        ? (order.package!.packageName)
+        ? order.package!.packageName
         : "Flydeal Air";
 
     final String cardSubtitle = _isPackageOrder
-        ? (order.package!.batchName)
+        ? order.package!.batchName
+        : _isRoundTrip
+        ? "${order.flight?.flightNo ?? '-'} • ${order.returnFlight?.flightNo ?? '-'}  •  PP"
         : "${flightData?.flightNo ?? '-'}  •  Ekonomi";
 
     final Widget logoWidget = _isPackageOrder
@@ -388,7 +393,6 @@ class OrderFlightCard extends StatelessWidget {
             ),
           );
 
-    // For non-package single flight
     final bool isOutbound = flightData?.isOutbound ?? true;
     final String originCode = isOutbound ? "UPG" : "JED";
     final String destCode = isOutbound ? "JED" : "UPG";
@@ -455,7 +459,7 @@ class OrderFlightCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Header ──────────────────────────────────────────────
+                  // ── Header ────────────────────────────────────────────
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -508,6 +512,22 @@ class OrderFlightCard extends StatelessWidget {
                                       color: textGrey,
                                     ),
                                   ),
+                                ] else if (_isRoundTrip) ...[
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    width: 1,
+                                    height: 10,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const Text(
+                                    "Pulang-Pergi",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: textGrey,
+                                    ),
+                                  ),
                                 ] else ...[
                                   Container(
                                     margin: const EdgeInsets.symmetric(
@@ -536,7 +556,7 @@ class OrderFlightCard extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // ── Flight segment(s) ────────────────────────────────────
+                  // ── Flight segment(s) ──────────────────────────────────
                   if (_isPackageOrder) ...[
                     _buildFlightSegment(
                       flight: order.package!.departureFlight,
@@ -570,7 +590,42 @@ class OrderFlightCard extends StatelessWidget {
                       labelBg: const Color(0xFFFFF0F6),
                       labelText: const Color(0xFFBE185D),
                     ),
+                  ] else if (_isRoundTrip) ...[
+                    // PP tiket biasa — tampilkan dua segment
+                    _buildFlightSegment(
+                      flight: order.flight,
+                      originCode: 'UPG',
+                      destCode: 'JED',
+                      defaultDep: '07:00',
+                      defaultArr: '14:45',
+                      defaultDur: '7j 45m',
+                      accentColor: brandBlue,
+                      label: '✈  Keberangkatan',
+                      labelBg: const Color(0xFFEFF6FF),
+                      labelText: const Color(0xFF1D4ED8),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      child: Divider(
+                        height: 1,
+                        color: Color(0xFFE5E7EB),
+                        thickness: 1,
+                      ),
+                    ),
+                    _buildFlightSegment(
+                      flight: order.returnFlight,
+                      originCode: 'JED',
+                      destCode: 'UPG',
+                      defaultDep: '18:00',
+                      defaultArr: '12:00',
+                      defaultDur: '18j 0m',
+                      accentColor: const Color(0xFFBE185D),
+                      label: '↩  Kepulangan',
+                      labelBg: const Color(0xFFFFF0F6),
+                      labelText: const Color(0xFFBE185D),
+                    ),
                   ] else
+                    // Sekali jalan biasa
                     _buildFlightSegment(
                       flight: flightData,
                       originCode: originCode,
@@ -586,7 +641,7 @@ class OrderFlightCard extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // ── Price & payment progress ─────────────────────────────
+                  // ── Price & payment progress ───────────────────────────
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -690,7 +745,7 @@ class OrderFlightCard extends StatelessWidget {
               ),
             ),
 
-            // ── Date badge ───────────────────────────────────────────────
+            // ── Date badge ─────────────────────────────────────────────
             Positioned(
               top: 30,
               right: 0,

@@ -11,7 +11,7 @@ import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/core/widgets/modals/calendar_bottom_sheet.dart';
 import 'package:yalla/core/widgets/modals/passenger_class_bottom_sheet.dart';
 import 'package:yalla/features/user/home/travel/travel_list_screen.dart';
-import 'package:yalla/features/user/plane/flight/oneWay/list_flight_screen.dart';
+import 'package:yalla/features/user/plane/flight/flight/list_flight_screen.dart';
 
 class HomePlaneUserScreen extends StatefulWidget {
   const HomePlaneUserScreen({super.key});
@@ -23,6 +23,7 @@ class HomePlaneUserScreen extends StatefulWidget {
 class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
   bool isOneWay = true;
   DateTime _selectedDate = DateTime.now();
+  DateTime? _returnDate;
   bool _isOutboundRoute = true;
 
   @override
@@ -50,10 +51,27 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
       'Nov',
       'Des',
     ];
-    String dayName = days[date.weekday - 1];
-    String day = date.day.toString().padLeft(2, '0');
-    String monthName = months[date.month - 1];
-    return "$dayName, $day $monthName ${date.year}";
+    return "${days[date.weekday - 1]}, ${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]}";
+  }
+
+  String _formatDateNullable(DateTime? date) {
+    if (date == null) return "Pilih";
+    const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    return "${days[date.weekday - 1]}, ${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]}";
   }
 
   @override
@@ -283,35 +301,65 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                             Expanded(
                               child: GestureDetector(
                                 onTap: () async {
-                                  // ✅ Ganti type ke Map<String, dynamic>
-                                  final result =
-                                      await showModalBottomSheet<
-                                        Map<String, dynamic>
-                                      >(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context) {
-                                          return CalendarBottomSheet(
-                                            flights: flightList,
-                                            isOutbound: _isOutboundRoute,
-                                          );
-                                        },
-                                      );
-
-                                  // ✅ Update date dan isOutbound sekaligus
-                                  if (result != null) {
-                                    setState(() {
-                                      _selectedDate =
-                                          result['date'] as DateTime;
-                                      _isOutboundRoute =
-                                          result['isOutbound'] as bool;
-                                    });
+                                  if (isOneWay) {
+                                    final result =
+                                        await showModalBottomSheet<
+                                          Map<String, dynamic>
+                                        >(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) {
+                                            return CalendarBottomSheet(
+                                              flights: flightList,
+                                              isOutbound: _isOutboundRoute,
+                                              isRangeMode: false,
+                                            );
+                                          },
+                                        );
+                                    if (result != null) {
+                                      setState(() {
+                                        _selectedDate =
+                                            result['date'] as DateTime;
+                                        _isOutboundRoute =
+                                            result['isOutbound'] as bool;
+                                        _returnDate = null;
+                                      });
+                                    }
+                                  } else {
+                                    final result =
+                                        await showModalBottomSheet<
+                                          Map<String, dynamic>
+                                        >(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) {
+                                            return CalendarBottomSheet(
+                                              flights: flightList,
+                                              isOutbound: true,
+                                              isRangeMode: true,
+                                            );
+                                          },
+                                        );
+                                    if (result != null) {
+                                      setState(() {
+                                        _selectedDate =
+                                            result['departureDate'] as DateTime;
+                                        _returnDate =
+                                            result['returnDate'] as DateTime?;
+                                        _isOutboundRoute = true;
+                                      });
+                                    }
                                   }
                                 },
                                 child: _buildSmallInputCard(
-                                  label: "Tanggal Keberangkatan",
-                                  value: _formatDate(_selectedDate),
+                                  label: isOneWay
+                                      ? "Tanggal Keberangkatan"
+                                      : "Berangkat → Pulang",
+                                  value: isOneWay
+                                      ? _formatDate(_selectedDate)
+                                      : "${_formatDateNullable(_selectedDate)} → ${_formatDateNullable(_returnDate)}",
                                   icon: Icons.calendar_today_outlined,
                                 ),
                               ),
@@ -344,6 +392,16 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                           text: "Cari Penerbangan",
                           icon: Icons.search,
                           onPressed: () {
+                            if (!isOneWay && _returnDate == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Pilih tanggal pulang terlebih dahulu.",
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
                             Navigator.push(
                               context,
                               PageRouteBuilder(
@@ -358,6 +416,8 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                                         ListFlightScreen(
                                           selectedDate: _selectedDate,
                                           isOutbound: _isOutboundRoute,
+                                          isRoundTrip: !isOneWay,
+                                          returnDate: _returnDate,
                                         ),
                                 transitionsBuilder:
                                     (
@@ -366,12 +426,11 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                                       secondaryAnimation,
                                       child,
                                     ) {
-                                      var curvedAnimation = CurvedAnimation(
-                                        parent: animation,
-                                        curve: Curves.easeOut,
-                                      );
                                       return FadeTransition(
-                                        opacity: curvedAnimation,
+                                        opacity: CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeOut,
+                                        ),
                                         child: child,
                                       );
                                     },
@@ -401,12 +460,11 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
                                   const TravelListScreen(),
                           transitionsBuilder:
                               (context, animation, secondaryAnimation, child) {
-                                var curvedAnimation = CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOut,
-                                );
                                 return FadeTransition(
-                                  opacity: curvedAnimation,
+                                  opacity: CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOut,
+                                  ),
                                   child: child,
                                 );
                               },
@@ -504,7 +562,10 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => isOneWay = true),
+              onTap: () => setState(() {
+                isOneWay = true;
+                _returnDate = null;
+              }),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
@@ -541,7 +602,10 @@ class _HomePlaneUserScreenState extends State<HomePlaneUserScreen> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => isOneWay = false),
+              onTap: () => setState(() {
+                isOneWay = false;
+                _isOutboundRoute = true; // PP selalu mulai UPG→JED
+              }),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(

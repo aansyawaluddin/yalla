@@ -2,38 +2,101 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:yalla/core/models/flight_model.dart';
 import 'package:yalla/core/utils/date_formatter.dart';
-import 'package:yalla/features/user/plane/flight/oneWay/detail_flight_screen.dart';
+import 'package:yalla/features/user/plane/flight/flight/detail_flight_screen.dart';
+import 'package:yalla/features/user/plane/flight/flight/detail_passenger_screen.dart';
+import 'package:yalla/features/user/plane/flight/flight/list_flight_screen.dart';
 
 class FlightOptionCard extends StatelessWidget {
   final FlightModel? flight;
   final bool isLoading;
   final bool isHighlighted;
+  final bool isRoundTripMode;
+  final FlightModel? departureFlight;
+  final DateTime? returnDate;
 
   const FlightOptionCard({
     super.key,
     this.flight,
     this.isLoading = false,
     this.isHighlighted = false,
+    this.isRoundTripMode = false,
+    this.departureFlight,
+    this.returnDate,
   });
 
   void _navigateToDetail(BuildContext context) {
     if (flight == null) return;
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 300),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            DetailFlightScreen(flight: flight!),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          var curvedAnimation = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOut,
-          );
-          return FadeTransition(opacity: curvedAnimation, child: child);
-        },
-      ),
-    );
+
+    if (isRoundTripMode && departureFlight == null) {
+      // Fase 1: pilih flight berangkat → ke list flight pulang
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              ListFlightScreen(
+                selectedDate: returnDate!,
+                isOutbound: false,
+                isRoundTrip: true,
+                returnDate: returnDate,
+                selectedDepartureFlight: flight,
+              ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            );
+          },
+        ),
+      );
+    } else if (isRoundTripMode && departureFlight != null) {
+      // Fase 2: pilih flight pulang → ke detail penumpang
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              DetailPassengerScreen(
+                flight: departureFlight!,
+                returnFlight: flight,
+              ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            );
+          },
+        ),
+      );
+    } else {
+      // Sekali jalan biasa
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              DetailFlightScreen(flight: flight!),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            );
+          },
+        ),
+      );
+    }
   }
 
   String _calculateDuration(String? dep, String? arr) {

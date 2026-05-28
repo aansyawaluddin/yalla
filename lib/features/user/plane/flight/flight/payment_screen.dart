@@ -6,10 +6,11 @@ import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/widgets/animated/animated_payment_bottomBar.dart';
 import 'package:yalla/core/widgets/animated/countdown_timer.dart';
 import 'package:yalla/features/user/home/home_screen.dart';
-import 'package:yalla/features/user/plane/flight/oneWay/payment_succes_screen.dart';
+import 'package:yalla/features/user/plane/flight/flight/payment_succes_screen.dart';
 
 class PaymentScreen extends StatelessWidget {
   final FlightModel flight;
+  final FlightModel? returnFlight;
   final num paymentAmount;
   final DateTime paymentDeadline;
   final OrderModel order;
@@ -20,7 +21,10 @@ class PaymentScreen extends StatelessWidget {
     required this.paymentAmount,
     required this.paymentDeadline,
     required this.order,
+    this.returnFlight,
   });
+
+  bool get _isRoundTrip => returnFlight != null;
 
   String _formatPrice(num? price) {
     if (price == null || price == 0) return "IDR 0";
@@ -88,6 +92,12 @@ class PaymentScreen extends StatelessWidget {
     final String priceText = _formatPrice(paymentAmount);
     final String deadlineText = _formatPaymentDeadline();
 
+    final String retFlightNo = returnFlight?.flightNo ?? "-";
+    final String retDuration = _calculateDuration(
+      returnFlight?.departureTime,
+      returnFlight?.arrivalTime,
+    );
+
     final orderProvider = context.read<OrderProvider>();
     final String orderIdShort = orderProvider.lastOrderId.isNotEmpty
         ? orderProvider.lastOrderId.substring(0, 8).toUpperCase()
@@ -98,6 +108,7 @@ class PaymentScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
+            // --- HEADER ---
             Padding(
               padding: const EdgeInsets.only(
                 top: 16,
@@ -155,6 +166,7 @@ class PaymentScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
+                    // --- RINGKASAN PESANAN ---
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -187,121 +199,46 @@ class PaymentScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xffDADADA),
-                                  ),
-                                  image: const DecorationImage(
-                                    image: AssetImage(
-                                      'assets/images/logo_flydeal.png',
-                                    ),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 3,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      "Flydeal Air",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      "$flightNo  •  Ekonomi",
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.grey.shade500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                flex: 4,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      children: [
-                                        Text(
-                                          originCode,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        Text(
-                                          originCity,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [
-                                        Container(
-                                          width: 30,
-                                          height: 1,
-                                          color: Colors.grey.shade400,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          duration,
-                                          style: const TextStyle(
-                                            fontSize: 8,
-                                            color: Colors.black38,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [
-                                        Text(
-                                          destCode,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        Text(
-                                          destCity,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+
+                          // --- FLIGHT KEBERANGKATAN ---
+                          _buildFlightRow(
+                            logoPath: 'assets/images/logo_flydeal.png',
+                            airlineName: "Flydeal Air",
+                            flightNo: flightNo,
+                            originCode: originCode,
+                            originCity: originCity,
+                            destCode: destCode,
+                            destCity: destCity,
+                            duration: duration,
+                            accentColor: const Color(0xFF0084FF),
+                            label: _isRoundTrip ? "Berangkat" : null,
                           ),
+
+                          // --- FLIGHT KEPULANGAN (jika PP) ---
+                          if (_isRoundTrip) ...[
+                            const SizedBox(height: 12),
+                            Divider(color: Colors.grey.shade100, thickness: 1),
+                            const SizedBox(height: 12),
+                            _buildFlightRow(
+                              logoPath: 'assets/images/logo_flydeal.png',
+                              airlineName: "Flydeal Air",
+                              flightNo: retFlightNo,
+                              originCode: "JED",
+                              originCity: "Jeddah",
+                              destCode: "UPG",
+                              destCity: "Makassar",
+                              duration: retDuration,
+                              accentColor: Colors.orange,
+                              label: "Pulang",
+                            ),
+                          ],
                         ],
                       ),
                     ),
 
                     const SizedBox(height: 40),
 
+                    // --- VIRTUAL ACCOUNT CARD ---
                     Stack(
                       clipBehavior: Clip.none,
                       children: [
@@ -365,8 +302,8 @@ class PaymentScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Row(
-                                children: const [
+                              const Row(
+                                children: [
                                   Expanded(
                                     child: Text(
                                       "988 3305 3013 3818 1782",
@@ -450,6 +387,172 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
+  // --- HELPER: baris info flight ---
+  Widget _buildFlightRow({
+    required String logoPath,
+    required String airlineName,
+    required String flightNo,
+    required String originCode,
+    required String originCity,
+    required String destCode,
+    required String destCity,
+    required String duration,
+    required Color accentColor,
+    String? label,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xffDADADA)),
+                image: DecorationImage(
+                  image: AssetImage(logoPath),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    airlineName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          "$flightNo  •  Ekonomi",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey.shade500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (label != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accentColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: accentColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  originCode,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  originCity,
+                  style: const TextStyle(fontSize: 9, color: Colors.black54),
+                ),
+              ],
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: Colors.grey.shade300,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Transform.rotate(
+                          angle: 1.5708,
+                          child: Icon(
+                            Icons.flight,
+                            size: 14,
+                            color: accentColor,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: Colors.grey.shade300,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    duration,
+                    style: const TextStyle(fontSize: 8, color: Colors.black38),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  destCode,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  destCity,
+                  style: const TextStyle(fontSize: 9, color: Colors.black54),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildPaymentGuideCard() {
     return Container(
       decoration: BoxDecoration(
@@ -485,7 +588,12 @@ class PaymentScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                "1. Masukkan Kartu ATM BNI & PIN\n2. Pilih menu Lainnya > Transfer\n3. Pilih jenis rekening asal dan pilih Virtual Account Billing\n4. Masukkan nomor Virtual Account\n5. Tagihan yang harus dibayarkan akan muncul pada layar\n6. Konfirmasi pembayaran",
+                "1. Masukkan Kartu ATM BNI & PIN\n"
+                "2. Pilih menu Lainnya > Transfer\n"
+                "3. Pilih jenis rekening asal dan pilih Virtual Account Billing\n"
+                "4. Masukkan nomor Virtual Account\n"
+                "5. Tagihan yang harus dibayarkan akan muncul pada layar\n"
+                "6. Konfirmasi pembayaran",
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,
