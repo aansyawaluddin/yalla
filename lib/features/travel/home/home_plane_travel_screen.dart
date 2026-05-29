@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
+import 'package:yalla/core/providers/user_profile_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/button/primary_gradient_button.dart';
@@ -33,6 +35,7 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TravelProvider>().fetchTravels();
       context.read<FlightProvider>().fetchFlights();
+      context.read<UserProfileProvider>().fetchProfile();
     });
   }
 
@@ -85,6 +88,10 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
     final travelProvider = context.watch<TravelProvider>();
     final isLoadingTravels = travelProvider.isLoading;
     final travels = travelProvider.travels;
+    final authProvider = context.watch<AuthProvider>();
+    final String firstName =
+        authProvider.userData?.profile?.firstName ?? "Memuat...";
+    final String? avatarUrl = context.watch<UserProfileProvider>().avatarUrl;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -149,19 +156,24 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                   color: Colors.white,
                                   width: 2,
                                 ),
-                                image: const DecorationImage(
-                                  image: AssetImage(
-                                    'assets/images/profile.png',
-                                  ),
+                                image: DecorationImage(
+                                  image:
+                                      (avatarUrl != null &&
+                                          avatarUrl.isNotEmpty)
+                                      ? NetworkImage(avatarUrl) as ImageProvider
+                                      : const AssetImage(
+                                          'assets/images/profile.png',
+                                        ),
                                   fit: BoxFit.cover,
+                                  onError: (_, __) {},
                                 ),
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Column(
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                const Text(
                                   "Selamat Datang,",
                                   style: TextStyle(
                                     fontSize: 14,
@@ -169,8 +181,8 @@ class _HomePlaneTravelScreenState extends State<HomePlaneTravelScreen> {
                                   ),
                                 ),
                                 Text(
-                                  "Syahdam 👋",
-                                  style: TextStyle(
+                                  "$firstName 👋",
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF005C99),

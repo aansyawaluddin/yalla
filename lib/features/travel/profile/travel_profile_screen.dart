@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
+import 'package:yalla/core/providers/user_profile_provider.dart';
 import 'package:yalla/core/widgets/eror/error_state_widget.dart';
 import 'package:yalla/features/travel/profile/edit_travel_profile_screen.dart';
 
@@ -26,6 +27,7 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
       if (widget.travelId.isNotEmpty) {
         context.read<TravelProvider>().getTravelDetail(widget.travelId);
       }
+      context.read<UserProfileProvider>().fetchProfile();
     });
   }
 
@@ -33,6 +35,7 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final travelProvider = context.watch<TravelProvider>();
+    final String? avatarUrl = context.watch<UserProfileProvider>().avatarUrl;
 
     final String companyName =
         authProvider.userData?.profile?.firstName ?? "Memuat...";
@@ -170,9 +173,14 @@ class _TravelProfileScreenState extends State<TravelProfileScreen> {
                               offset: const Offset(0, 4),
                             ),
                           ],
-                          image: const DecorationImage(
-                            image: AssetImage('assets/images/logo_flydeal.png'),
+                          image: DecorationImage(
+                            image: (avatarUrl != null && avatarUrl.isNotEmpty)
+                                ? NetworkImage(avatarUrl) as ImageProvider
+                                : const AssetImage(
+                                    'assets/images/logo_flydeal.png',
+                                  ),
                             fit: BoxFit.cover,
+                            onError: (_, __) {},
                           ),
                         ),
                       ),

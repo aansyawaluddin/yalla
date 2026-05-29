@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
+import 'package:yalla/core/providers/user_profile_provider.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/animated/animatedSearchBar.dart';
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().fetchUserProfile();
+      context.read<UserProfileProvider>().fetchProfile();
       context.read<FlightProvider>().fetchFlights();
       context.read<TravelProvider>().fetchTravels();
       context.read<PackageProvider>().getAllPackages();
@@ -41,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final avatarUrl = context.watch<UserProfileProvider>().avatarUrl;
     final displayFirstName = authProvider.firstName.isNotEmpty
         ? authProvider.firstName
         : "Memuat...";
@@ -108,10 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Colors.white,
                                   width: 2,
                                 ),
-                                image: const DecorationImage(
-                                  image: AssetImage(
-                                    'assets/images/profile.png',
-                                  ),
+                                image: DecorationImage(
+                                  image:
+                                      (avatarUrl != null &&
+                                          avatarUrl.isNotEmpty)
+                                      ? NetworkImage(avatarUrl) as ImageProvider
+                                      : const AssetImage(
+                                          'assets/images/profile.png',
+                                        ),
                                   fit: BoxFit.cover,
                                 ),
                               ),

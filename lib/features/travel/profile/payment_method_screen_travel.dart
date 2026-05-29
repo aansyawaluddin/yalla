@@ -24,7 +24,7 @@ class PaymentMethodScreenTravel extends StatelessWidget {
               padding: EdgeInsets.zero,
               icon: const Icon(
                 Icons.arrow_back,
-                color: Color(0xFF0084FF), // Biru panah
+                color: Color(0xFF0084FF), 
                 size: 18,
               ),
               onPressed: () => Navigator.pop(context),

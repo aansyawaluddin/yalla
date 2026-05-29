@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
+import 'package:yalla/core/providers/user_profile_provider.dart';
 import 'package:yalla/features/travel/profile/travel_profile_screen.dart';
 
 class ProfileCardTravel extends StatelessWidget {
@@ -20,6 +21,8 @@ class ProfileCardTravel extends StatelessWidget {
         lastName.isNotEmpty && lastName.toLowerCase() != "travel"
         ? "$firstName $lastName"
         : "$firstName Travel";
+
+    final String? avatarUrl = context.watch<UserProfileProvider>().avatarUrl;
 
     return Container(
       height: 110,
@@ -53,8 +56,10 @@ class ProfileCardTravel extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/profile.png'),
+                      image: DecorationImage(
+                        image: (avatarUrl != null && avatarUrl.isNotEmpty)
+                            ? NetworkImage(avatarUrl) as ImageProvider
+                            : const AssetImage('assets/images/profile.png'),
                         fit: BoxFit.cover,
                       ),
                     ),

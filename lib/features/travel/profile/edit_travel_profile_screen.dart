@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/auth_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
+import 'package:yalla/core/providers/user_profile_provider.dart';
 import 'package:yalla/core/widgets/snackbar/custom_snackbar.dart';
 
 class EditTravelProfileScreen extends StatefulWidget {
@@ -31,6 +35,9 @@ class _EditTravelProfileScreenState extends State<EditTravelProfileScreen> {
     licenseC = TextEditingController(text: detail?.licenseNumber ?? "");
     yearC = TextEditingController(text: detail?.operatingSince ?? "");
     bioC = TextEditingController(text: detail?.aboutText ?? "");
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProfileProvider>().fetchProfile();
+    });
   }
 
   @override
@@ -81,10 +88,90 @@ class _EditTravelProfileScreenState extends State<EditTravelProfileScreen> {
     if (picked != null) {
       String day = picked.day.toString().padLeft(2, '0');
       String month = picked.month.toString().padLeft(2, '0');
-
       setState(() {
         yearC.text = "${picked.year}-$month-$day";
       });
+    }
+  }
+
+  Future<void> _pickAndUpload() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Color(0xFF004CB9)),
+              title: const Text("Ambil Foto"),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library,
+                color: Color(0xFF004CB9),
+              ),
+              title: const Text("Pilih dari Galeri"),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    final picked = await ImagePicker().pickImage(source: source);
+    if (picked == null) return;
+
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      maxWidth: 512,
+      maxHeight: 512,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressFormat: ImageCompressFormat.jpg,
+      compressQuality: 90,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Sesuaikan Foto',
+          toolbarColor: const Color(0xFF004CB9),
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.square,
+          lockAspectRatio: true,
+          hideBottomControls: true,
+        ),
+        IOSUiSettings(
+          title: 'Sesuaikan Foto',
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+          aspectRatioPickerButtonHidden: true,
+        ),
+      ],
+    );
+
+    if (cropped == null) return;
+    if (!mounted) return;
+
+    final provider = context.read<UserProfileProvider>();
+    final success = await provider.uploadAvatar(File(cropped.path));
+    if (!mounted) return;
+
+    if (success) {
+      CustomSnackBar.showSuccess(
+        context,
+        title: "Berhasil",
+        message: "Foto profil berhasil diperbarui.",
+      );
+    } else {
+      CustomSnackBar.showError(
+        context,
+        title: "Gagal",
+        message: provider.errorMessage,
+      );
     }
   }
 
@@ -130,6 +217,7 @@ class _EditTravelProfileScreenState extends State<EditTravelProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         leadingWidth: 62,
         leading: _buildBackButton(),
@@ -147,6 +235,73 @@ class _EditTravelProfileScreenState extends State<EditTravelProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Foto profil
+            Center(
+              child: Consumer<UserProfileProvider>(
+                builder: (context, profileProvider, _) {
+                  final avatarUrl = profileProvider.avatarUrl;
+                  final isUploading = profileProvider.isUploadingAvatar;
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFF004CB9),
+                            width: 2,
+                          ),
+                          image: DecorationImage(
+                            image: (avatarUrl != null && avatarUrl.isNotEmpty)
+                                ? NetworkImage(avatarUrl) as ImageProvider
+                                : const AssetImage('assets/images/profile.png'),
+                            fit: BoxFit.cover,
+                            onError: (_, __) {},
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: GestureDetector(
+                          onTap: isUploading ? null : _pickAndUpload,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF004CB9),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: isUploading
+                                ? const Padding(
+                                    padding: EdgeInsets.all(5),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1.5,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.camera_alt,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 28),
+
             _buildSectionTitle("Informasi Umum"),
             const SizedBox(height: 16),
             _buildInputField(
@@ -161,14 +316,12 @@ class _EditTravelProfileScreenState extends State<EditTravelProfileScreen> {
               hint: "Contoh: PPIU-12345/2020",
             ),
             const SizedBox(height: 16),
-
             _buildInputField(
               label: "Tahun Beroperasi",
               controller: yearC,
               hint: "Pilih tanggal beroperasi",
               onTap: () => _selectDate(context),
             ),
-
             const SizedBox(height: 32),
             _buildSectionTitle("Tentang Travel"),
             const SizedBox(height: 16),
@@ -177,7 +330,6 @@ class _EditTravelProfileScreenState extends State<EditTravelProfileScreen> {
               controller: bioC,
               isMultiline: true,
             ),
-
             const SizedBox(height: 100),
           ],
         ),
@@ -185,7 +337,6 @@ class _EditTravelProfileScreenState extends State<EditTravelProfileScreen> {
       bottomNavigationBar: _buildBottomBar(isLoading),
     );
   }
-
 
   Widget _buildBackButton() {
     return Padding(
@@ -300,7 +451,7 @@ class _EditTravelProfileScreenState extends State<EditTravelProfileScreen> {
     String? hint,
     bool isMultiline = false,
     bool isEnabled = true,
-    VoidCallback? onTap, 
+    VoidCallback? onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,9 +468,8 @@ class _EditTravelProfileScreenState extends State<EditTravelProfileScreen> {
         TextFormField(
           controller: controller,
           enabled: isEnabled,
-          readOnly:
-              onTap != null,
-          onTap: onTap, 
+          readOnly: onTap != null,
+          onTap: onTap,
           maxLines: isMultiline ? 5 : 1,
           style: TextStyle(
             fontSize: 14,

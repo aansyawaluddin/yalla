@@ -155,30 +155,6 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
-          // ── GLOW PUSAT (step 4, di belakang logo, lebih terang) ──
-          Positioned(
-            top: centerBigGlowTop,
-            left: centerBigGlowLeft,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 700),
-              opacity: _step == 4 ? 1.0 : 0.0,
-              child: Container(
-                width: bigGlowSize,
-                height: bigGlowSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF4DA8FF).withOpacity(0.9),
-                      const Color(0xFF4DA8FF).withOpacity(0.0),
-                    ],
-                    stops: const [0.0, 1.0],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
           // ── TRAIL ASAP PESAWAT (step 6) ──
           AnimatedPositioned(
             duration: const Duration(milliseconds: 1200),
