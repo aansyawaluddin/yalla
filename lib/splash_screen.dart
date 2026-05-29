@@ -24,26 +24,24 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _jalankanAnimasi() async {
-    // Step 1: Delay awal
     await Future.delayed(const Duration(seconds: 1));
 
-    // Step 2: Logo membesar
     if (mounted) setState(() => _step = 2);
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // Step 3: Cahaya muncul
+    // Step 3: Dua cahaya muncul di sudut (kanan-atas & kiri-bawah)
     if (mounted) setState(() => _step = 3);
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 1000));
 
-    // Step 4: Cahaya menyatu ke tengah
+    // Step 4: Cahaya menyatu jadi satu glow besar di tengah
     if (mounted) setState(() => _step = 4);
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 1000));
 
-    // Step 5: Cahaya memudar (Fade out)
+    // Step 5: Cahaya memudar
     if (mounted) setState(() => _step = 5);
     await Future.delayed(const Duration(milliseconds: 600));
 
-    // Step 6: Logo & Pesawat bergerak ke posisi akhir
+    // Step 6: Logo & Pesawat bergerak ke posisi akhir + trail asap
     if (mounted) setState(() => _step = 6);
     await Future.delayed(const Duration(seconds: 2));
 
@@ -57,12 +55,11 @@ class _SplashScreenState extends State<SplashScreen> {
     if (role != null) {
       Widget targetScreen;
       if (role == 'admin') {
-        targetScreen =
-            const AdminDashboardScreen(); 
+        targetScreen = const AdminDashboardScreen();
       } else if (role == 'travel') {
-        targetScreen = const HomePlaneTravelScreen(); 
+        targetScreen = const HomePlaneTravelScreen();
       } else {
-        targetScreen = const HomeScreen(); 
+        targetScreen = const HomeScreen();
       }
       Navigator.pushReplacement(
         context,
@@ -91,48 +88,146 @@ class _SplashScreenState extends State<SplashScreen> {
     final centerTop = screenHeight / 2 - (logoContainerSize / 2);
     final centerLeft = screenWidth / 2 - (logoContainerSize / 2);
 
-    final double alignCenterY = 120.0;
+    const double alignCenterY = 120.0;
     final double planeTop = alignCenterY - (planeSize / 2);
     final double targetTop = alignCenterY - (logoContainerSize / 2);
     final double targetLeftForRightPos = screenWidth - logoContainerSize;
 
-    const double lightSize = 300.0;
-    final centerLightTop = screenHeight / 2 - (lightSize / 2);
-    final centerLightX = screenWidth / 2 - (lightSize / 2);
+    // Ukuran glow besar saat menyatu di tengah (step 4)
+    const double bigGlowSize = 300.0;
+    final centerBigGlowTop = screenHeight / 2 - (bigGlowSize / 2);
+    final centerBigGlowLeft = screenWidth / 2 - (bigGlowSize / 2);
+
+    // Ukuran cahaya sudut (step 3)
+    const double cornerGlowSize = 200.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFF004CB9),
       body: Stack(
         children: [
-          // Efek Cahaya Glow 1
+          // ── CAHAYA SUDUT KANAN-ATAS (step 3) ──
           AnimatedPositioned(
-            duration: const Duration(milliseconds: 800),
+            duration: const Duration(milliseconds: 900),
             curve: Curves.easeInOut,
             top: _step >= 4
-                ? centerLightTop
-                : (_step == 3 ? screenHeight - 200 : screenHeight),
-            left: _step >= 4 ? centerLightX : (_step == 3 ? -150 : -300),
+                ? centerBigGlowTop
+                : (_step == 3 ? -cornerGlowSize * 0.4 : -cornerGlowSize),
+            right: _step >= 4
+                ? (screenWidth / 2 - bigGlowSize / 2)
+                : (_step == 3 ? -cornerGlowSize * 0.4 : -cornerGlowSize),
             child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 600),
               opacity: (_step == 3 || _step == 4) ? 1.0 : 0.0,
-              child: _buildGlowLight(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 900),
+                curve: Curves.easeInOut,
+                width: _step >= 4 ? bigGlowSize : cornerGlowSize,
+                height: _step >= 4 ? bigGlowSize : cornerGlowSize,
+                child: _buildGlowLight(
+                  _step >= 4 ? bigGlowSize : cornerGlowSize,
+                ),
+              ),
             ),
           ),
 
-          // Efek Cahaya Glow 2
+          // ── CAHAYA SUDUT KIRI-BAWAH (step 3) ──
           AnimatedPositioned(
-            duration: const Duration(milliseconds: 800),
+            duration: const Duration(milliseconds: 900),
             curve: Curves.easeInOut,
-            top: _step >= 4 ? centerLightTop : (_step == 3 ? 0 : -200),
-            right: _step >= 4 ? centerLightX : (_step == 3 ? -150 : -300),
+            bottom: _step >= 4
+                ? (screenHeight / 2 - bigGlowSize / 2)
+                : (_step == 3 ? -cornerGlowSize * 0.4 : -cornerGlowSize),
+            left: _step >= 4
+                ? (screenWidth / 2 - bigGlowSize / 2)
+                : (_step == 3 ? -cornerGlowSize * 0.4 : -cornerGlowSize),
             child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 600),
               opacity: (_step == 3 || _step == 4) ? 1.0 : 0.0,
-              child: _buildGlowLight(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 900),
+                curve: Curves.easeInOut,
+                width: _step >= 4 ? bigGlowSize : cornerGlowSize,
+                height: _step >= 4 ? bigGlowSize : cornerGlowSize,
+                child: _buildGlowLight(
+                  _step >= 4 ? bigGlowSize : cornerGlowSize,
+                ),
+              ),
             ),
           ),
 
-          // Animasi Logo
+          // ── GLOW PUSAT (step 4, di belakang logo, lebih terang) ──
+          Positioned(
+            top: centerBigGlowTop,
+            left: centerBigGlowLeft,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 700),
+              opacity: _step == 4 ? 1.0 : 0.0,
+              child: Container(
+                width: bigGlowSize,
+                height: bigGlowSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF4DA8FF).withOpacity(0.9),
+                      const Color(0xFF4DA8FF).withOpacity(0.0),
+                    ],
+                    stops: const [0.0, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── TRAIL ASAP PESAWAT (step 6) ──
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 1200),
+            curve: Curves.easeOutCubic,
+            top: planeTop + planeSize / 2 - 8,
+            left: _step >= 6 ? -10 : -250,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 1000),
+              opacity: _step >= 6 ? 1.0 : 0.0,
+              child: Container(
+                width: 90,
+                height: 16,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.lightBlueAccent.withOpacity(0.0),
+                      Colors.lightBlueAccent.withOpacity(0.5),
+                      Colors.white.withOpacity(0.8),
+                    ],
+                    stops: const [0.0, 0.6, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── ANIMASI PESAWAT ──
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 1200),
+            curve: Curves.easeOutCubic,
+            top: planeTop,
+            left: _step >= 6 ? 40 : -100,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 800),
+              opacity: _step >= 6 ? 1.0 : 0.0,
+              child: Image.asset(
+                'assets/icons/plane.png',
+                width: planeSize,
+                height: planeSize,
+                color: Colors.white,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+
+          // ── ANIMASI LOGO ──
           AnimatedPositioned(
             duration: const Duration(milliseconds: 1000),
             curve: Curves.easeOutCubic,
@@ -156,26 +251,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
-          // Animasi Pesawat
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 1200),
-            curve: Curves.easeOutCubic,
-            top: planeTop,
-            left: _step >= 6 ? 40 : -100,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 800),
-              opacity: _step >= 6 ? 1.0 : 0.0,
-              child: Image.asset(
-                'assets/icons/plane.png',
-                width: planeSize,
-                height: planeSize,
-                color: Colors.white,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-
-          // Layer Login Screen (Muncul jika belum login)
+          // ── LOGIN SCREEN ──
           AnimatedPositioned(
             duration: const Duration(milliseconds: 1000),
             curve: Curves.easeOutQuart,
@@ -190,19 +266,19 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
-  Widget _buildGlowLight() {
+  Widget _buildGlowLight(double size) {
     return Container(
-      width: 200,
-      height: 200,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.lightBlueAccent.withOpacity(0.6),
-            blurRadius: 90,
-            spreadRadius: 30,
-          ),
-        ],
+        gradient: RadialGradient(
+          colors: [
+            const Color(0xFF4DA8FF).withOpacity(0.85),
+            const Color(0xFF4DA8FF).withOpacity(0.0),
+          ],
+          stops: const [0.0, 1.0],
+        ),
       ),
     );
   }
