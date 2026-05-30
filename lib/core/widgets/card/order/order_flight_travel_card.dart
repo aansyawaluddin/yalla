@@ -298,9 +298,11 @@ class OrderFlightTravelCard extends StatelessWidget {
             Expanded(child: _buildDashedLine(Colors.grey.shade300)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Transform.rotate(
-                angle: math.pi / 4,
-                child: Icon(Icons.flight, color: accentColor, size: 24),
+              child: Image.asset(
+                'assets/icons/vector_plane.png',
+                width: 24,
+                height: 24,
+                color: accentColor,
               ),
             ),
             Expanded(child: _buildDashedLine(Colors.grey.shade300)),

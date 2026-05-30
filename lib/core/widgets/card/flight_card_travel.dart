@@ -417,13 +417,11 @@ class FlightOptionCardTravel extends StatelessWidget {
                                     Expanded(
                                       child: _buildDashedLine(dashedLineColor),
                                     ),
-                                    Transform.rotate(
-                                      angle: 1.5708,
-                                      child: Icon(
-                                        Icons.flight,
-                                        color: iconColor,
-                                        size: 20,
-                                      ),
+                                    Image.asset(
+                                      'assets/icons/vector_plane.png',
+                                      width: 20,
+                                      height: 20,
+                                      color: iconColor,
                                     ),
                                     Expanded(
                                       child: _buildDashedLine(dashedLineColor),
