@@ -67,6 +67,7 @@ class OrderModel {
   final FlightModel? returnFlight;
   final String? manifestUrl;
   final PackageModel? package;
+  final String? travelAvatarUrl;
 
   OrderModel({
     required this.id,
@@ -85,8 +86,8 @@ class OrderModel {
     this.returnFlight,
     this.manifestUrl,
     this.package,
+    this.travelAvatarUrl,
   });
-
 
   factory OrderModel.empty() {
     return OrderModel(
@@ -106,6 +107,7 @@ class OrderModel {
       returnFlight: null,
       manifestUrl: null,
       package: null,
+      travelAvatarUrl: null,
     );
   }
 
@@ -142,6 +144,7 @@ class OrderModel {
       package: json['package'] != null
           ? PackageModel.fromJson(json['package'])
           : null,
+      travelAvatarUrl: json['travel_avatar_url'],
     );
   }
 }

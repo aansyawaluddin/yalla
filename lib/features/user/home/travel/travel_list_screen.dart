@@ -82,6 +82,7 @@ class _TravelListScreenState extends State<TravelListScreen> {
           icon: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
+              color: Colors.white,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.grey.shade300),
             ),

@@ -172,10 +172,28 @@ class _PaymentPackageScreenState extends State<PaymentPackageScreen> {
                                     color: const Color(0xffDADADA),
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.mosque,
-                                  color: Color(0xFF0084FF),
-                                  size: 24,
+                                child: ClipOval(
+                                  child:
+                                      (widget.order.travelAvatarUrl != null &&
+                                          widget
+                                              .order
+                                              .travelAvatarUrl!
+                                              .isNotEmpty)
+                                      ? Image.network(
+                                          widget.order.travelAvatarUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(
+                                                Icons.mosque,
+                                                color: Color(0xFF0084FF),
+                                                size: 24,
+                                              ),
+                                        )
+                                      : const Icon(
+                                          Icons.mosque,
+                                          color: Color(0xFF0084FF),
+                                          size: 24,
+                                        ),
                                 ),
                               ),
                               const SizedBox(width: 12),

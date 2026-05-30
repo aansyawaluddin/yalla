@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/models/flight_model.dart';
@@ -212,7 +211,6 @@ class OrderFlightCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label pill
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           decoration: BoxDecoration(
@@ -230,7 +228,6 @@ class OrderFlightCard extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Times row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -288,7 +285,6 @@ class OrderFlightCard extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Route row
         Row(
           children: [
             Text(
@@ -312,9 +308,11 @@ class OrderFlightCard extends StatelessWidget {
             Expanded(child: _buildDashedLine(Colors.grey.shade300)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Transform.rotate(
-                angle: math.pi / 4,
-                child: Icon(Icons.flight, color: accentColor, size: 24),
+              child: Image.asset(
+                'assets/icons/vector_plane.png',
+                width: 24,
+                height: 24,
+                color: accentColor,
               ),
             ),
             Expanded(child: _buildDashedLine(Colors.grey.shade300)),
@@ -366,6 +364,8 @@ class OrderFlightCard extends StatelessWidget {
         ? "${order.flight?.flightNo ?? '-'} • ${order.returnFlight?.flightNo ?? '-'}  •  PP"
         : "${flightData?.flightNo ?? '-'}  •  Ekonomi";
 
+    final String? travelAvatarUrl = order.travelAvatarUrl;
+
     final Widget logoWidget = _isPackageOrder
         ? Container(
             width: 50,
@@ -375,7 +375,23 @@ class OrderFlightCard extends StatelessWidget {
               color: const Color(0xFFF0F8FF),
               border: Border.all(color: Colors.grey.shade200),
             ),
-            child: const Icon(Icons.mosque, color: Color(0xFF0084FF), size: 24),
+            child: ClipOval(
+              child: (travelAvatarUrl != null && travelAvatarUrl.isNotEmpty)
+                  ? Image.network(
+                      travelAvatarUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.mosque,
+                        color: Color(0xFF0084FF),
+                        size: 24,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.mosque,
+                      color: Color(0xFF0084FF),
+                      size: 24,
+                    ),
+            ),
           )
         : Container(
             height: 50,
@@ -438,7 +454,6 @@ class OrderFlightCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Background decoration
             Positioned(
               right: -30,
               top: -100,
@@ -459,7 +474,6 @@ class OrderFlightCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Header ────────────────────────────────────────────
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -556,7 +570,6 @@ class OrderFlightCard extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // ── Flight segment(s) ──────────────────────────────────
                   if (_isPackageOrder) ...[
                     _buildFlightSegment(
                       flight: order.package!.departureFlight,
@@ -591,7 +604,6 @@ class OrderFlightCard extends StatelessWidget {
                       labelText: const Color(0xFFBE185D),
                     ),
                   ] else if (_isRoundTrip) ...[
-                    // PP tiket biasa — tampilkan dua segment
                     _buildFlightSegment(
                       flight: order.flight,
                       originCode: 'UPG',
@@ -641,7 +653,6 @@ class OrderFlightCard extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // ── Price & payment progress ───────────────────────────
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -745,7 +756,6 @@ class OrderFlightCard extends StatelessWidget {
               ),
             ),
 
-            // ── Date badge ─────────────────────────────────────────────
             Positioned(
               top: 30,
               right: 0,

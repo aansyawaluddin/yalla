@@ -106,7 +106,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- Data dari order ---
     final FlightModel? departureFlight =
         order.package?.departureFlight ?? order.flight;
     final FlightModel? returnFlight =
@@ -119,12 +118,10 @@ class PackageTicketDetailScreen extends StatelessWidget {
         ? order.id.substring(0, 8).toUpperCase()
         : order.id.toUpperCase();
 
-    // Departure flight info
     final String depFlightNo = departureFlight?.flightNo ?? "-";
     final String depTime = _formatTime(departureFlight?.departureTime);
     final String depDate = _formatDate(departureFlight?.departureTime);
 
-    // Return flight info
     final String retFlightNo = returnFlight?.flightNo ?? "-";
     final String retTime = _formatTime(returnFlight?.departureTime);
     final String retDate = _formatDate(returnFlight?.departureTime);
@@ -134,7 +131,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // --- HEADER ---
             Padding(
               padding: const EdgeInsets.only(
                 top: 16,
@@ -193,7 +189,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    // --- KARTU TIKET UTAMA ---
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -212,7 +207,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          // --- HEADER PAKET ---
                           Padding(
                             padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
                             child: Row(
@@ -229,10 +223,25 @@ class PackageTicketDetailScreen extends StatelessWidget {
                                       ).withOpacity(0.3),
                                     ),
                                   ),
-                                  child: const Icon(
-                                    Icons.mosque,
-                                    color: Color(0xFF0084FF),
-                                    size: 24,
+                                  child: ClipOval(
+                                    child:
+                                        (order.travelAvatarUrl != null &&
+                                            order.travelAvatarUrl!.isNotEmpty)
+                                        ? Image.network(
+                                            order.travelAvatarUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) =>
+                                                const Icon(
+                                                  Icons.mosque,
+                                                  color: Color(0xFF0084FF),
+                                                  size: 24,
+                                                ),
+                                          )
+                                        : const Icon(
+                                            Icons.mosque,
+                                            color: Color(0xFF0084FF),
+                                            size: 24,
+                                          ),
                                   ),
                                 ),
                                 const SizedBox(width: 14),
@@ -286,7 +295,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
 
                           const PackageTicketDivider(),
 
-                          // --- RUTE KEBERANGKATAN ---
                           Padding(
                             padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                             child: Column(
@@ -309,7 +317,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
 
                           const SizedBox(height: 16),
 
-                          // --- RUTE KEPULANGAN ---
                           if (returnFlight != null)
                             Padding(
                               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -369,7 +376,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
 
                           const PackageTicketDivider(),
 
-                          // --- BARCODE ---
                           AnimatedBuilder(
                             animation: Listenable.merge([
                               barcodeOpacity,
@@ -416,7 +422,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
 
                     const SizedBox(height: 32),
 
-                    // --- TOMBOL UNDUH ---
                     order.manifestUrl != null
                         ? PrimaryGradientButton(
                             text: 'Unduh E-Tiket Paket',
@@ -442,8 +447,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
       ),
     );
   }
-
-  // --- HELPER WIDGETS ---
 
   Widget _buildRouteLabel(String label) {
     return Row(
@@ -503,7 +506,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
               ],
             ),
 
-            // Arrow / flight
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -517,12 +519,13 @@ class PackageTicketDetailScreen extends StatelessWidget {
                             painter: _PackageDashedLinePainter(),
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4),
-                          child: Icon(
-                            Icons.flight_takeoff,
-                            color: Color(0xFF0084FF),
-                            size: 18,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Image.asset(
+                            'assets/icons/vector_plane.png',
+                            width: 18,
+                            height: 18,
+                            color: const Color(0xFF0084FF),
                           ),
                         ),
                         Expanded(
@@ -547,7 +550,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
               ),
             ),
 
-            // Destination
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -569,7 +571,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
           ],
         ),
 
-        // --- TAMBAHAN: tanggal & waktu ---
         const SizedBox(height: 10),
         Row(
           children: [
@@ -668,7 +669,6 @@ class PackageTicketDetailScreen extends StatelessWidget {
   }
 }
 
-// --- DIVIDER TIKET ---
 class PackageTicketDivider extends StatelessWidget {
   const PackageTicketDivider({super.key});
 

@@ -87,23 +87,21 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
         elevation: 0,
         centerTitle: true,
         leadingWidth: 62,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 24.0, top: 8, bottom: 8),
-          child: Container(
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
+              color: Colors.white,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF0084FF),
-                size: 18,
-              ),
-              onPressed: () => Navigator.pop(context),
+            child: const Icon(
+              Icons.arrow_back,
+              color: Color(0xFF005C99),
+              size: 20,
             ),
           ),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Profil Travel",

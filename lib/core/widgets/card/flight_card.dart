@@ -28,7 +28,6 @@ class FlightOptionCard extends StatelessWidget {
     if (flight == null) return;
 
     if (isRoundTripMode && departureFlight == null) {
-      // Fase 1: pilih flight berangkat → ke list flight pulang
       Navigator.push(
         context,
         PageRouteBuilder(
@@ -54,7 +53,6 @@ class FlightOptionCard extends StatelessWidget {
         ),
       );
     } else if (isRoundTripMode && departureFlight != null) {
-      // Fase 2: pilih flight pulang → ke detail penumpang
       Navigator.push(
         context,
         PageRouteBuilder(
@@ -77,7 +75,6 @@ class FlightOptionCard extends StatelessWidget {
         ),
       );
     } else {
-      // Sekali jalan biasa
       Navigator.push(
         context,
         PageRouteBuilder(
@@ -405,13 +402,11 @@ class FlightOptionCard extends StatelessWidget {
                                     Expanded(
                                       child: _buildDashedLine(dashedLineColor),
                                     ),
-                                    Transform.rotate(
-                                      angle: 1.5708,
-                                      child: Icon(
-                                        Icons.flight,
-                                        color: iconColor,
-                                        size: 20,
-                                      ),
+                                    Image.asset(
+                                      'assets/icons/vector_plane.png',
+                                      width: 20,
+                                      height: 20,
+                                      color: iconColor,
                                     ),
                                     Expanded(
                                       child: _buildDashedLine(dashedLineColor),

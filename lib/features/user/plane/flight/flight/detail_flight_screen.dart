@@ -147,13 +147,11 @@ class DetailFlightScreen extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
                                   ),
-                                  child: Transform.rotate(
-                                    angle: 1.5708,
-                                    child: const Icon(
-                                      Icons.flight,
-                                      color: Colors.white70,
-                                      size: 20,
-                                    ),
+                                  child: Image.asset(
+                                    'assets/icons/vector_plane.png',
+                                    width: 20,
+                                    height: 20,
+                                    color: Colors.white,
                                   ),
                                 ),
                                 Expanded(child: _buildDottedLine()),
