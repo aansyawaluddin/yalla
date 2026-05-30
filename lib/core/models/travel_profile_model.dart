@@ -5,6 +5,7 @@ class TravelProfileModel {
   final int totalRatings;
   final String firstName;
   final String lastName;
+  final String avatarUrl;
   final String aboutText;
   final String licenseNumber;
   final String operatingSince;
@@ -16,6 +17,7 @@ class TravelProfileModel {
     required this.totalRatings,
     required this.firstName,
     required this.lastName,
+    required this.avatarUrl,
     required this.aboutText,
     required this.licenseNumber,
     required this.operatingSince,
@@ -29,6 +31,7 @@ class TravelProfileModel {
       totalRatings: json['total_ratings'] ?? 0,
       firstName: json['profile']?['firstName'] ?? '',
       lastName: json['profile']?['lastName'] ?? '',
+      avatarUrl: json['profile']?['avatarUrl'] ?? '',
       aboutText:
           json['travel_details']?['about_text'] ??
           'Belum ada deskripsi profil untuk travel ini.',

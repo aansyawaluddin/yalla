@@ -4,14 +4,14 @@ class SmallTravelCard extends StatelessWidget {
   final String title;
   final double rating;
   final String reviews;
-  final String logoPath;
+  final String avatarUrl; 
 
   const SmallTravelCard({
     super.key,
     required this.title,
     required this.rating,
     required this.reviews,
-    required this.logoPath,
+    required this.avatarUrl, 
   });
 
   @override
@@ -36,7 +36,6 @@ class SmallTravelCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Placeholder Logo (Ganti dengan Image.asset)
               Container(
                 width: 40,
                 height: 40,
@@ -44,14 +43,21 @@ class SmallTravelCard extends StatelessWidget {
                   color: Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                // Uncomment kode di bawah jika gambar sudah ada di assets
-                // child: ClipRRect(
-                //   borderRadius: BorderRadius.circular(8),
-                //   child: Image.asset(logoPath, fit: BoxFit.cover),
-                // ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: (avatarUrl.isNotEmpty)
+                      ? Image.network(
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.store,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
+                        )
+                      : const Icon(Icons.store, size: 20, color: Colors.grey),
+                ),
               ),
-
-              // Ikon Centang Biru Kecil
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
@@ -69,8 +75,7 @@ class SmallTravelCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24), // Spacer
-          // Rating & Ulasan
+          const SizedBox(height: 24),
           Row(
             children: [
               const Icon(Icons.star, color: Color(0xFFFFC107), size: 14),
@@ -90,8 +95,6 @@ class SmallTravelCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-
-          // Judul Travel
           Text(
             title,
             style: const TextStyle(

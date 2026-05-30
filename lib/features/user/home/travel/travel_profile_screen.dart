@@ -76,6 +76,7 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
     final profileData = travelProvider.selectedTravelProfile;
     final bool isLoading = travelProvider.isProfileLoading;
     final String companyName = profileData?.companyName ?? "Memuat...";
+    final String avatarUrl = profileData?.avatarUrl ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -166,9 +167,14 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                               offset: const Offset(0, 4),
                             ),
                           ],
-                          image: const DecorationImage(
-                            image: AssetImage('assets/images/logo_flydeal.png'),
+                          image: DecorationImage(
+                            image: avatarUrl.isNotEmpty
+                                ? NetworkImage(avatarUrl) as ImageProvider
+                                : const AssetImage(
+                                    'assets/images/logo_flydeal.png',
+                                  ),
                             fit: BoxFit.cover,
+                            onError: (_, __) {},
                           ),
                         ),
                       ),
@@ -457,7 +463,9 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                 facilityNames = ["Fasilitas Standar"];
               }
 
-              String displayDate = _formatDate(paket.departureFlight?.departureTime ?? '');
+              String displayDate = _formatDate(
+                paket.departureFlight?.departureTime ?? '',
+              );
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 24),

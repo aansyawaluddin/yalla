@@ -38,7 +38,7 @@ class _TravelListScreenState extends State<TravelListScreen> {
                 title: travel1.fullName,
                 rating: travel1.averageScore,
                 reviews: "${travel1.totalRatings}",
-                logoPath: 'assets/images/logo_rabbani.png',
+                avatarUrl: travel1.avatarUrl,
               ),
             ),
             const SizedBox(width: 16),
@@ -48,7 +48,7 @@ class _TravelListScreenState extends State<TravelListScreen> {
                   title: travel2.fullName,
                   rating: travel2.averageScore,
                   reviews: "${travel2.totalRatings}",
-                  logoPath: 'assets/images/logo_khazzanah.png',
+                  avatarUrl: travel1.avatarUrl,
                 ),
               )
             else
