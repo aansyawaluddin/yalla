@@ -590,12 +590,13 @@ class _AdminFlightScreenState extends State<AdminFlightScreen> {
                             },
                           ),
                         ),
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.symmetric(horizontal: 4.0),
-                          child: Icon(
-                            Icons.flight,
-                            color: Color(0xFF004CB9),
-                            size: 24,
+                          child: Image.asset(
+                            'assets/icons/vector_plane.png',
+                            width: 20,
+                            height: 20,
+                            color: const Color(0xFF0084FF),
                           ),
                         ),
                         Expanded(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:yalla/core/providers/admin_stats_provider.dart';
+import 'package:yalla/core/providers/admin_user_provider.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/providers/package_provider.dart';
@@ -25,6 +26,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => OrderProvider()),
         ChangeNotifierProvider(create: (_) => AdminStatsProvider()),
         ChangeNotifierProvider(create: (_) => UserProfileProvider()),
+        ChangeNotifierProvider(create: (_) => AdminUserProvider()),
       ],
       child: const MyApp(),
     ),

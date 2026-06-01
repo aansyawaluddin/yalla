@@ -84,4 +84,28 @@ class UserProfileService {
       throw Exception(error['message'] ?? 'Gagal mengunggah foto.');
     }
   }
+
+  Future<List<UserProfileModel>> fetchAllUsers(
+    String token, {
+    String? role,
+  }) async {
+    final queryParams = role != null ? '?role=$role' : '';
+    final url = Uri.parse('$_baseUrl/users$queryParams');
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => UserProfileModel.fromJson(e)).toList();
+    } else if (response.statusCode == 401) {
+      throw Exception(
+        'Sesi login telah habis (Error 401). Silakan login ulang.',
+      );
+    } else {
+      throw Exception(
+        'Gagal memuat daftar pengguna. Status: ${response.statusCode}',
+      );
+    }
+  }
 }

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/models/user_profile_model.dart';
+import 'package:yalla/core/providers/admin_user_provider.dart';
 import 'package:yalla/core/widgets/card/profile_card.dart';
 
 class AdminUserManagementScreen extends StatefulWidget {
@@ -10,7 +14,50 @@ class AdminUserManagementScreen extends StatefulWidget {
 }
 
 class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
   int _selectedFilterIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AdminUserProvider>().fetchAllUsers();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onFilterTap(int index) {
+    setState(() => _selectedFilterIndex = index);
+    final provider = context.read<AdminUserProvider>();
+    switch (index) {
+      case 0:
+        provider.setRoleFilter(null);
+        break;
+      case 1:
+        provider.setRoleFilter('jamaah');
+        break;
+      case 2:
+        provider.setRoleFilter('travel');
+        break;
+    }
+  }
+
+  void _onExportCsv() {
+    final csv = context.read<AdminUserProvider>().exportToCsv();
+    Clipboard.setData(ClipboardData(text: csv));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Data CSV telah disalin ke clipboard.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,23 +68,22 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         elevation: 0,
         centerTitle: true,
         leadingWidth: 70,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 24.0, top: 8.0, bottom: 8.0),
-          child: InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF0084FF), // Biru panah
-                size: 20,
-              ),
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: const Icon(
+              Icons.arrow_back,
+              color: Color(0xFF005C99),
+              size: 20,
             ),
           ),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Manajemen Pengguna",
@@ -49,85 +95,131 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Konten atas yang statis (Profile Card, Search, Filter)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-
-                  const ProfileCard(),
-
-                  const SizedBox(height: 24),
-
-                  _buildSearchBar(),
-
-                  const SizedBox(height: 20),
-
-                  _buildFilters(),
-
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-
-            Container(
-              width: double.infinity,
-              color: const Color(0xFFFAFAFA),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 12.0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Baru saja aktif",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade400,
-                    ),
+        child: Consumer<AdminUserProvider>(
+          builder: (context, provider, _) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      const ProfileCard(),
+                      const SizedBox(height: 24),
+                      _buildSearchBar(provider),
+                      const SizedBox(height: 20),
+                      _buildFilters(provider),
+                      const SizedBox(height: 24),
+                    ],
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      // TODO: Aksi Export CSV
-                    },
-                    child: const Text(
-                      "Export CSV",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0084FF), // Biru
+                ),
+
+                Container(
+                  width: double.infinity,
+                  color: const Color(0xFFFAFAFA),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 12.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        provider.isLoading
+                            ? "Memuat..."
+                            : "${provider.displayedUsers.length} pengguna",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade400,
+                        ),
                       ),
-                    ),
+                      GestureDetector(
+                        onTap: provider.isLoading ? null : _onExportCsv,
+                        child: Text(
+                          "Export CSV",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: provider.isLoading
+                                ? Colors.grey.shade300
+                                : const Color(0xFF0084FF),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            Expanded(
-              child: ListView(
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  _buildUserItem(
-                    name: "Alice Johnson",
-                    joinedDate: "Okt 2022",
-                    bookingCount: 3,
-                    type: "Reguler",
-                  ),
-                  const Divider(height: 1, color: Color(0xFFF3F4F6)),
-                  _buildUserItem(
-                    name: "Alice Johnson",
-                    joinedDate: "Okt 2022",
-                    bookingCount: 3,
-                    type: "Travel",
-                  ),
-                  const Divider(height: 1, color: Color(0xFFF3F4F6)),
-                ],
+                Expanded(child: _buildBody(provider)),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(AdminUserProvider provider) {
+    if (provider.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF0084FF)),
+      );
+    }
+
+    if (provider.errorMessage.isNotEmpty) {
+      return _buildErrorState(provider);
+    }
+
+    final users = provider.displayedUsers;
+
+    if (users.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return ListView.separated(
+      physics: const BouncingScrollPhysics(),
+      itemCount: users.length,
+      separatorBuilder: (_, __) =>
+          const Divider(height: 1, color: Color(0xFFF3F4F6)),
+      itemBuilder: (_, index) => _buildUserItem(users[index]),
+    );
+  }
+
+  Widget _buildErrorState(AdminUserProvider provider) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 48,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              provider.errorMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: provider.fetchAllUsers,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text("Coba Lagi"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0084FF),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
               ),
             ),
           ],
@@ -136,7 +228,23 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.search_off_rounded, size: 48, color: Colors.grey.shade300),
+          const SizedBox(height: 12),
+          Text(
+            "Tidak ada pengguna ditemukan.",
+            style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(AdminUserProvider provider) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -144,10 +252,25 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: TextField(
+        controller: _searchController,
+        onChanged: provider.setSearchQuery,
         decoration: InputDecoration(
-          hintText: "Cari berdasarkan nama...",
+          hintText: "Cari berdasarkan nama atau email...",
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
           prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    color: Colors.grey.shade400,
+                    size: 18,
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    provider.setSearchQuery('');
+                  },
+                )
+              : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
@@ -155,12 +278,11 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     );
   }
 
-  Widget _buildFilters() {
+  Widget _buildFilters(AdminUserProvider provider) {
     return Row(
       children: [
-        // Filter 1: Semua Pengguna
         GestureDetector(
-          onTap: () => setState(() => _selectedFilterIndex = 0),
+          onTap: () => _onFilterTap(0),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -188,9 +310,8 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         ),
         const SizedBox(width: 12),
 
-        // Filter 2: Reguler
         GestureDetector(
-          onTap: () => setState(() => _selectedFilterIndex = 1),
+          onTap: () => _onFilterTap(1),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -222,9 +343,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  "82",
-                  style: TextStyle(
+                Text(
+                  '${provider.totalJamaah}',
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -237,7 +358,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
         const SizedBox(width: 12),
 
         GestureDetector(
-          onTap: () => setState(() => _selectedFilterIndex = 2),
+          onTap: () => _onFilterTap(2),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -269,9 +390,9 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  "67",
-                  style: TextStyle(
+                Text(
+                  '${provider.totalTravel}',
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -285,18 +406,15 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
     );
   }
 
-  Widget _buildUserItem({
-    required String name,
-    required String joinedDate,
-    required int bookingCount,
-    required String type,
-  }) {
-    Color badgeBgColor = type == "Reguler"
+  Widget _buildUserItem(UserProfileModel user) {
+    final isJamaah = user.role == 'jamaah';
+    final badgeBgColor = isJamaah
         ? const Color(0xFFE8F5E9)
         : const Color(0xFFF0F8FF);
-    Color badgeTextColor = type == "Reguler"
+    final badgeTextColor = isJamaah
         ? const Color(0xFF4CAF50)
         : const Color(0xFF0084FF);
+    final badgeLabel = isJamaah ? 'Reguler' : 'Travel';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -307,13 +425,19 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
               Container(
                 width: 45,
                 height: 45,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/passenger.png'),
-                    fit: BoxFit.cover,
-                  ),
+                  color: Colors.grey.shade200,
                 ),
+                clipBehavior: Clip.antiAlias,
+                child: user.avatarUrl.isNotEmpty
+                    ? Image.network(
+                        user.avatarUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _buildAvatarFallback(user),
+                      )
+                    : _buildAvatarFallback(user),
               ),
               Positioned(
                 bottom: 0,
@@ -332,13 +456,14 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
           ),
           const SizedBox(width: 16),
 
-          // Info Pengguna
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  '${user.firstName} ${user.lastName}'.trim().isEmpty
+                      ? user.email
+                      : '${user.firstName} ${user.lastName}'.trim(),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -349,25 +474,47 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
                 Row(
                   children: [
                     Icon(
-                      Icons.calendar_today_outlined,
+                      Icons.email_outlined,
                       size: 12,
                       color: Colors.grey.shade400,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      "Joined $joinedDate • $bookingCount Booking",
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade400,
+                    Expanded(
+                      child: Text(
+                        user.email,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade400,
+                        ),
                       ),
                     ),
                   ],
                 ),
+                if (user.nationality.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.flag_outlined,
+                        size: 12,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        user.nationality,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
 
-          // Badge Tipe Pengguna (Reguler/Travel)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -375,7 +522,7 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              type,
+              badgeLabel,
               style: TextStyle(
                 color: badgeTextColor,
                 fontSize: 10,
@@ -384,6 +531,27 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarFallback(UserProfileModel user) {
+    final initials = [
+      user.firstName,
+      user.lastName,
+    ].where((s) => s.isNotEmpty).map((s) => s[0].toUpperCase()).join();
+
+    return Container(
+      color: const Color(0xFFE3F2FD),
+      child: Center(
+        child: Text(
+          initials.isEmpty ? '?' : initials,
+          style: const TextStyle(
+            color: Color(0xFF0084FF),
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
       ),
     );
   }
