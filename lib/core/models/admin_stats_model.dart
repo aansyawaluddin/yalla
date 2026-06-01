@@ -77,16 +77,27 @@ class LatestOrderModel {
   factory LatestOrderModel.fromJson(Map<String, dynamic> json) {
     final package = json['package'];
     final departureFlight = json['departure_flight'];
+    final returnFlight = json['return_flight'];
     final passengers = json['passengers'] as List<dynamic>? ?? [];
+
+    String flightNo = '-';
+    if (package != null) {
+      flightNo =
+          package['departure_flight']?['flightNo'] ??
+          package['return_flight']?['flightNo'] ??
+          '-';
+    } else if (departureFlight != null) {
+      flightNo = departureFlight['flightNo'] ?? '-';
+    } else if (returnFlight != null) {
+      flightNo = returnFlight['flightNo'] ?? '-';
+    }
 
     return LatestOrderModel(
       id: json['id'] ?? '',
       status: json['status'] ?? '',
       price: json['price'] ?? 0,
       email: json['email'] ?? '',
-      flightNo: package != null
-          ? (package['departure_flight']?['flightNo'] ?? '-')
-          : (departureFlight?['flightNo'] ?? '-'),
+      flightNo: flightNo,
       isPackage: package != null,
       packageName: package?['package_name'] ?? '',
       passengerCount: passengers.length,

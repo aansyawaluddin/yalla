@@ -106,6 +106,29 @@ class _AdminOrderManagementScreenState
     return "IDR $res";
   }
 
+  String _formatPriceShort(num price) {
+    if (price >= 1000000000) {
+      final val = (price / 1000000000);
+      final str = val == val.truncate()
+          ? val.toInt().toString()
+          : val.toStringAsFixed(1);
+      return "${str}M";
+    } else if (price >= 1000000) {
+      final val = (price / 1000000);
+      final str = val == val.truncate()
+          ? val.toInt().toString()
+          : val.toStringAsFixed(1);
+      return "${str}Jt";
+    } else if (price >= 1000) {
+      final val = (price / 1000);
+      final str = val == val.truncate()
+          ? val.toInt().toString()
+          : val.toStringAsFixed(1);
+      return "${str}Rb";
+    }
+    return price.toInt().toString();
+  }
+
   Map<String, List<OrderModel>> _groupOrders(List<OrderModel> orders) {
     final List<OrderModel> sortedList = List.from(orders);
     sortedList.sort((a, b) {
@@ -825,6 +848,21 @@ class _AdminOrderManagementScreenState
 
     final groupedOrders = _groupOrders(displayOrders);
 
+    final approvedAndFinished = allOrders
+        .where((o) => o.status == 'approved' || o.status == 'finished')
+        .toList();
+
+    final totalPendapatan = approvedAndFinished.fold<num>(
+      0,
+      (sum, o) => sum + o.price,
+    );
+
+    final totalPesanan = allOrders.length;
+    final completedCount = approvedAndFinished.length;
+    final completedPercent = totalPesanan > 0
+        ? ((completedCount / totalPesanan) * 100).toStringAsFixed(0)
+        : "0";
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -833,23 +871,21 @@ class _AdminOrderManagementScreenState
         centerTitle: true,
         scrolledUnderElevation: 0,
         leadingWidth: 70,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 24.0, top: 8.0, bottom: 8.0),
-          child: InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF0084FF),
-                size: 20,
-              ),
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: const Icon(
+              Icons.arrow_back,
+              color: Color(0xFF005C99),
+              size: 20,
             ),
           ),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Manajemen Pesanan",
@@ -876,8 +912,8 @@ class _AdminOrderManagementScreenState
                       Expanded(
                         child: _buildSummaryCard(
                           title: "Pendapatan",
-                          value: "182.000",
-                          trendValue: "78%",
+                          value: _formatPriceShort(totalPendapatan),
+                          trendValue: "${approvedAndFinished.length} order",
                           icon: Icons.account_balance_wallet_outlined,
                         ),
                       ),
@@ -885,8 +921,8 @@ class _AdminOrderManagementScreenState
                       Expanded(
                         child: _buildSummaryCard(
                           title: "Pesanan",
-                          value: "${allOrders.length}",
-                          trendValue: "78%",
+                          value: "$totalPesanan",
+                          trendValue: "$completedPercent%",
                           icon: Icons.receipt_long_outlined,
                         ),
                       ),
@@ -1204,7 +1240,6 @@ class _AdminOrderManagementScreenState
                   Divider(color: Colors.grey.shade100, thickness: 1.5),
                   const SizedBox(height: 12),
 
-                  // ── Flight Info ──
                   if (isPackageOrder) ...[
                     Row(
                       children: [

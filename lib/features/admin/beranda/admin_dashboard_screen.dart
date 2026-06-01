@@ -698,6 +698,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         statusLabel = order.status;
     }
 
+    final String displayTitle = order.isPackage
+        ? (order.packageName.isNotEmpty ? order.packageName : "Paket Umrah")
+        : (order.flightNo.isNotEmpty && order.flightNo != '-'
+              ? "Flydeal Air ${order.flightNo}"
+              : "Flydeal Air");
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -706,12 +712,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       child: Row(
         children: [
-          // Icon kiri
           Container(
             width: 60,
             height: 55,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: order.isPackage
+                  ? const Color(0xFFF0F8FF)
+                  : const Color(0xFFEFF6FF),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
                 bottomLeft: Radius.circular(8),
@@ -730,14 +737,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: const EdgeInsets.symmetric(vertical: 10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    order.isPackage
-                        ? order.packageName
-                        : "Flydeal Air ${order.flightNo}",
+                    displayTitle,
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -749,24 +754,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(
-                        order.email,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey.shade500,
+                      Icon(
+                        Icons.email_outlined,
+                        size: 10,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          order.email.isNotEmpty ? order.email : "-",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey.shade500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       if (order.passengerCount > 0) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Icon(
                             Icons.circle,
-                            size: 4,
+                            size: 3,
                             color: Colors.grey.shade400,
                           ),
                         ),
+                        Icon(
+                          Icons.people_outline,
+                          size: 10,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(width: 2),
                         Text(
                           "${order.passengerCount} Pax",
                           style: TextStyle(
