@@ -101,6 +101,7 @@ class _SplashScreenState extends State<SplashScreen> {
     const double cornerGlowSize = 200.0;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFF004CB9),
       body: Stack(
         children: [
@@ -230,10 +231,10 @@ class _SplashScreenState extends State<SplashScreen> {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 1000),
             curve: Curves.easeOutQuart,
-            top: _step == 7 ? 170 : screenHeight,
+            top: _step == 7 ? 0 : screenHeight,
             left: 0,
             right: 0,
-            height: screenHeight - 170,
+            bottom: 0,
             child: LoginScreen(screenHeight: screenHeight),
           ),
         ],
