@@ -96,7 +96,6 @@ class _SplashScreenState extends State<SplashScreen> {
     // Ukuran glow besar saat menyatu di tengah (step 4)
     const double bigGlowSize = 300.0;
     final centerBigGlowTop = screenHeight / 2 - (bigGlowSize / 2);
-    final centerBigGlowLeft = screenWidth / 2 - (bigGlowSize / 2);
 
     // Ukuran cahaya sudut (step 3)
     const double cornerGlowSize = 200.0;

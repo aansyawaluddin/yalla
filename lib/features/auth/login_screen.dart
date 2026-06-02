@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Stack(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 41, bottom: 40),
+                    padding: const EdgeInsets.only(top: 30, bottom: 40),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -222,9 +222,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 47),
+                        const SizedBox(height: 18),
 
-                        // Title
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 30),
                           child: Column(
@@ -256,9 +255,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 18),
 
-                        // Input Email
                         Padding(
                           padding: const EdgeInsets.only(right: 30),
                           child: CustomTextField(
@@ -268,9 +266,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 15),
 
-                        // Input Password
                         Row(
                           children: [
                             Expanded(
@@ -317,7 +314,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 24),
 
-                        // Buttons
                         Row(
                           children: [
                             Expanded(
@@ -344,7 +340,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     ),
                                   ),
-                                  // ---> PERUBAHAN: Kembalikan Teks Masuk <---
                                   child: const Text(
                                     "Masuk",
                                     style: TextStyle(
