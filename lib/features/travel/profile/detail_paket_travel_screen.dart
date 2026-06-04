@@ -1,0 +1,735 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yalla/core/models/flight_model.dart';
+import 'package:yalla/core/providers/package_provider.dart';
+import 'package:yalla/core/widgets/eror/error_state_widget.dart';
+import 'package:yalla/core/widgets/paket/facility_item.dart';
+import 'package:yalla/features/travel/profile/batch_detail_screen.dart';
+import 'package:yalla/features/travel/profile/edit_paket_screen.dart';
+
+class DetailPaketTravelScreen extends StatefulWidget {
+  final String packageId;
+
+  const DetailPaketTravelScreen({super.key, required this.packageId});
+
+  @override
+  State<DetailPaketTravelScreen> createState() =>
+      _DetailPaketTravelScreenState();
+}
+
+class _DetailPaketTravelScreenState extends State<DetailPaketTravelScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.packageId.isNotEmpty) {
+        context.read<PackageProvider>().getPackageById(widget.packageId);
+      }
+    });
+  }
+
+  String _formatPrice(int price) {
+    String priceStr = price.toString();
+    String result = '';
+    int count = 0;
+    for (int i = priceStr.length - 1; i >= 0; i--) {
+      result = priceStr[i] + result;
+      count++;
+      if (count % 3 == 0 && i != 0) {
+        result = '.$result';
+      }
+    }
+    return result;
+  }
+
+  String _formatDateTime(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) return "-";
+    try {
+      final dt = DateTime.parse(isoDate).toLocal();
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+      String day = dt.day.toString().padLeft(2, '0');
+      String month = months[dt.month - 1];
+      String hour = dt.hour.toString().padLeft(2, '0');
+      String minute = dt.minute.toString().padLeft(2, '0');
+      return "$day $month ${dt.year}, $hour:$minute";
+    } catch (e) {
+      return isoDate.split('T').first;
+    }
+  }
+
+  IconData _getFacilityIcon(String slug) {
+    switch (slug.toLowerCase()) {
+      case 'visa':
+        return Icons.article_outlined;
+      case 'asuransi':
+        return Icons.health_and_safety_outlined;
+      case 'mutawwif':
+        return Icons.headset_mic_outlined;
+      case 'transportasi':
+        return Icons.directions_bus_outlined;
+      case 'konsumsi':
+        return Icons.restaurant;
+      case 'air-zamzam':
+      case 'air_zamzam':
+        return Icons.water_drop_outlined;
+      case 'hotel':
+        return Icons.business;
+      case 'penerbangan':
+      case 'tiket':
+        return Icons.flight_takeoff;
+      default:
+        return Icons.check_circle_outline;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<PackageProvider>();
+    final isLoading = provider.isDetailFetching;
+    final packageData = provider.selectedPackage;
+
+    if (isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF005C99)),
+        ),
+      );
+    }
+
+    if (provider.errorMessage.isNotEmpty && packageData == null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF005C99)),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: ErrorStateWidget(
+          errorMessage: provider.errorMessage,
+          onRetry: () => provider.getPackageById(widget.packageId),
+        ),
+      );
+    }
+
+    final String packageName = packageData?.packageName ?? "Nama Paket";
+    final String batchName = packageData?.batchName ?? "Gelombang";
+    final int price = packageData?.price ?? 0;
+    final int duration = packageData?.durationDays ?? 0;
+    final List<dynamic> facilities = packageData?.facilities ?? [];
+    final FlightModel? depFlight = packageData?.departureFlight;
+    final FlightModel? retFlight = packageData?.returnFlight;
+    final int originalPrice = (price * 1.1).toInt();
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: const Icon(
+              Icons.arrow_back,
+              color: Color(0xFF005C99),
+              size: 20,
+            ),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Detail Paket",
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          SizedBox(
+            height: 280.0,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset('assets/images/kaabah.jpeg', fit: BoxFit.cover),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [Colors.black.withOpacity(1), Colors.transparent],
+                      stops: const [0.0, 1.0],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 24,
+                  left: 20,
+                  right: 20,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0099FF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          "Terbatas",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: "$packageName\n- ",
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            TextSpan(
+                              text: batchName,
+                              style: const TextStyle(color: Color(0xFFFF9800)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "$duration Hari Keberangkatan",
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Container(
+                color: Colors.white,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Harga Paket",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "IDR ${_formatPrice(originalPrice)}",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.redAccent,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: "IDR ${_formatPrice(price)}",
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: " /pax",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black54,
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 6,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F8FF),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Positioned(
+                                  right: -15,
+                                  bottom: -15,
+                                  child: Icon(
+                                    Icons.info_outline,
+                                    size: 60,
+                                    color: const Color(
+                                      0xFF0099FF,
+                                    ).withOpacity(0.1),
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "Opsi Cicilan Ringan",
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text:
+                                                "Mulai IDR ${_formatPrice((price / 12).toInt())}",
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                          const TextSpan(
+                                            text: "/bulan",
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    const Text(
+                      "Informasi Penerbangan",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildFlightInfoSection(depFlight, retFlight),
+
+                    const SizedBox(height: 32),
+
+                    const Text(
+                      "Fasilitas Termasuk",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (facilities.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          "Belum ada fasilitas khusus untuk paket ini.",
+                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                      )
+                    else
+                      GridView.builder(
+                        padding: EdgeInsets.zero,
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 2.8,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                            ),
+                        itemCount: facilities.length,
+                        itemBuilder: (context, index) {
+                          final facilityData = facilities[index];
+                          return FacilityItem(
+                            icon: _getFacilityIcon(facilityData.slug),
+                            title: facilityData.name,
+                          );
+                        },
+                      ),
+
+                    const SizedBox(height: 32),
+
+                    const Text(
+                      "Rencana Perjalanan Utama",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTimelineItem(
+                            title: "Kedatangan & Persiapan",
+                            desc:
+                                "Keberangkatan menuju bandara, check-in, dan persiapan ibadah umrah.",
+                            isLast: false,
+                          ),
+                          _buildTimelineItem(
+                            title: "Fokus Ibadah & Ziarah",
+                            desc:
+                                "Rangkaian ibadah inti di Makkah dan ziarah di kota Madinah.",
+                            isLast: false,
+                          ),
+                          _buildTimelineItem(
+                            title: "Kepulangan",
+                            desc:
+                                "Meninggalkan tanah suci dan kembali menuju ke Tanah Air.",
+                            isLast: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Row(
+            children: [
+              // --- BUTTON EDIT ---
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () async {
+                    // Pastikan packageData tidak null sebelum dilempar ke halaman Edit
+                    if (packageData != null) {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EditPaketScreen(package: packageData),
+                        ),
+                      );
+
+                      // Jika proses edit berhasil (mengembalikan nilai true), refresh data
+                      if (result == true && context.mounted) {
+                        context.read<PackageProvider>().getPackageById(
+                          widget.packageId,
+                        );
+                      }
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: Color(0xFF0099FF)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    "Edit",
+                    style: TextStyle(
+                      color: Color(0xFF0099FF),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [Color(0xFF005C99), Color(0xFF0099FF)],
+                    ),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BatchDetailScreen(
+                            packageId: widget.packageId,
+                            batchName: batchName,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      "Lihat Jamaah",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlightInfoSection(FlightModel? dep, FlightModel? ret) {
+    if (dep == null && ret == null) {
+      return const Text(
+        "Detail penerbangan belum tersedia.",
+        style: TextStyle(color: Colors.grey, fontSize: 13),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          if (dep != null) _buildFlightDetailItem("Keberangkatan", dep),
+          if (dep != null && ret != null)
+            const Divider(height: 24, thickness: 1, color: Color(0xFFEEEEEE)),
+          if (ret != null) _buildFlightDetailItem("Kepulangan", ret),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlightDetailItem(String title, FlightModel flight) {
+    bool isOutbound = flight.isOutbound ?? true;
+    String routeName = isOutbound ? "UPG ✈ JED" : "JED ✈ UPG";
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "$title ($routeName)",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: Color(0xFF005C99),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F8FF),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                flight.flightNo ?? "-",
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            const Icon(Icons.flight_takeoff, size: 16, color: Colors.grey),
+            const SizedBox(width: 8),
+            Text(
+              "Berangkat: ${_formatDateTime(flight.departureTime)}",
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            const Icon(Icons.flight_land, size: 16, color: Colors.grey),
+            const SizedBox(width: 8),
+            Text(
+              "Tiba: ${_formatDateTime(flight.arrivalTime)}",
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimelineItem({
+    required String title,
+    required String desc,
+    required bool isLast,
+  }) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                width: 14,
+                height: 14,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0099FF),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: Colors.grey.shade300,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    desc,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

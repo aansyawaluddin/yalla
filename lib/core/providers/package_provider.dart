@@ -193,4 +193,30 @@ class PackageProvider extends ChangeNotifier {
       notifyListeners();
     } catch (_) {}
   }
+
+  Future<bool> updatePackage(
+    String packageId,
+    Map<String, dynamic> payload,
+  ) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isEmpty) {
+        throw Exception("Sesi login tidak ditemukan. Silakan login ulang.");
+      }
+
+      return await _packageService.updatePackage(packageId, payload, token);
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll("Exception: ", "");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

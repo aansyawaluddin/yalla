@@ -119,4 +119,31 @@ class PackageService {
       );
     }
   }
+
+  Future<bool> updatePackage(
+    String packageId,
+    Map<String, dynamic> payload,
+    String token,
+  ) async {
+    final url = Uri.parse('$_baseUrl/packages/$packageId');
+
+    final response = await http.patch(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    } else if (response.statusCode == 401) {
+      throw Exception('Sesi login telah habis. Silakan login ulang.');
+    } else {
+      final errorData = jsonDecode(response.body);
+      throw Exception(errorData['message'] ?? 'Gagal memperbarui paket.');
+    }
+  }
 }
