@@ -2,7 +2,8 @@ import 'dart:core';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yalla/core/models/package_model.dart';
-import 'package:yalla/core/models/facility_model.dart'; 
+import 'package:yalla/core/models/facility_model.dart';
+import 'package:yalla/core/models/package_passenger_model.dart';
 import 'package:yalla/core/services/package_service.dart';
 
 class PackageProvider extends ChangeNotifier {
@@ -116,7 +117,7 @@ class PackageProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   List<FacilityModel> _facilities = [];
   List<FacilityModel> get facilities => _facilities;
 
@@ -135,6 +136,36 @@ class PackageProvider extends ChangeNotifier {
       print("Error fetching facilities: $e");
     } finally {
       _isFacilitiesLoading = false;
+      notifyListeners();
+    }
+  }
+
+  List<PackagePassengerModel> _passengers = [];
+  bool _isFetchingPassengers = false;
+  String _passengersError = '';
+
+  List<PackagePassengerModel> get passengers => _passengers;
+  bool get isFetchingPassengers => _isFetchingPassengers;
+  String get passengersError => _passengersError;
+
+  Future<void> fetchPackagePassengers(String packageId) async {
+    _isFetchingPassengers = true;
+    _passengersError = '';
+    _passengers = [];
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      _passengers = await _packageService.fetchPackagePassengers(
+        packageId,
+        token,
+      );
+    } catch (e) {
+      _passengersError = e.toString().replaceAll('Exception: ', '');
+    } finally {
+      _isFetchingPassengers = false;
       notifyListeners();
     }
   }

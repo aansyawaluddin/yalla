@@ -34,23 +34,21 @@ class _MyUmrahPackageScreenState extends State<MyUmrahPackageScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leadingWidth: 72,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 24.0, top: 8, bottom: 8),
-          child: Container(
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
+              color: Colors.white,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF0084FF),
-                size: 18,
-              ),
-              onPressed: () => Navigator.pop(context),
+            child: const Icon(
+              Icons.arrow_back,
+              color: Color(0xFF005C99),
+              size: 20,
             ),
           ),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Paket Umrah Saya",
@@ -111,10 +109,10 @@ class _MyUmrahPackageScreenState extends State<MyUmrahPackageScreen> {
               final data = packageProvider.packages[index];
               return _buildPackageCard(
                 context: context,
-                batch: data.batchName, 
-                date: data.batchDate, 
-                jamaahCount:
-                    0, 
+                packageId: data.id ?? '',
+                batch: data.batchName,
+                date: data.batchDate,
+                jamaahCount: 0,
               );
             },
           );
@@ -150,6 +148,7 @@ class _MyUmrahPackageScreenState extends State<MyUmrahPackageScreen> {
 
   Widget _buildPackageCard({
     required BuildContext context,
+    required String packageId,
     required String batch,
     required String date,
     required int jamaahCount,
@@ -232,7 +231,7 @@ class _MyUmrahPackageScreenState extends State<MyUmrahPackageScreen> {
                         ),
                         SizedBox(width: 4),
                         Text(
-                          "Flyadeal", 
+                          "Flyadeal",
                           style: TextStyle(
                             color: Color(0xFF0099FF),
                             fontSize: 16,
@@ -270,8 +269,10 @@ class _MyUmrahPackageScreenState extends State<MyUmrahPackageScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              BatchDetailScreen(batchName: batch),
+                          builder: (context) => BatchDetailScreen(
+                            packageId: packageId,
+                            batchName: batch,
+                          ),
                         ),
                       );
                     },

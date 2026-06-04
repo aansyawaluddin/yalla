@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:yalla/core/models/package_model.dart';
-import 'package:yalla/core/models/facility_model.dart'; 
+import 'package:yalla/core/models/facility_model.dart';
+import 'package:yalla/core/models/package_passenger_model.dart';
 
 class PackageService {
   final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
@@ -69,10 +70,7 @@ class PackageService {
 
     final response = await http.get(
       url,
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -96,6 +94,29 @@ class PackageService {
       return data.map((item) => FacilityModel.fromJson(item)).toList();
     } else {
       throw Exception('Gagal memuat daftar fasilitas');
+    }
+  }
+
+  Future<List<PackagePassengerModel>> fetchPackagePassengers(
+    String packageId,
+    String token,
+  ) async {
+    final url = Uri.parse('$_baseUrl/packages/$packageId/passengers');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => PackagePassengerModel.fromJson(e)).toList();
+    } else if (response.statusCode == 401) {
+      throw Exception('Sesi login telah habis. Silakan login ulang.');
+    } else {
+      throw Exception(
+        'Gagal memuat jamaah paket. Status: ${response.statusCode}',
+      );
     }
   }
 }

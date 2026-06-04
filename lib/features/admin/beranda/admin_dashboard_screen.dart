@@ -932,6 +932,15 @@ class DailyOrderChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (dailyOrders.isEmpty) return;
 
+    if (dailyOrders.length == 1) {
+      final dotBgPaint = Paint()..color = const Color(0xFFD4EEFF);
+      final dotPaint = Paint()..color = const Color(0xFF0084FF);
+      final center = Offset(size.width / 2, size.height / 2);
+      canvas.drawCircle(center, 7, dotBgPaint);
+      canvas.drawCircle(center, 3.5, dotPaint);
+      return;
+    }
+
     final maxCount = dailyOrders
         .map((e) => e.count)
         .reduce((a, b) => a > b ? a : b)
@@ -953,6 +962,9 @@ class DailyOrderChartPainter extends CustomPainter {
       final x = (i / (total - 1)) * size.width;
       final y = size.height - (dailyOrders[i].count / maxCount) * size.height;
 
+      // Guard NaN tambahan
+      if (x.isNaN || y.isNaN) continue;
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
@@ -972,6 +984,8 @@ class DailyOrderChartPainter extends CustomPainter {
     final peakX = (peakIndex / (total - 1)) * size.width;
     final peakY =
         size.height - (dailyOrders[peakIndex].count / maxCount) * size.height;
+
+    if (peakX.isNaN || peakY.isNaN) return;
 
     final dotBgPaint = Paint()..color = const Color(0xFFD4EEFF);
     final dotPaint = Paint()..color = const Color(0xFF0084FF);
