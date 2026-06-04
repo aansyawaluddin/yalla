@@ -169,4 +169,28 @@ class PackageProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Map<String, int> _jamaahCounts = {};
+  Map<String, int> get jamaahCounts => _jamaahCounts;
+
+  Future<void> fetchAllJamaahCounts(List<String> packageIds) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      for (final id in packageIds) {
+        if (id.isEmpty) continue;
+        try {
+          final passengers = await _packageService.fetchPackagePassengers(
+            id,
+            token,
+          );
+          _jamaahCounts[id] = passengers.length;
+        } catch (_) {
+          _jamaahCounts[id] = 0;
+        }
+      }
+      notifyListeners();
+    } catch (_) {}
+  }
 }

@@ -17,10 +17,20 @@ class _MyUmrahPackageScreenState extends State<MyUmrahPackageScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final userId = context.read<AuthProvider>().userData?.userID;
       if (userId != null && userId.isNotEmpty) {
-        context.read<PackageProvider>().getPackages(userId);
+        await context.read<PackageProvider>().getPackages(userId);
+
+        if (!mounted) return;
+        final packages = context.read<PackageProvider>().packages;
+        final ids = packages
+            .where((p) => p.id != null)
+            .map((p) => p.id!)
+            .toList();
+        if (ids.isNotEmpty) {
+          context.read<PackageProvider>().fetchAllJamaahCounts(ids);
+        }
       }
     });
   }
@@ -62,16 +72,18 @@ class _MyUmrahPackageScreenState extends State<MyUmrahPackageScreen> {
       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final authProvider = context.read<AuthProvider>();
+          final packageProvider = context.read<PackageProvider>();
+          await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const TambahPaketScreen()),
-          ).then((_) {
-            final userId = context.read<AuthProvider>().userData?.userID;
-            if (userId != null) {
-              context.read<PackageProvider>().getPackages(userId);
-            }
-          });
+          );
+          if (!mounted) return;
+          final userId = authProvider.userData?.userID;
+          if (userId != null) {
+            packageProvider.getPackages(userId);
+          }
         },
         backgroundColor: const Color(0xFF0066CC),
         shape: const CircleBorder(),
@@ -107,12 +119,13 @@ class _MyUmrahPackageScreenState extends State<MyUmrahPackageScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: 24),
             itemBuilder: (context, index) {
               final data = packageProvider.packages[index];
+              final count = packageProvider.jamaahCounts[data.id ?? ''] ?? 0;
               return _buildPackageCard(
                 context: context,
                 packageId: data.id ?? '',
                 batch: data.batchName,
                 date: data.batchDate,
-                jamaahCount: 0,
+                jamaahCount: count,
               );
             },
           );
