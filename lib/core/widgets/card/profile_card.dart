@@ -222,41 +222,41 @@ class ProfileCard extends StatelessWidget {
                     ),
                   ),
 
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      icon: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
-                        child: onSave != null
-                            ? const Icon(
-                                Icons.check,
-                                key: ValueKey('check'),
-                                color: Color(0xFF004CB9),
-                                size: 16,
-                              )
-                            : const Icon(
-                                Icons.edit,
-                                key: ValueKey('edit'),
-                                color: Color(0xFF003875),
-                                size: 16,
-                              ),
-                      ),
-                      onPressed: onSave,
-                    ),
-                  ),
+                  // Container(
+                  //   width: 32,
+                  //   height: 32,
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.white,
+                  //     shape: BoxShape.circle,
+                  //     boxShadow: [
+                  //       BoxShadow(
+                  //         color: Colors.black.withOpacity(0.1),
+                  //         blurRadius: 8,
+                  //         offset: const Offset(0, 4),
+                  //       ),
+                  //     ],
+                  //   ),
+                  //   child: IconButton(
+                  //     padding: EdgeInsets.zero,
+                  //     icon: AnimatedSwitcher(
+                  //       duration: const Duration(milliseconds: 250),
+                  //       child: onSave != null
+                  //           ? const Icon(
+                  //               Icons.check,
+                  //               key: ValueKey('check'),
+                  //               color: Color(0xFF004CB9),
+                  //               size: 16,
+                  //             )
+                  //           : const Icon(
+                  //               Icons.edit,
+                  //               key: ValueKey('edit'),
+                  //               color: Color(0xFF003875),
+                  //               size: 16,
+                  //             ),
+                  //     ),
+                  //     onPressed: onSave,
+                  //   ),
+                  // ),
                 ],
               ),
             ),

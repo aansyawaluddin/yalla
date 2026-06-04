@@ -238,29 +238,21 @@ class _SavedDocumentScreenState extends State<SavedDocumentScreen> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leadingWidth: 72,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 24.0, top: 8, bottom: 8),
-            child: Container(
-              width: 36,
-              height: 36,
+          leading: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.grey.shade300),
               ),
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Color(0xFF0084FF),
-                  size: 18,
-                ),
-                onPressed: () async {
-                  final canPop = await _onWillPop();
-                  if (canPop && mounted) Navigator.pop(context);
-                },
+              child: const Icon(
+                Icons.arrow_back,
+                color: Color(0xFF005C99),
+                size: 20,
               ),
             ),
+            onPressed: () => Navigator.pop(context),
           ),
           title: const Text(
             "Dokumen Tersimpan",
@@ -364,65 +356,65 @@ class _SavedDocumentScreenState extends State<SavedDocumentScreen> {
 
                     const SizedBox(height: 32),
 
-                    const Text(
-                      "Informasi Paspor",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    // const Text(
+                    //   "Informasi Paspor",
+                    //   style: TextStyle(
+                    //     fontSize: 14,
+                    //     fontWeight: FontWeight.bold,
+                    //     color: Colors.black87,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 16),
 
-                    _buildTextField(
-                      "Nomor Paspor",
-                      controller: _passportController,
-                    ),
-                    const SizedBox(height: 16),
+                    // _buildTextField(
+                    //   "Nomor Paspor",
+                    //   controller: _passportController,
+                    // ),
+                    // const SizedBox(height: 16),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildDateField(
-                            "Tanggal Terbit",
-                            controller: _passportIssueDateController,
-                            onTap: () => _selectDate(
-                              context,
-                              _passportIssueDateController,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildDateField(
-                            "Masa Berlaku",
-                            controller: _passportExpiryController,
-                            onTap: () =>
-                                _selectDate(context, _passportExpiryController),
-                          ),
-                        ),
-                      ],
-                    ),
+                    // Row(
+                    //   children: [
+                    //     Expanded(
+                    //       child: _buildDateField(
+                    //         "Tanggal Terbit",
+                    //         controller: _passportIssueDateController,
+                    //         onTap: () => _selectDate(
+                    //           context,
+                    //           _passportIssueDateController,
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     const SizedBox(width: 16),
+                    //     Expanded(
+                    //       child: _buildDateField(
+                    //         "Masa Berlaku",
+                    //         controller: _passportExpiryController,
+                    //         onTap: () =>
+                    //             _selectDate(context, _passportExpiryController),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
 
-                    const SizedBox(height: 32),
+                    // const SizedBox(height: 32),
 
-                    const Text(
-                      "Masukkan Dokumen",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildUploadSection("Foto Paspor (Halaman Biodata)"),
-                    const SizedBox(height: 24),
-                    _buildUploadSection("Pas Foto Terbaru (4.5 x 3.5 Cm)"),
-                    const SizedBox(height: 24),
-                    _buildUploadSection("Bukti Pemesanan Hotel"),
-                    const SizedBox(height: 24),
-                    _buildUploadSection("Tiket Pesawat Pulang Pergi"),
-                    const SizedBox(height: 40),
+                    // const Text(
+                    //   "Masukkan Dokumen",
+                    //   style: TextStyle(
+                    //     fontSize: 14,
+                    //     fontWeight: FontWeight.bold,
+                    //     color: Colors.black87,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 24),
+                    // _buildUploadSection("Foto Paspor (Halaman Biodata)"),
+                    // const SizedBox(height: 24),
+                    // _buildUploadSection("Pas Foto Terbaru (4.5 x 3.5 Cm)"),
+                    // const SizedBox(height: 24),
+                    // _buildUploadSection("Bukti Pemesanan Hotel"),
+                    // const SizedBox(height: 24),
+                    // _buildUploadSection("Tiket Pesawat Pulang Pergi"),
+                    // const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -465,88 +457,88 @@ class _SavedDocumentScreenState extends State<SavedDocumentScreen> {
     );
   }
 
-  Widget _buildUploadSection(String title) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RichText(
-          text: TextSpan(
-            text: title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black54,
-              fontWeight: FontWeight.w500,
-            ),
-            children: const [
-              TextSpan(
-                text: " *",
-                style: TextStyle(color: Colors.red),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildUploadBox(
-                icon: Icons.camera_alt,
-                label: "Ambil Foto",
-                onTap: () {},
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildUploadBox(
-                icon: Icons.photo_library,
-                label: "Galeri",
-                onTap: () {},
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  // Widget _buildUploadSection(String title) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       RichText(
+  //         text: TextSpan(
+  //           text: title,
+  //           style: const TextStyle(
+  //             fontSize: 12,
+  //             color: Colors.black54,
+  //             fontWeight: FontWeight.w500,
+  //           ),
+  //           children: const [
+  //             TextSpan(
+  //               text: " *",
+  //               style: TextStyle(color: Colors.red),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //       const SizedBox(height: 12),
+  //       Row(
+  //         children: [
+  //           Expanded(
+  //             child: _buildUploadBox(
+  //               icon: Icons.camera_alt,
+  //               label: "Ambil Foto",
+  //               onTap: () {},
+  //             ),
+  //           ),
+  //           const SizedBox(width: 16),
+  //           Expanded(
+  //             child: _buildUploadBox(
+  //               icon: Icons.photo_library,
+  //               label: "Galeri",
+  //               onTap: () {},
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ],
+  //   );
+  // }
 
-  Widget _buildUploadBox({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: CustomPaint(
-        painter: DashedRectPainter(
-          color: Colors.grey.shade300,
-          strokeWidth: 1,
-          gap: 5.0,
-        ),
-        child: Container(
-          height: 80,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF4F9FF),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: const Color(0xFF0066CC), size: 24),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF0066CC),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buildUploadBox({
+  //   required IconData icon,
+  //   required String label,
+  //   required VoidCallback onTap,
+  // }) {
+  //   return GestureDetector(
+  //     onTap: onTap,
+  //     child: CustomPaint(
+  //       painter: DashedRectPainter(
+  //         color: Colors.grey.shade300,
+  //         strokeWidth: 1,
+  //         gap: 5.0,
+  //       ),
+  //       child: Container(
+  //         height: 80,
+  //         decoration: BoxDecoration(
+  //           color: const Color(0xFFF4F9FF),
+  //           borderRadius: BorderRadius.circular(8),
+  //         ),
+  //         child: Column(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: [
+  //             Icon(icon, color: const Color(0xFF0066CC), size: 24),
+  //             const SizedBox(height: 8),
+  //             Text(
+  //               label,
+  //               style: const TextStyle(
+  //                 fontSize: 12,
+  //                 color: Color(0xFF0066CC),
+  //                 fontWeight: FontWeight.w500,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildDateField(
     String hintText, {

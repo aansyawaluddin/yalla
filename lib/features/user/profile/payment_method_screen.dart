@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:yalla/core/widgets/card/profile_card.dart'; 
+import 'package:yalla/core/widgets/card/profile_card.dart';
 
 class PaymentMethodScreen extends StatelessWidget {
   const PaymentMethodScreen({super.key});
@@ -13,23 +13,21 @@ class PaymentMethodScreen extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leadingWidth: 72,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 24.0, top: 8, bottom: 8),
-          child: Container(
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
+              color: Colors.white,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF0084FF), // Biru panah
-                size: 18,
-              ),
-              onPressed: () => Navigator.pop(context),
+            child: const Icon(
+              Icons.arrow_back,
+              color: Color(0xFF005C99),
+              size: 20,
             ),
           ),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Metode Pembayaran",
@@ -46,7 +44,7 @@ class PaymentMethodScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            
+
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.0),
               child: ProfileCard(),
@@ -73,25 +71,35 @@ class PaymentMethodScreen extends StatelessWidget {
               iconBgColor: const Color(0xFFE8FAED),
               title: "Dompet Digital",
               trailingLogos: [
-                _buildLogo('https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gopay_logo.svg/256px-Gopay_logo.svg.png'),
-                _buildLogo('https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Logo_dana_blue.svg/256px-Logo_dana_blue.svg.png'),
+                _buildLogo(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gopay_logo.svg/256px-Gopay_logo.svg.png',
+                ),
+                _buildLogo(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Logo_dana_blue.svg/256px-Logo_dana_blue.svg.png',
+                ),
               ],
               onTap: () {
                 // Navigasi ke detail Dompet Digital
               },
             ),
-            
+
             const Divider(height: 1, color: Color(0xFFF3F4F6)),
-            
+
             _buildPaymentMethodItem(
               icon: Icons.account_balance_outlined,
               iconColor: const Color(0xFF0066CC),
               iconBgColor: const Color(0xFFF4F9FF),
               title: "Debit Instan",
               trailingLogos: [
-                _buildLogo('https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bank_Mandiri_logo_2016.svg/256px-Bank_Mandiri_logo_2016.svg.png'),
-                _buildLogo('https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/BRI_2020.svg/256px-BRI_2020.svg.png'),
-                _buildLogo('https://upload.wikimedia.org/wikipedia/id/thumb/5/55/BNI_logo.svg/256px-BNI_logo.svg.png'),
+                _buildLogo(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bank_Mandiri_logo_2016.svg/256px-Bank_Mandiri_logo_2016.svg.png',
+                ),
+                _buildLogo(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/BRI_2020.svg/256px-BRI_2020.svg.png',
+                ),
+                _buildLogo(
+                  'https://upload.wikimedia.org/wikipedia/id/thumb/5/55/BNI_logo.svg/256px-BNI_logo.svg.png',
+                ),
               ],
               onTap: () {
                 // Navigasi ke detail Debit Instan
@@ -103,17 +111,21 @@ class PaymentMethodScreen extends StatelessWidget {
             _buildPaymentMethodItem(
               icon: Icons.credit_card_outlined,
               iconColor: const Color(0xFFF97316),
-              iconBgColor: const Color(0xFFFFF7ED), 
+              iconBgColor: const Color(0xFFFFF7ED),
               title: "Kartu Saya",
               trailingLogos: [
-                _buildLogo('https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/256px-Visa_Inc._logo.svg.png'),
-                _buildLogo('https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/256px-Mastercard-logo.svg.png'),
+                _buildLogo(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/256px-Visa_Inc._logo.svg.png',
+                ),
+                _buildLogo(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/256px-Mastercard-logo.svg.png',
+                ),
               ],
               onTap: () {
                 // Navigasi ke detail Kartu Saya
               },
             ),
-            
+
             const Divider(height: 1, color: Color(0xFFF3F4F6)),
           ],
         ),
@@ -143,14 +155,10 @@ class PaymentMethodScreen extends StatelessWidget {
                 color: iconBgColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 20,
-              ),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
             const SizedBox(width: 16),
-            
+
             // Judul Menu
             Expanded(
               child: Text(
@@ -162,21 +170,14 @@ class PaymentMethodScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Deretan Logo Metode Pembayaran
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: trailingLogos,
-            ),
-            
+            Row(mainAxisSize: MainAxisSize.min, children: trailingLogos),
+
             const SizedBox(width: 12),
-            
+
             // Panah Kanan
-            const Icon(
-              Icons.chevron_right,
-              color: Colors.black87,
-              size: 24,
-            ),
+            const Icon(Icons.chevron_right, color: Colors.black87, size: 24),
           ],
         ),
       ),
@@ -196,7 +197,11 @@ class PaymentMethodScreen extends StatelessWidget {
             width: 24,
             height: 16,
             color: Colors.grey.shade200,
-            child: const Icon(Icons.image_not_supported, size: 10, color: Colors.grey),
+            child: const Icon(
+              Icons.image_not_supported,
+              size: 10,
+              color: Colors.grey,
+            ),
           );
         },
       ),

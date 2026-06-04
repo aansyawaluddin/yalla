@@ -5,7 +5,7 @@ class TravelModel {
   final int totalRatings;
   final String firstName;
   final String lastName;
-  final String avatarUrl; 
+  final String avatarUrl;
 
   TravelModel({
     required this.userID,
@@ -14,7 +14,7 @@ class TravelModel {
     required this.totalRatings,
     required this.firstName,
     required this.lastName,
-    required this.avatarUrl, 
+    required this.avatarUrl,
   });
 
   factory TravelModel.fromJson(Map<String, dynamic> json) {
@@ -26,9 +26,11 @@ class TravelModel {
       totalRatings: json['total_ratings'] ?? 0,
       firstName: profile['firstName'] ?? '',
       lastName: profile['lastName'] ?? '',
-      avatarUrl: profile['avatarUrl'] ?? '', 
+      avatarUrl: profile['avatarUrl'] ?? '',
     );
   }
 
   String get fullName => "$firstName $lastName".trim();
+
+  String get id => userID;
 }
