@@ -6,6 +6,7 @@ import 'package:yalla/core/providers/admin_user_provider.dart';
 import 'package:yalla/core/providers/flight_provider.dart';
 import 'package:yalla/core/providers/order_provider.dart';
 import 'package:yalla/core/providers/package_provider.dart';
+import 'package:yalla/core/providers/rating_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
 import 'package:yalla/core/providers/user_profile_provider.dart';
 import 'package:yalla/splash_screen.dart';
@@ -27,6 +28,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => AdminStatsProvider()),
         ChangeNotifierProvider(create: (_) => UserProfileProvider()),
         ChangeNotifierProvider(create: (_) => AdminUserProvider()),
+        ChangeNotifierProvider(create: (_) => RatingProvider()),
       ],
       child: const MyApp(),
     ),
