@@ -92,4 +92,63 @@ class RatingProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> updateRating({
+    required String ratingId,
+    required int score,
+    required String comment,
+  }) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      if (token.isEmpty) {
+        throw Exception('Sesi login tidak ditemukan. Silakan login ulang.');
+      }
+
+      final success = await _service.updateRating(
+        ratingId: ratingId,
+        score: score,
+        comment: comment,
+        token: token,
+      );
+
+      if (success) {
+        final idx = _ratings.indexWhere((r) => r.id == ratingId);
+        if (idx != -1) {
+          _ratings[idx] = RatingModel(
+            id: _ratings[idx].id,
+            rateeId: _ratings[idx].rateeId,
+            raterId: _ratings[idx].raterId,
+            raterFullName: _ratings[idx].raterFullName,
+            raterAvatarUrl: _ratings[idx].raterAvatarUrl,
+            score: score,
+            comment: comment,
+            createdAt: _ratings[idx].createdAt,
+          );
+        }
+      }
+
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Cek apakah user sudah pernah rating ratee ini
+  RatingModel? findMyRating(String myUserId) {
+    try {
+      return _ratings.firstWhere((r) => r.raterId == myUserId);
+    } catch (_) {
+      return null;
+    }
+  }
 }

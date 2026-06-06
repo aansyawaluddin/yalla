@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yalla/core/models/rating_model.dart';
 import 'package:yalla/core/providers/package_provider.dart';
 import 'package:yalla/core/providers/rating_provider.dart';
 import 'package:yalla/core/providers/travel_provider.dart';
@@ -20,12 +22,20 @@ class UserTravelProfileScreen extends StatefulWidget {
 
 class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
   int _selectedTabIndex = 0;
+  String _myUserId = '';
   final List<String> _tabs = ["Tentang", "Paket", "Ulasan"];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+
+      setState(() {
+        _myUserId = prefs.getString('user_id') ?? '';
+      });
+
       if (widget.travelId.isNotEmpty) {
         context.read<TravelProvider>().getTravelProfileById(widget.travelId);
         context.read<PackageProvider>().getPackages(widget.travelId);
@@ -843,7 +853,6 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Bintang Rating
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) {
@@ -866,7 +875,6 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Input ulasan
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
@@ -921,83 +929,313 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                                   ],
                                 ),
 
-                                // Tombol kirim
                                 Consumer<RatingProvider>(
                                   builder: (context, ratingProvider, _) {
-                                    return ratingProvider.isLoading
-                                        ? const SizedBox(
-                                            width: 24,
-                                            height: 24,
+                                    return IconButton(
+                                      icon: const Icon(
+                                        Icons.send,
+                                        color: Color(0xFF005C99),
+                                      ),
+                                      onPressed: () async {
+                                        if (rating == 0) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Pilih bintang terlebih dahulu.',
+                                              ),
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        if (reviewController.text
+                                            .trim()
+                                            .isEmpty) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Tulis ulasan terlebih dahulu.',
+                                              ),
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        Navigator.pop(context);
+
+                                        showDialog(
+                                          context: this.context,
+                                          barrierDismissible: false,
+                                          builder: (_) => const Center(
                                             child: CircularProgressIndicator(
                                               color: Color(0xFF005C99),
-                                              strokeWidth: 2,
                                             ),
-                                          )
-                                        : IconButton(
-                                            icon: const Icon(
-                                              Icons.send,
+                                          ),
+                                        );
+
+                                        final success = await this.context
+                                            .read<RatingProvider>()
+                                            .submitRating(
+                                              rateeId: widget.travelId,
+                                              score: rating,
+                                              comment: reviewController.text
+                                                  .trim(),
+                                            );
+
+                                        if (!mounted) return;
+
+                                        Navigator.pop(this.context);
+
+                                        if (success) {
+                                          this.context
+                                              .read<RatingProvider>()
+                                              .fetchStats(widget.travelId);
+                                          this.context
+                                              .read<RatingProvider>()
+                                              .fetchRatings(widget.travelId);
+
+                                          CustomSnackBar.showSuccess(
+                                            this.context,
+                                            title: "Ulasan Terkirim",
+                                            message:
+                                                "Terima kasih atas ulasan Anda!",
+                                          );
+                                        } else {
+                                          CustomSnackBar.showError(
+                                            this.context,
+                                            title: "Gagal",
+                                            message: this.context
+                                                .read<RatingProvider>()
+                                                .errorMessage,
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditReviewPopup(BuildContext context, RatingModel existing) {
+    int rating = existing.score;
+    final TextEditingController reviewController = TextEditingController(
+      text: existing.comment,
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: const Color(0xFFFAFAFA),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Edit Ulasan Anda",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Perbarui pengalaman Anda untuk membantu jamaah lainnya.",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        return GestureDetector(
+                          onTap: () {
+                            setDialogState(() => rating = index + 1);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4.0,
+                            ),
+                            child: Icon(
+                              index < rating ? Icons.star : Icons.star_border,
+                              color: const Color(0xFFFFB800),
+                              size: 40,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 24),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: reviewController,
+                            maxLines: 4,
+                            minLines: 3,
+                            style: const TextStyle(fontSize: 13),
+                            decoration: const InputDecoration(
+                              hintText: "Tulis ulasan Anda di sini...",
+                              hintStyle: TextStyle(
+                                color: Colors.black38,
+                                fontSize: 13,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.all(16),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 12,
+                              right: 8,
+                              bottom: 8,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.emoji_emotions_outlined,
+                                      color: Colors.grey.shade600,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Icon(
+                                      Icons.font_download_outlined,
+                                      color: Colors.grey.shade600,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Icon(
+                                      Icons.copy_outlined,
+                                      color: Colors.grey.shade600,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+
+                                Consumer<RatingProvider>(
+                                  builder: (context, ratingProvider, _) {
+                                    return IconButton(
+                                      icon: const Icon(
+                                        Icons.send,
+                                        color: Color(0xFF005C99),
+                                      ),
+                                      onPressed: () async {
+                                        if (rating == 0) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Pilih bintang terlebih dahulu.',
+                                              ),
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        if (reviewController.text
+                                            .trim()
+                                            .isEmpty) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Tulis ulasan terlebih dahulu.',
+                                              ),
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        Navigator.pop(context);
+
+                                        showDialog(
+                                          context: this.context,
+                                          barrierDismissible: false,
+                                          builder: (_) => const Center(
+                                            child: CircularProgressIndicator(
                                               color: Color(0xFF005C99),
                                             ),
-                                            onPressed: () async {
-                                              if (rating == 0) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'Pilih bintang terlebih dahulu.',
-                                                    ),
-                                                  ),
-                                                );
-                                                return;
-                                              }
+                                          ),
+                                        );
 
-                                              if (reviewController.text
-                                                  .trim()
-                                                  .isEmpty) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'Tulis ulasan terlebih dahulu.',
-                                                    ),
-                                                  ),
-                                                );
-                                                return;
-                                              }
+                                        final success = await this.context
+                                            .read<RatingProvider>()
+                                            .updateRating(
+                                              ratingId: existing.id,
+                                              score: rating,
+                                              comment: reviewController.text
+                                                  .trim(),
+                                            );
 
-                                              final success = await context
-                                                  .read<RatingProvider>()
-                                                  .submitRating(
-                                                    rateeId: widget.travelId,
-                                                    score: rating,
-                                                    comment: reviewController
-                                                        .text
-                                                        .trim(),
-                                                  );
+                                        if (!mounted) return;
 
-                                              if (!context.mounted) return;
-                                              Navigator.pop(context);
+                                        Navigator.pop(this.context);
 
-                                              if (success) {
-                                                CustomSnackBar.showSuccess(
-                                                  this.context,
-                                                  title: "Ulasan Terkirim",
-                                                  message:
-                                                      "Terima kasih atas ulasan Anda!",
-                                                );
-                                              } else {
-                                                CustomSnackBar.showError(
-                                                  this.context,
-                                                  title: "Gagal",
-                                                  message: context
-                                                      .read<RatingProvider>()
-                                                      .errorMessage,
-                                                );
-                                              }
-                                            },
+                                        if (success) {
+                                          this.context
+                                              .read<RatingProvider>()
+                                              .fetchStats(widget.travelId);
+                                          this.context
+                                              .read<RatingProvider>()
+                                              .fetchRatings(widget.travelId);
+
+                                          CustomSnackBar.showSuccess(
+                                            this.context,
+                                            title: "Ulasan Diperbarui",
+                                            message:
+                                                "Ulasan Anda berhasil diperbarui!",
                                           );
+                                        } else {
+                                          CustomSnackBar.showError(
+                                            this.context,
+                                            title: "Gagal",
+                                            message: this.context
+                                                .read<RatingProvider>()
+                                                .errorMessage,
+                                          );
+                                        }
+                                      },
+                                    );
                                   },
                                 ),
                               ],
@@ -1142,29 +1380,55 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
 
           const SizedBox(height: 24),
 
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton.icon(
-              onPressed: () => _showReviewPopup(context),
-              icon: const Icon(Icons.rate_review_outlined, size: 18),
-              label: const Text(
-                "Tulis Ulasan Anda",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0099FF),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          Consumer<RatingProvider>(
+            builder: (context, ratingProvider, _) {
+              final myExistingRating = _myUserId.isNotEmpty
+                  ? ratingProvider.findMyRating(_myUserId)
+                  : null;
+              final bool hasReviewed = myExistingRating != null;
+
+              return SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (hasReviewed) {
+                      _showEditReviewPopup(context, myExistingRating);
+                    } else {
+                      _showReviewPopup(context);
+                    }
+                  },
+                  icon: Icon(
+                    hasReviewed
+                        ? Icons.edit_outlined
+                        : Icons.rate_review_outlined,
+                    size: 18,
+                  ),
+                  label: Text(
+                    hasReviewed ? "Edit Ulasan Anda" : "Tulis Ulasan Anda",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: hasReviewed
+                        ? const Color(0xFF005C99)
+                        : const Color(0xFF0099FF),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
 
           const SizedBox(height: 32),
 
+          // List komentar
           Consumer<RatingProvider>(
             builder: (context, ratingProvider, _) {
               if (ratingProvider.isRatingsLoading) {
@@ -1197,10 +1461,8 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
               return Column(
                 children: ratingProvider.ratings.map((rating) {
                   return _buildReviewItem(
-                    raterId: rating.raterId,
+                    rating: rating,
                     timeAgo: _formatTimeAgo(rating.createdAt),
-                    score: rating.score,
-                    reviewText: rating.comment,
                   );
                 }).toList(),
               );
@@ -1238,11 +1500,11 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
           ),
           const SizedBox(width: 6),
           SizedBox(
-            width: 36, 
+            width: 36,
             child: Text(
               percentage,
               style: const TextStyle(
-                fontSize: 9, // ← lebih kecil
+                fontSize: 9,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
@@ -1256,20 +1518,22 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
   }
 
   Widget _buildReviewItem({
-    required String raterId,
+    required RatingModel rating,
     required String timeAgo,
-    required int score,
-    required String reviewText,
   }) {
-    // Ambil inisial dari raterId untuk avatar fallback
-    final String initial = raterId.isNotEmpty ? raterId[0].toUpperCase() : '?';
+    final String fullName = rating.raterFullName.isNotEmpty
+        ? rating.raterFullName
+        : "Jamaah ${rating.raterId.length >= 6 ? rating.raterId.substring(0, 6).toUpperCase() : rating.raterId.toUpperCase()}";
+
+    final String initial = fullName.isNotEmpty
+        ? fullName[0].toUpperCase()
+        : '?';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            // Avatar inisial
             Container(
               width: 40,
               height: 40,
@@ -1278,16 +1542,32 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                 color: const Color(0xFFE8F0FF),
                 border: Border.all(color: Colors.grey.shade200),
               ),
-              child: Center(
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF004CB9),
-                  ),
-                ),
-              ),
+              clipBehavior: Clip.antiAlias,
+              child: rating.raterAvatarUrl.isNotEmpty
+                  ? Image.network(
+                      rating.raterAvatarUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Center(
+                        child: Text(
+                          initial,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF004CB9),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF004CB9),
+                        ),
+                      ),
+                    ),
             ),
             const SizedBox(width: 12),
 
@@ -1296,8 +1576,7 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    // Tampilkan ID pendek sebagai nama anonim
-                    "Jamaah ${raterId.length >= 6 ? raterId.substring(0, 6).toUpperCase() : raterId.toUpperCase()}",
+                    fullName,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -1313,7 +1592,7 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
                   Row(
                     children: List.generate(5, (index) {
                       return Icon(
-                        index < score ? Icons.star : Icons.star_border,
+                        index < rating.score ? Icons.star : Icons.star_border,
                         color: const Color(0xFFFFB800),
                         size: 12,
                       );
@@ -1326,7 +1605,7 @@ class _UserTravelProfileScreenState extends State<UserTravelProfileScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          '"$reviewText"',
+          '"${rating.comment}"',
           style: const TextStyle(
             fontSize: 11,
             color: Colors.black54,

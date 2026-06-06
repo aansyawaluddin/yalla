@@ -83,4 +83,32 @@ class RatingService {
       throw Exception('Gagal memuat ulasan. Status: ${response.statusCode}');
     }
   }
+
+  Future<bool> updateRating({
+    required String ratingId,
+    required int score,
+    required String comment,
+    required String token,
+  }) async {
+    final url = Uri.parse('$_baseUrl/ratings/$ratingId');
+
+    final response = await http.patch(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({"score": score, "comment": comment}),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    } else if (response.statusCode == 401) {
+      throw Exception('Sesi login telah habis. Silakan login ulang.');
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Gagal memperbarui ulasan.');
+    }
+  }
 }

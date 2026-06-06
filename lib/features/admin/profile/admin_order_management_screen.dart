@@ -1004,9 +1004,14 @@ class _AdminOrderManagementScreenState
         ? order.id.substring(0, 6).toUpperCase()
         : order.id.toUpperCase();
 
-    final String bookingName = order.passengers.isNotEmpty
+    final String bookingName =
+        (order.buyer != null && order.buyer!.fullName.isNotEmpty)
+        ? order.buyer!.fullName
+        : order.passengers.isNotEmpty
         ? order.passengers.first.fullName
-        : "Pesanan Tiket";
+        : (order.travelName != null && order.travelName!.isNotEmpty)
+        ? order.travelName!
+        : "Pesanan #${order.id.substring(0, 6).toUpperCase()}";
 
     final bool isPackageOrder = order.package != null;
     final bool isActive = order.status != 'postponed';
@@ -1127,11 +1132,24 @@ class _AdminOrderManagementScreenState
                               color: Colors.grey.shade100,
                               border: Border.all(color: Colors.grey.shade200),
                             ),
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.grey,
-                              size: 24,
-                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child:
+                                order.buyer?.avatarUrl != null &&
+                                    order.buyer!.avatarUrl!.isNotEmpty
+                                ? Image.network(
+                                    order.buyer!.avatarUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.person,
+                                      color: Colors.grey,
+                                      size: 24,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.person,
+                                    color: Colors.grey,
+                                    size: 24,
+                                  ),
                           ),
                           if (isActive)
                             Positioned(

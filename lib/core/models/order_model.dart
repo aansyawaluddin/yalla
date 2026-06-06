@@ -50,6 +50,38 @@ class PassengerModel {
   }
 }
 
+class BuyerModel {
+  final String firstName;
+  final String? middleName;
+  final String lastName;
+  final String? avatarUrl;
+
+  BuyerModel({
+    required this.firstName,
+    this.middleName,
+    required this.lastName,
+    this.avatarUrl,
+  });
+
+  String get fullName {
+    final parts = [
+      firstName,
+      middleName,
+      lastName,
+    ].where((p) => p != null && p.isNotEmpty).toList();
+    return parts.join(' ');
+  }
+
+  factory BuyerModel.fromJson(Map<String, dynamic> json) {
+    return BuyerModel(
+      firstName: json['first_name'] ?? '',
+      middleName: json['middle_name'],
+      lastName: json['last_name'] ?? '',
+      avatarUrl: json['avatar_url'],
+    );
+  }
+}
+
 class OrderModel {
   final String id;
   final String buyerId;
@@ -68,6 +100,8 @@ class OrderModel {
   final String? manifestUrl;
   final PackageModel? package;
   final String? travelAvatarUrl;
+  final String? travelName;
+  final BuyerModel? buyer;
 
   OrderModel({
     required this.id,
@@ -87,6 +121,8 @@ class OrderModel {
     this.manifestUrl,
     this.package,
     this.travelAvatarUrl,
+    this.travelName,
+    this.buyer,
   });
 
   factory OrderModel.empty() {
@@ -108,6 +144,8 @@ class OrderModel {
       manifestUrl: null,
       package: null,
       travelAvatarUrl: null,
+      travelName: null,
+      buyer: null,
     );
   }
 
@@ -145,6 +183,8 @@ class OrderModel {
           ? PackageModel.fromJson(json['package'])
           : null,
       travelAvatarUrl: json['travel_avatar_url'],
+      travelName: json['travel_name'],
+      buyer: json['buyer'] != null ? BuyerModel.fromJson(json['buyer']) : null,
     );
   }
 }
