@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:yalla/core/models/country_model.dart';
+import 'package:yalla/core/services/auth_service.dart';
 import 'package:yalla/core/theme/app_colors.dart';
 import 'package:yalla/core/theme/app_typography.dart';
 import 'package:yalla/core/widgets/inputan/custom_text_field.dart';
@@ -25,7 +27,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController middleNameC = TextEditingController();
   final TextEditingController lastNameC = TextEditingController();
   final TextEditingController dobC = TextEditingController();
-  final TextEditingController countryC = TextEditingController();
 
   // Controllers Travel
   final TextEditingController companyNameC = TextEditingController();
@@ -37,13 +38,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController passwordC = TextEditingController();
   final TextEditingController confirmPasswordC = TextEditingController();
 
+  List<CountryModel> _countries = [];
+  CountryModel? _selectedCountry;
+  bool _isLoadingCountries = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCountries();
+  }
+
+  Future<void> _loadCountries() async {
+    setState(() => _isLoadingCountries = true);
+    try {
+      final countries = await AuthService().getCountries();
+      if (mounted) {
+        setState(() {
+          _countries = countries;
+          _isLoadingCountries = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingCountries = false);
+    }
+  }
+
   @override
   void dispose() {
     firstNameC.dispose();
     middleNameC.dispose();
     lastNameC.dispose();
     dobC.dispose();
-    countryC.dispose();
     companyNameC.dispose();
     npwpC.dispose();
     travelLicenseC.dispose();
@@ -110,11 +135,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if (passwordC.text.length < 8) {
+      CustomSnackBar.showError(
+        context,
+        title: "Kata Sandi Terlalu Pendek",
+        message: "Kata sandi harus minimal 8 karakter.",
+      );
+      return;
+    }
+
     if (passwordC.text != confirmPasswordC.text) {
       CustomSnackBar.showError(
         context,
         title: "Kata Sandi Berbeda",
         message: "Kata sandi dan Masukkan Ulang Kata Sandi tidak cocok!",
+      );
+      return;
+    }
+
+    if (_selectedCountry == null) {
+      CustomSnackBar.showError(
+        context,
+        title: "Negara Belum Dipilih",
+        message: "Silakan pilih negara asal terlebih dahulu.",
       );
       return;
     }
@@ -127,7 +170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         "middleName": middleNameC.text.trim(),
         "lastName": lastNameC.text.trim(),
         "birth": _formatDateForApi(dobC.text),
-        "nationality": countryC.text.trim(),
+        "nationality": _selectedCountry!.country,
         "email": emailC.text.trim(),
         "password": passwordC.text,
         "role": "jamaah",
@@ -139,7 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       };
     } else {
       String fName = companyNameC.text.trim();
-      String lName = "Travel"; 
+      String lName = "Travel";
 
       if (fName.contains(" ")) {
         int firstSpace = fName.indexOf(" ");
@@ -147,20 +190,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         fName = fName.substring(0, firstSpace);
       }
 
-      String birthDate = _formatDateForApi(dobC.text);
-      String nationality = countryC.text.trim();
-
       payload = {
         "email": emailC.text.trim(),
         "password": passwordC.text,
         "firstName": fName.isNotEmpty ? fName : "Yalla",
         "lastName": lName,
-        "birth": birthDate.isNotEmpty
-            ? birthDate
-            : "2000-01-01", 
-        "nationality": nationality.isNotEmpty
-            ? nationality
-            : "Indonesia", 
+        "birth": _formatDateForApi(dobC.text).isNotEmpty
+            ? _formatDateForApi(dobC.text)
+            : "2000-01-01",
+        "nationality": _selectedCountry!.country,
         "gender": "male",
         "role": "travel",
       };
@@ -180,12 +218,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         message:
             "Akun Anda telah berhasil didaftarkan. Silakan masuk untuk melanjutkan.",
       );
-      Navigator.pop(context); 
+      Navigator.pop(context);
     } else {
       CustomSnackBar.showError(
         context,
         title: "Pendaftaran Gagal",
-        message: authProvider.errorMessage, 
+        message: authProvider.errorMessage,
       );
     }
   }
@@ -220,6 +258,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      // Tombol Kembali / Masuk
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: Row(
@@ -248,6 +287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       RegistrationType.none) {
                                     setState(() {
                                       _selectedRegType = RegistrationType.none;
+                                      _selectedCountry = null;
                                     });
                                   } else {
                                     Navigator.pop(context);
@@ -288,6 +328,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 19),
 
+                      // Header teks
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: Column(
@@ -336,7 +377,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           if (isLoading)
             Container(
-              color: Colors.black.withOpacity(0.3), // Latar belakang redup
+              color: Colors.black.withOpacity(0.3),
               child: const Center(
                 child: CircularProgressIndicator(color: Color(0xFF0084FF)),
               ),
@@ -387,11 +428,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildRoleButton(String title, RegistrationType type) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedRegType = type;
-        });
-      },
+      onTap: () => setState(() => _selectedRegType = type),
       child: Container(
         height: 40,
         alignment: Alignment.center,
@@ -415,6 +452,78 @@ class _RegisterScreenState extends State<RegisterScreen> {
           title,
           style: AppTypography.bold14.copyWith(color: AppColors.textDark),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCountryDropdown({
+    required BorderRadius borderRadius,
+    EdgeInsets padding = EdgeInsets.zero,
+  }) {
+    return Padding(
+      padding: padding,
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: borderRadius,
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: _isLoadingCountries
+            ? const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF004CB9),
+                  ),
+                ),
+              )
+            : DropdownButtonHideUnderline(
+                child: ButtonTheme(
+                  alignedDropdown: true,
+                  child: DropdownButton<CountryModel>(
+                    value: _selectedCountry,
+                    isExpanded: true,
+                    hint: Text(
+                      "Negara Asal",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    icon: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.grey.shade500,
+                      size: 20,
+                    ),
+                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    menuMaxHeight: 300,
+                    items: _countries
+                        .map(
+                          (c) => DropdownMenuItem<CountryModel>(
+                            value: c,
+                            child: Text(
+                              c.country,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) => setState(() => _selectedCountry = val),
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -444,11 +553,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // --- FORM JAMAAH ---
   Widget _buildJamaahForm() {
     return Column(
       key: const ValueKey("JamaahForm"),
       children: [
+        // Nama
         Row(
           children: [
             Expanded(
@@ -488,6 +597,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         ),
         const SizedBox(height: 6),
+
+        // Tanggal Lahir & Negara Asal (dropdown)
         Row(
           children: [
             Expanded(
@@ -508,20 +619,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: CustomTextField(
-                  hint: "Negara Asal",
-                  controller: countryC,
-                  borderRadius: const BorderRadius.horizontal(
-                    left: Radius.circular(50),
-                  ),
+              child: _buildCountryDropdown(
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(50),
                 ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 6),
+
+        // Email
         Padding(
           padding: const EdgeInsets.only(right: 30),
           child: CustomTextField(
@@ -534,6 +642,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         const SizedBox(height: 6),
+
+        // Kata Sandi
         Row(
           children: [
             Expanded(
@@ -565,6 +675,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         ),
         const SizedBox(height: 28),
+
+        // Tombol Daftar
         Row(
           children: [
             const Expanded(flex: 3, child: SizedBox()),
@@ -593,11 +705,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // --- FORM TRAVEL ---
   Widget _buildTravelForm() {
     return Column(
       key: const ValueKey("TravelForm"),
       children: [
+        // Nama Perusahaan
         Padding(
           padding: const EdgeInsets.only(right: 30),
           child: CustomTextField(
@@ -610,6 +722,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 6),
 
+        // Tgl Didirikan & Negara (dropdown)
         Row(
           children: [
             Expanded(
@@ -630,14 +743,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: CustomTextField(
-                  hint: "Negara",
-                  controller: countryC,
-                  borderRadius: const BorderRadius.horizontal(
-                    left: Radius.circular(50),
-                  ),
+              child: _buildCountryDropdown(
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(50),
                 ),
               ),
             ),
@@ -645,6 +753,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 6),
 
+        // Email Perusahaan
         Padding(
           padding: const EdgeInsets.only(right: 30),
           child: CustomTextField(
@@ -658,6 +767,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 6),
 
+        // Kata Sandi
         Row(
           children: [
             Expanded(
@@ -690,6 +800,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 32),
 
+        // Tombol Daftar
         Row(
           children: [
             const Expanded(flex: 3, child: SizedBox()),
@@ -717,123 +828,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ],
     );
   }
-  // Widget _buildTravelForm() {
-  //   return Column(
-  //     key: const ValueKey("TravelForm"),
-  //     children: [
-  //       Padding(
-  //         padding: const EdgeInsets.only(right: 30),
-  //         child: CustomTextField(
-  //           hint: "Nama Perusahaan",
-  //           controller: companyNameC,
-  //           borderRadius: const BorderRadius.horizontal(
-  //             right: Radius.circular(50),
-  //           ),
-  //         ),
-  //       ),
-  //       const SizedBox(height: 16),
-
-  //       Padding(
-  //         padding: const EdgeInsets.only(right: 30),
-  //         child: CustomTextField(
-  //           hint: "Email Perusahaan",
-  //           controller: emailC,
-  //           keyboardType: TextInputType.emailAddress,
-  //           borderRadius: const BorderRadius.horizontal(
-  //             right: Radius.circular(50),
-  //           ),
-  //         ),
-  //       ),
-  //       const SizedBox(height: 16),
-
-  //       Row(
-  //         children: [
-  //           Expanded(
-  //             flex: 6,
-  //             child: Padding(
-  //               padding: const EdgeInsets.only(right: 12),
-  //               child: CustomTextField(
-  //                 hint: "NPWP/NIB",
-  //                 controller: npwpC,
-  //                 borderRadius: const BorderRadius.horizontal(
-  //                   right: Radius.circular(50),
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //           const Expanded(flex: 4, child: SizedBox()),
-  //         ],
-  //       ),
-  //       const SizedBox(height: 16),
-
-  //       Padding(
-  //         padding: const EdgeInsets.only(right: 30),
-  //         child: CustomTextField(
-  //           hint: "Nomor Izin Travel",
-  //           controller: travelLicenseC,
-  //           borderRadius: const BorderRadius.horizontal(
-  //             right: Radius.circular(50),
-  //           ),
-  //         ),
-  //       ),
-  //       const SizedBox(height: 16),
-
-  //       Row(
-  //         children: [
-  //           Expanded(
-  //             child: Padding(
-  //               padding: const EdgeInsets.only(right: 12),
-  //               child: CustomTextField(
-  //                 hint: "Kata Sandi",
-  //                 isPassword: true,
-  //                 controller: passwordC,
-  //                 borderRadius: const BorderRadius.horizontal(
-  //                   right: Radius.circular(50),
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //           Expanded(
-  //             child: Padding(
-  //               padding: const EdgeInsets.only(left: 12),
-  //               child: CustomTextField(
-  //                 hint: "Masukkan Ulang Kata Sandi",
-  //                 isPassword: true,
-  //                 controller: confirmPasswordC,
-  //                 borderRadius: const BorderRadius.horizontal(
-  //                   left: Radius.circular(50),
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //       const SizedBox(height: 32),
-
-  //       Row(
-  //         children: [
-  //           const Expanded(flex: 3, child: SizedBox()),
-  //           Expanded(
-  //             flex: 7,
-  //             child: Container(
-  //               height: 54,
-  //               decoration: BoxDecoration(
-  //                 gradient: const LinearGradient(
-  //                   begin: Alignment.centerLeft,
-  //                   end: Alignment.centerRight,
-  //                   colors: [Color(0xFF0099FF), Color(0xFF005C99)],
-  //                 ),
-  //                 borderRadius: const BorderRadius.horizontal(
-  //                   left: Radius.circular(50),
-  //                 ),
-  //                 boxShadow: AppColors.defaultShadow,
-  //               ),
-  //               child: _buildSubmitButton(),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ],
-  //   );
-  // }
 }

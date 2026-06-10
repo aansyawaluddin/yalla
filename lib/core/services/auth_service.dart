@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:yalla/core/models/user_model.dart';
+import 'package:yalla/core/models/country_model.dart';
 
 class AuthService {
   final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
@@ -65,6 +66,22 @@ class AuthService {
       return UserModel.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Gagal mengambil data profil');
+    }
+  }
+
+  Future<List<CountryModel>> getCountries() async {
+    final url = Uri.parse('$_baseUrl/countries');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => CountryModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Gagal mengambil daftar negara.');
     }
   }
 }
