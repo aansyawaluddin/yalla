@@ -7,6 +7,7 @@ class JelajahScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       backgroundColor: const Color(0xFFF5F6F8),
       body: Stack(
         children: [
@@ -40,8 +41,8 @@ class JelajahScreen extends StatelessWidget {
             ),
           ),
 
-          // --- 2. Konten Utama ---
           SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(

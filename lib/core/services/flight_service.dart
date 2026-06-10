@@ -7,6 +7,46 @@ import 'package:yalla/core/models/flight_passenger_response_model.dart';
 class FlightService {
   final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
 
+  Future<bool> createFlight(Map<String, dynamic> payload, String token) async {
+    final url = Uri.parse('$_baseUrl/flights');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(payload),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        String errorMessage =
+            'Gagal menambahkan penerbangan (Error ${response.statusCode})';
+
+        try {
+          final errorData = jsonDecode(response.body);
+          if (errorData is Map && errorData.containsKey('message')) {
+            errorMessage = errorData['message'];
+          } else if (errorData is Map && errorData.containsKey('error')) {
+            errorMessage = errorData['error'];
+          }
+        } catch (_) {
+          errorMessage = 'Error ${response.statusCode}: ${response.body}';
+        }
+
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      throw Exception(
+        'Terjadi kesalahan: ${e.toString().replaceAll("Exception: ", "")}',
+      );
+    }
+  }
+
   Future<bool> uploadFlightExcel(String filePath, String token) async {
     final url = Uri.parse('$_baseUrl/upload-flights');
 

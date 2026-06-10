@@ -164,8 +164,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               _buildRecentOrders(stats.latestOrders),
 
                               const SizedBox(height: 24),
-                              _buildPassengerTypeSection(),
-                              const SizedBox(height: 32),
                             ],
                           ),
                         ),
@@ -824,50 +822,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildPassengerTypeSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Jenis Penumpang",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF004CB9),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Menampilkan distribusi kategori penumpang berdasarkan tipe perjalanan pada rute Makassar – Jeddah.",
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildProgressBar(title: "Individu", percentage: 75),
-          const SizedBox(height: 20),
-          _buildProgressBar(title: "Keluarga", percentage: 80),
-        ],
-      ),
-    );
-  }
 
   Widget _buildProgressBar({required String title, required int percentage}) {
     return Column(
