@@ -64,13 +64,15 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  config:
+    enable-swift-package-manager: false
   uses-material-design: true
 
   assets:
     - assets/icons/
     - assets/images/
     - .env
-  
+
   fonts:
     - family: Inter
       fonts:
@@ -81,10 +83,10 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/logo.png" 
+  image_path: "assets/images/logo.png"
   adaptive_icon_background: "#004AAB"
   adaptive_icon_foreground: "assets/images/logo.png"
-  min_sdk_android: 21 
+  min_sdk_android: 21
 
   # To add assets to your application, add an assets section, like this:
   # assets:
